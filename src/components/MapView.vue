@@ -1,19 +1,22 @@
 <template>
-  <div class="map-shell">
-    <div ref="mapContainer" class="map"></div>
+  <div ref="mapShell" class="map-shell">
+    <div
+      ref="mapContainer"
+      class="map"
+      :class="{ 'symbol-drop-active': isSymbolDragOver }"
+    ></div>
 
-    <div class="map-toolbar">
-      <button type="button" @click="toggleTerrain">
-        {{ terrainEnabled ? 'Relief ON' : 'Relief OFF' }}
-      </button>
+    <div v-if="isSymbolDragOver" class="symbol-drop-overlay">
+      Depose le symbole sur la carte
+    </div>
 
-      <button type="button" @click="toggleHillshade">
-        {{ hillshadeEnabled ? 'Ombrage ON' : 'Ombrage OFF' }}
-      </button>
-
-      <button type="button" @click="resetView">
-        Recentrer
-      </button>
+    <div
+      v-if="isDraggingPlacedSymbol"
+      ref="trashDropzone"
+      class="trash-dropzone"
+      :class="{ active: isPlacedSymbolOverTrash }"
+    >
+      <Trash2 class="trash-dropzone-icon" aria-hidden="true" />
     </div>
 
     <div class="baselayer-switcher">
@@ -27,72 +30,93 @@
 
       <button
         type="button"
-        :class="{ active: baseLayer === 'osm' }"
-        @click="setBaseLayer('osm')"
+        :class="{ active: baseLayer === 'cyclosm' }"
+        @click="setBaseLayer('cyclosm')"
       >
-        Carte
+        Cyclo
       </button>
-    </div>
-
-    <div class="terrain-slider">
-      <input
-        v-model.number="terrainExaggeration"
-        type="range"
-        min="1"
-        max="10"
-        step="0.1"
-        @input="applyTerrainState"
-      />
-      <div class="terrain-label">
-        x{{ terrainExaggeration.toFixed(1) }}
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
+import { Trash2 } from 'lucide-vue-next'
 import type { GpxTrack } from '../types/gpx'
+import type { MapLabelFont } from './sidebar/map-settings'
+import { getSymbolDefinition, getSymbolSvg, type MapSymbol, type SymbolDefinition, type SymbolId } from '../types/symbol'
 
 const props = withDefaults(
   defineProps<{
     tracks?: GpxTrack[]
+    symbols?: MapSymbol[]
+    customSymbols: SymbolDefinition[]
+    draggingSymbolType?: SymbolId | null
+    dragPointer?: { x: number; y: number }
+    terrainExaggeration?: number
+    hillshadeStrength?: number
+    labelFont?: MapLabelFont
   }>(),
   {
     tracks: () => [],
+    symbols: () => [],
+    customSymbols: () => [],
+    draggingSymbolType: null,
+    dragPointer: () => ({ x: 0, y: 0 }),
+    terrainExaggeration: 1.4,
+    hillshadeStrength: 100,
+    labelFont: 'segoe',
   },
 )
 
 const emit = defineEmits<{
   (e: 'update-label-position', payload: { trackId: string; position: [number, number] }): void
+  (e: 'add-symbol', payload: { symbolId: SymbolId; position: [number, number] }): void
+  (e: 'complete-symbol-drag'): void
+  (e: 'remove-symbol', payload: { symbolId: string }): void
+  (e: 'select-symbol', payload: { symbolId: string | null }): void
+  (e: 'update-symbol-position', payload: { symbolId: string; position: [number, number] }): void
+  (e: 'update-symbol-size', payload: { symbolId: string; iconSize: number }): void
 }>()
 
 const mapContainer = ref<HTMLDivElement | null>(null)
+const mapShell = ref<HTMLDivElement | null>(null)
+const trashDropzone = ref<HTMLDivElement | null>(null)
+const isSymbolDragOver = ref(false)
+const isDraggingPlacedSymbol = ref(false)
+const isPlacedSymbolOverTrash = ref(false)
 
 let map: maplibregl.Map | null = null
 let draggedTrackId: string | null = null
+let draggedPlacedSymbolId: string | null = null
 let isDraggingLabel = false
+const symbolMarkers = new Map<string, maplibregl.Marker>()
 
-const terrainEnabled = ref(true)
-const hillshadeEnabled = ref(true)
-const baseLayer = ref<'osm' | 'esri'>('esri')
-const terrainExaggeration = ref(1.35)
+const baseLayer = ref<'cyclosm' | 'esri'>('cyclosm')
 
 const initialCenter: [number, number] = [-1.69, 43.31]
 const initialZoom = 14
 const initialPitch = 65
 const initialBearing = -20
+const arrivalBounds = [
+  [-9.492188, 41.558114],
+  [13.183594, 54.445336],
+] as const satisfies [[number, number], [number, number]]
 
 function buildStyle(): maplibregl.StyleSpecification {
   return {
     version: 8,
     sources: {
-      osm: {
+      cyclosm: {
         type: 'raster',
-        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tiles: [
+          'https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+          'https://b.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+          'https://c.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+        ],
         tileSize: 256,
-        attribution: '&copy; OpenStreetMap contributors',
+        attribution: '&copy; OpenStreetMap contributors, style CyclOSM',
       },
       'esri-world-imagery': {
         type: 'raster',
@@ -101,32 +125,33 @@ function buildStyle(): maplibregl.StyleSpecification {
         ],
         tileSize: 256,
         attribution:
-          'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+          'Tiles © Esri - Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       },
     },
     layers: [
       {
-        id: 'osm',
+        id: 'cyclosm',
         type: 'raster',
-        source: 'osm',
-        layout: { visibility: 'none' },
+        source: 'cyclosm',
+        layout: { visibility: 'visible' },
       },
       {
         id: 'esri',
         type: 'raster',
         source: 'esri-world-imagery',
-        layout: { visibility: 'visible' },
+        layout: { visibility: 'none' },
       },
     ],
   }
 }
 
-function setBaseLayer(layer: 'osm' | 'esri') {
+function setBaseLayer(layer: 'cyclosm' | 'esri') {
   if (!map) return
+
   baseLayer.value = layer
 
-  if (map.getLayer('osm')) {
-    map.setLayoutProperty('osm', 'visibility', layer === 'osm' ? 'visible' : 'none')
+  if (map.getLayer('cyclosm')) {
+    map.setLayoutProperty('cyclosm', 'visibility', layer === 'cyclosm' ? 'visible' : 'none')
   }
 
   if (map.getLayer('esri')) {
@@ -134,13 +159,25 @@ function setBaseLayer(layer: 'osm' | 'esri') {
   }
 }
 
+function fitToArrivalBounds(duration = 1000) {
+  if (!map) return
+
+  map.fitBounds(arrivalBounds, {
+    padding: 60,
+    duration,
+    pitch: Math.min(initialPitch, 55),
+    bearing: initialBearing,
+    essential: true,
+  })
+}
+
 function applyTerrainState() {
   if (!map) return
 
-  if (terrainEnabled.value) {
+  if (props.terrainExaggeration > 0) {
     map.setTerrain({
       source: 'terrain-dem',
-      exaggeration: terrainExaggeration.value,
+      exaggeration: props.terrainExaggeration,
     })
   } else {
     map.setTerrain(null)
@@ -150,7 +187,7 @@ function applyTerrainState() {
     map.setPaintProperty(
       'terrain-hillshade',
       'hillshade-exaggeration',
-      Math.min(terrainExaggeration.value * 0.6, 6),
+      Math.min(props.terrainExaggeration * 0.6, 6),
     )
   }
 }
@@ -158,40 +195,119 @@ function applyTerrainState() {
 function applyHillshadeState() {
   if (!map || !map.getLayer('terrain-hillshade')) return
 
-  map.setLayoutProperty(
+  const opacity = Math.max(0, Math.min(props.hillshadeStrength / 100, 1))
+
+  map.setLayoutProperty('terrain-hillshade', 'visibility', opacity > 0 ? 'visible' : 'none')
+  map.setPaintProperty('terrain-hillshade', 'hillshade-shadow-color', `rgba(0, 0, 0, ${opacity})`)
+  map.setPaintProperty(
     'terrain-hillshade',
-    'visibility',
-    hillshadeEnabled.value ? 'visible' : 'none',
+    'hillshade-highlight-color',
+    `rgba(255, 255, 255, ${opacity * 0.9})`,
   )
-}
-
-function toggleTerrain() {
-  terrainEnabled.value = !terrainEnabled.value
-  applyTerrainState()
-}
-
-function toggleHillshade() {
-  hillshadeEnabled.value = !hillshadeEnabled.value
-  applyHillshadeState()
-}
-
-function resetView() {
-  if (!map) return
-
-  map.easeTo({
-    center: initialCenter,
-    zoom: initialZoom,
-    pitch: initialPitch,
-    bearing: initialBearing,
-    duration: 1000,
-    essential: true,
-  })
+  map.setPaintProperty(
+    'terrain-hillshade',
+    'hillshade-accent-color',
+    `rgba(31, 41, 55, ${opacity})`,
+  )
 }
 
 function dashArrayForStyle(style: GpxTrack['style']) {
   if (style === 'dashed') return [3, 2]
   if (style === 'dotted') return [1, 2]
-  return [1, 0]
+  return undefined
+}
+
+function arrowLayerVisibility(track: GpxTrack) {
+  return track.visible && (track.style === 'arrow' || track.style === 'arrow-reverse')
+    ? 'visible'
+    : 'none'
+}
+
+function arrowSymbolForStyle(style: GpxTrack['style']) {
+  return style === 'arrow-reverse' ? '\u2190' : '\u2192'
+}
+
+function linePaintForTrack(track: GpxTrack): maplibregl.LinePaint {
+  const dashArray = dashArrayForStyle(track.style)
+
+  return {
+    'line-color': track.color,
+    'line-width': track.width,
+    'line-opacity': 0.95,
+    ...(dashArray ? { 'line-dasharray': dashArray } : {}),
+  }
+}
+
+function fontStackForLabelFont(labelFont: MapLabelFont) {
+  if (labelFont === 'arial') return ['Arial']
+  if (labelFont === 'verdana') return ['Verdana']
+  if (labelFont === 'trebuchet') return ['Trebuchet MS']
+  if (labelFont === 'tahoma') return ['Tahoma']
+  if (labelFont === 'georgia') return ['Georgia']
+  if (labelFont === 'palatino') return ['Palatino Linotype', 'Book Antiqua']
+  if (labelFont === 'cambria') return ['Cambria']
+  if (labelFont === 'impact') return ['Impact']
+  if (labelFont === 'courier') return ['Courier New']
+  return ['Segoe UI']
+}
+
+function labelLetterSpacingForFont(labelFont: MapLabelFont) {
+  if (labelFont === 'impact') return 0.04
+  if (labelFont === 'courier') return 0.02
+  if (labelFont === 'trebuchet') return 0.01
+  return 0
+}
+
+function labelTextSizeForFont(labelFont: MapLabelFont) {
+  if (labelFont === 'impact') return 17
+  if (labelFont === 'georgia' || labelFont === 'palatino' || labelFont === 'cambria') return 17
+  if (labelFont === 'courier') return 15
+  return 16
+}
+
+function labelPaintForTrack(track: GpxTrack): maplibregl.SymbolPaint {
+  if (track.labelStyle === 'soft') {
+    return {
+      'text-color': track.color,
+      'text-halo-color': 'rgba(255,255,255,0.72)',
+      'text-halo-width': 1.2,
+      'text-opacity': 0.94,
+    }
+  }
+
+  if (track.labelStyle === 'bold') {
+    return {
+      'text-color': track.color,
+      'text-halo-color': 'rgba(255,255,255,1)',
+      'text-halo-width': 3.2,
+      'text-opacity': 1,
+    }
+  }
+
+  if (track.labelStyle === 'ghost') {
+    return {
+      'text-color': 'rgba(255,255,255,0.96)',
+      'text-halo-color': 'rgba(15,23,42,0.84)',
+      'text-halo-width': 1.8,
+      'text-opacity': 0.96,
+    }
+  }
+
+  if (track.labelStyle === 'stamp') {
+    return {
+      'text-color': 'rgba(255,255,255,0.98)',
+      'text-halo-color': track.color,
+      'text-halo-width': 2.4,
+      'text-opacity': 1,
+    }
+  }
+
+  return {
+    'text-color': track.color,
+    'text-halo-color': 'rgba(255,255,255,0.98)',
+    'text-halo-width': 2,
+    'text-opacity': 1,
+  }
 }
 
 function flattenLineCoordinates(geojson: GeoJSON.FeatureCollection): [number, number][] {
@@ -251,18 +367,132 @@ function buildLabelPoint(track: GpxTrack): GeoJSON.FeatureCollection {
   }
 }
 
+function buildTrackLineData(track: GpxTrack): GeoJSON.FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: (track.geojson.features ?? []).filter((feature) => {
+      const geometryType = feature.geometry?.type
+      return geometryType === 'LineString' || geometryType === 'MultiLineString'
+    }),
+  }
+}
+
+function refreshSymbols() {
+  if (!map) return
+
+  const nextIds = new Set(props.symbols.map((symbol) => symbol.id))
+
+  for (const symbol of props.symbols) {
+    const definition = getSymbolDefinition(symbol.symbolId, props.customSymbols)
+    const existingMarker = symbolMarkers.get(symbol.id)
+
+    if (existingMarker) {
+      const element = existingMarker.getElement()
+      const outerSize = Math.max(24, Math.min(symbol.iconSize + 11, 42))
+      const coreSize = Math.max(18, Math.min(symbol.iconSize + 7, 34))
+      element.style.setProperty('--marker-size', `${outerSize}px`)
+      element.style.setProperty('--marker-core-size', `${coreSize}px`)
+      element.style.setProperty('--marker-icon-size', `${symbol.iconSize}px`)
+      element.style.setProperty('--marker-rotation', `${symbol.rotation}deg`)
+      element.style.setProperty('--marker-scale-x', symbol.flipX ? '-1' : '1')
+      element.style.setProperty('--marker-scale-y', symbol.flipY ? '-1' : '1')
+      existingMarker.setLngLat(symbol.lngLat)
+      continue
+    }
+
+    const element = document.createElement('button')
+    element.type = 'button'
+    element.className = 'map-symbol-marker'
+    element.style.setProperty('--symbol-color', definition.color)
+    element.style.setProperty('--marker-size', `${Math.max(24, Math.min(symbol.iconSize + 11, 42))}px`)
+    element.style.setProperty('--marker-core-size', `${Math.max(18, Math.min(symbol.iconSize + 7, 34))}px`)
+    element.style.setProperty('--marker-icon-size', `${symbol.iconSize}px`)
+    element.style.setProperty('--marker-rotation', `${symbol.rotation}deg`)
+    element.style.setProperty('--marker-scale-x', symbol.flipX ? '-1' : '1')
+    element.style.setProperty('--marker-scale-y', symbol.flipY ? '-1' : '1')
+    element.title = definition.label
+    element.innerHTML = `<span class="map-symbol-marker__core"><span class="map-symbol-marker__icon">${getSymbolSvg(symbol.symbolId, props.customSymbols)}</span></span>`
+    element.addEventListener('click', (event) => {
+      event.stopPropagation()
+      emit('select-symbol', { symbolId: symbol.id })
+    })
+
+    const marker = new maplibregl.Marker({
+      element,
+      anchor: 'center',
+      draggable: true,
+    })
+      .setLngLat(symbol.lngLat)
+      .addTo(map)
+
+    marker.on('dragstart', () => {
+      draggedPlacedSymbolId = symbol.id
+      isDraggingPlacedSymbol.value = true
+      isPlacedSymbolOverTrash.value = false
+    })
+
+    marker.on('drag', () => {
+      const markerRect = element.getBoundingClientRect()
+      const trashRect = trashDropzone.value?.getBoundingClientRect()
+
+      if (!trashRect) {
+        isPlacedSymbolOverTrash.value = false
+        return
+      }
+
+      const markerCenterX = markerRect.left + markerRect.width / 2
+      const markerCenterY = markerRect.top + markerRect.height / 2
+
+      isPlacedSymbolOverTrash.value =
+        markerCenterX >= trashRect.left &&
+        markerCenterX <= trashRect.right &&
+        markerCenterY >= trashRect.top &&
+        markerCenterY <= trashRect.bottom
+    })
+
+    marker.on('dragend', () => {
+      if (draggedPlacedSymbolId === symbol.id && isPlacedSymbolOverTrash.value) {
+        emit('remove-symbol', { symbolId: symbol.id })
+        draggedPlacedSymbolId = null
+        isDraggingPlacedSymbol.value = false
+        isPlacedSymbolOverTrash.value = false
+        return
+      }
+
+      const lngLat = marker.getLngLat()
+      emit('update-symbol-position', {
+        symbolId: symbol.id,
+        position: [lngLat.lng, lngLat.lat],
+      })
+
+      draggedPlacedSymbolId = null
+      isDraggingPlacedSymbol.value = false
+      isPlacedSymbolOverTrash.value = false
+    })
+
+    symbolMarkers.set(symbol.id, marker)
+  }
+
+  for (const [symbolId, marker] of symbolMarkers.entries()) {
+    if (nextIds.has(symbolId)) continue
+    marker.remove()
+    symbolMarkers.delete(symbolId)
+  }
+}
+
 function ensureTrackSource(track: GpxTrack) {
   if (!map) return
 
   const sourceId = `track-source-${track.id}`
   const existing = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined
+  const trackLineData = buildTrackLineData(track)
 
   if (existing) {
-    existing.setData(track.geojson as GeoJSON.GeoJSON)
+    existing.setData(trackLineData as GeoJSON.GeoJSON)
   } else {
     map.addSource(sourceId, {
       type: 'geojson',
-      data: track.geojson as GeoJSON.GeoJSON,
+      data: trackLineData as GeoJSON.GeoJSON,
     })
   }
 }
@@ -288,7 +518,10 @@ function ensureTrackLayers(track: GpxTrack) {
   if (!map) return
 
   const sourceId = `track-source-${track.id}`
+  const labelSourceId = `track-label-source-${track.id}`
   const lineId = `track-line-${track.id}`
+  const labelId = `track-label-${track.id}`
+  const arrowId = `track-arrow-${track.id}`
 
   if (!map.getLayer(lineId)) {
     map.addLayer({
@@ -300,17 +533,9 @@ function ensureTrackLayers(track: GpxTrack) {
         'line-join': 'round',
         visibility: track.visible ? 'visible' : 'none',
       },
-      paint: {
-        'line-color': track.color,
-        'line-width': track.width,
-        'line-opacity': 0.95,
-        'line-dasharray': dashArrayForStyle(track.style),
-      },
+      paint: linePaintForTrack(track),
     })
   }
-
-  const labelSourceId = `track-label-source-${track.id}`
-  const labelId = `track-label-${track.id}`
 
   if (!map.getLayer(labelId)) {
     map.addLayer({
@@ -320,7 +545,9 @@ function ensureTrackLayers(track: GpxTrack) {
       layout: {
         'symbol-placement': 'point',
         'text-field': ['get', 'label'],
-        'text-size': 16,
+        'text-font': fontStackForLabelFont(props.labelFont),
+        'text-letter-spacing': labelLetterSpacingForFont(props.labelFont),
+        'text-size': track.labelSize,
         'text-padding': 4,
         'text-pitch-alignment': 'viewport',
         'text-rotation-alignment': 'viewport',
@@ -332,12 +559,100 @@ function ensureTrackLayers(track: GpxTrack) {
         visibility: track.visible ? 'visible' : 'none',
       },
       paint: {
-        'text-color': track.color,
-        'text-halo-color': 'rgba(255,255,255,0.98)',
-        'text-halo-width': 2,
+        ...labelPaintForTrack(track),
       },
     })
   }
+
+  if (!map.getLayer(arrowId)) {
+    map.addLayer({
+      id: arrowId,
+      type: 'symbol',
+      source: sourceId,
+      layout: {
+        'symbol-placement': 'line',
+        'symbol-spacing': 48,
+        'text-field': arrowSymbolForStyle(track.style),
+        'text-size': 14,
+        'text-rotation-alignment': 'map',
+        'text-keep-upright': false,
+        visibility: arrowLayerVisibility(track),
+      },
+      paint: {
+        'text-color': track.color,
+        'text-halo-color': 'rgba(255,255,255,0.95)',
+        'text-halo-width': 1.2,
+      },
+    })
+  }
+}
+
+function rebuildTrackLineLayer(track: GpxTrack) {
+  if (!map) return
+
+  const sourceId = `track-source-${track.id}`
+  const lineId = `track-line-${track.id}`
+  const labelId = `track-label-${track.id}`
+  const arrowId = `track-arrow-${track.id}`
+
+  if (map.getLayer(lineId)) {
+    map.removeLayer(lineId)
+  }
+
+  map.addLayer(
+    {
+      id: lineId,
+      type: 'line',
+      source: sourceId,
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+        visibility: track.visible ? 'visible' : 'none',
+      },
+      paint: linePaintForTrack(track),
+    },
+    map.getLayer(arrowId) ? arrowId : map.getLayer(labelId) ? labelId : undefined,
+  )
+}
+
+function rebuildTrackLabelLayer(track: GpxTrack) {
+  if (!map) return
+
+  const labelSourceId = `track-label-source-${track.id}`
+  const labelId = `track-label-${track.id}`
+  const arrowId = `track-arrow-${track.id}`
+
+  if (map.getLayer(labelId)) {
+    map.removeLayer(labelId)
+  }
+
+  map.addLayer(
+    {
+      id: labelId,
+      type: 'symbol',
+      source: labelSourceId,
+      layout: {
+        'symbol-placement': 'point',
+        'text-field': ['get', 'label'],
+        'text-font': fontStackForLabelFont(props.labelFont),
+        'text-size': track.labelSize,
+        'text-letter-spacing': labelLetterSpacingForFont(props.labelFont),
+        'text-padding': 4,
+        'text-pitch-alignment': 'viewport',
+        'text-rotation-alignment': 'viewport',
+        'text-keep-upright': true,
+        'text-anchor': 'center',
+        'text-offset': [0, 0],
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
+        visibility: track.visible ? 'visible' : 'none',
+      },
+      paint: {
+        ...labelPaintForTrack(track),
+      },
+    },
+    map.getLayer(arrowId) ? arrowId : undefined,
+  )
 }
 
 function updateTrackLayers(track: GpxTrack) {
@@ -345,18 +660,41 @@ function updateTrackLayers(track: GpxTrack) {
 
   const lineId = `track-line-${track.id}`
   const labelId = `track-label-${track.id}`
+  const arrowId = `track-arrow-${track.id}`
 
   if (map.getLayer(lineId)) {
-    map.setPaintProperty(lineId, 'line-color', track.color)
-    map.setPaintProperty(lineId, 'line-width', track.width)
-    map.setPaintProperty(lineId, 'line-dasharray', dashArrayForStyle(track.style))
-    map.setLayoutProperty(lineId, 'visibility', track.visible ? 'visible' : 'none')
+    rebuildTrackLineLayer(track)
+  }
+
+  if (map.getLayer(labelId)) {
+    rebuildTrackLabelLayer(track)
   }
 
   if (map.getLayer(labelId)) {
     map.setLayoutProperty(labelId, 'visibility', track.visible ? 'visible' : 'none')
-    map.setPaintProperty(labelId, 'text-color', track.color)
+    map.setLayoutProperty(labelId, 'text-size', track.labelSize)
+    const labelPaint = labelPaintForTrack(track)
+    map.setPaintProperty(labelId, 'text-color', labelPaint['text-color'])
+    map.setPaintProperty(labelId, 'text-halo-color', labelPaint['text-halo-color'])
+    map.setPaintProperty(labelId, 'text-halo-width', labelPaint['text-halo-width'])
+    map.setPaintProperty(labelId, 'text-opacity', labelPaint['text-opacity'])
   }
+
+  if (map.getLayer(arrowId)) {
+    map.setLayoutProperty(arrowId, 'visibility', arrowLayerVisibility(track))
+    map.setLayoutProperty(arrowId, 'text-field', arrowSymbolForStyle(track.style))
+    map.setPaintProperty(arrowId, 'text-color', track.color)
+  }
+
+  if (map.getLayer(labelId)) {
+    map.moveLayer(labelId)
+  }
+
+  if (map.getLayer(arrowId)) {
+    map.moveLayer(arrowId)
+  }
+
+  map.triggerRepaint()
 }
 
 function removeDeletedTrackLayers() {
@@ -366,7 +704,7 @@ function removeDeletedTrackLayers() {
   const style = map.getStyle()
 
   for (const layer of style.layers ?? []) {
-    const match = layer.id.match(/^track-(line|label)-(.+)$/)
+    const match = layer.id.match(/^track-(line|label|arrow)-(.+)$/)
     if (!match) continue
 
     const trackId = match[2]
@@ -400,6 +738,10 @@ function refreshTracks() {
   }
 
   removeDeletedTrackLayers()
+  map.triggerRepaint()
+  requestAnimationFrame(() => {
+    map?.triggerRepaint()
+  })
 }
 
 function fitToTracks() {
@@ -532,6 +874,8 @@ function setupLabelDragging() {
 onMounted(() => {
   if (!mapContainer.value) return
 
+  window.addEventListener('pointerup', handleGlobalPointerUp, true)
+
   map = new maplibregl.Map({
     container: mapContainer.value,
     style: buildStyle(),
@@ -540,10 +884,15 @@ onMounted(() => {
     pitch: initialPitch,
     bearing: initialBearing,
     maxPitch: 85,
+    maxTileCacheSize: 100,
+    maxZoom: 20,
   })
 
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right')
   map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right')
+  map.on('click', () => {
+    emit('select-symbol', { symbolId: null })
+  })
 
   map.on('load', () => {
     if (!map) return
@@ -560,7 +909,7 @@ onMounted(() => {
       type: 'hillshade',
       source: 'terrain-dem',
       paint: {
-        'hillshade-exaggeration': Math.min(terrainExaggeration.value * 0.6, 6),
+        'hillshade-exaggeration': Math.min(props.terrainExaggeration * 0.6, 6),
         'hillshade-shadow-color': '#000000',
         'hillshade-highlight-color': '#ffffff',
         'hillshade-accent-color': '#1f2937',
@@ -569,17 +918,19 @@ onMounted(() => {
 
     map.setTerrain({
       source: 'terrain-dem',
-      exaggeration: terrainExaggeration.value,
+      exaggeration: props.terrainExaggeration,
     })
 
-    if (typeof (map as any).setSky === 'function') {
-      ;(map as any).setSky({
+    if (
+      typeof (map as maplibregl.Map & { setSky?: (value: unknown) => void }).setSky === 'function'
+    ) {
+      ;(map as maplibregl.Map & { setSky: (value: unknown) => void }).setSky({
         'sky-color': '#7db7ff',
         'sky-horizon-blend': 0.4,
         'horizon-color': '#ffffff',
-        'horizon-fog-blend': 0.25,
+        'horizon-fog-blend': 0.01,
         'fog-color': '#d0e6ff',
-        'fog-ground-blend': 0.15,
+        'fog-ground-blend': 0.001,
       })
     }
 
@@ -587,10 +938,13 @@ onMounted(() => {
     applyHillshadeState()
     setBaseLayer(baseLayer.value)
     refreshTracks()
+    refreshSymbols()
     setupLabelDragging()
 
     if (props.tracks.length > 0) {
       fitToTracks()
+    } else {
+      fitToArrivalBounds(0)
     }
 
     map.easeTo({
@@ -598,6 +952,16 @@ onMounted(() => {
       bearing: initialBearing,
       duration: 600,
       essential: true,
+    })
+
+    requestAnimationFrame(() => {
+      refreshTracks()
+      refreshSymbols()
+    })
+
+    map.once('idle', () => {
+      refreshTracks()
+      refreshSymbols()
     })
   })
 })
@@ -607,21 +971,98 @@ watch(
   () => {
     refreshTracks()
   },
-  { deep: true },
+  { deep: true, flush: 'post' },
 )
+
+watch(
+  () => props.symbols,
+  () => {
+    refreshSymbols()
+  },
+  { deep: true, flush: 'post' },
+)
+
+watch(
+  () => [props.draggingSymbolType, props.dragPointer.x, props.dragPointer.y] as const,
+  ([draggingSymbolType, clientX, clientY]) => {
+    if (!mapContainer.value || !draggingSymbolType) {
+      isSymbolDragOver.value = false
+      return
+    }
+
+    const rect = mapContainer.value.getBoundingClientRect()
+    isSymbolDragOver.value =
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+  },
+  { flush: 'post' },
+)
+
+function handleMapPointerUp(event: PointerEvent) {
+  if (!props.draggingSymbolType || !map || !mapContainer.value) return
+
+  const rect = mapContainer.value.getBoundingClientRect()
+  const insideMap =
+    event.clientX >= rect.left &&
+    event.clientX <= rect.right &&
+    event.clientY >= rect.top &&
+    event.clientY <= rect.bottom
+
+  if (!insideMap) return
+
+  const point = [event.clientX - rect.left, event.clientY - rect.top] as [number, number]
+  const lngLat = map.unproject(point)
+
+  emit('add-symbol', {
+    symbolId: props.draggingSymbolType,
+    position: [lngLat.lng, lngLat.lat],
+  })
+  emit('complete-symbol-drag')
+}
+
+function handleGlobalPointerUp(event: PointerEvent) {
+  handleMapPointerUp(event)
+}
 
 watch(
   () => props.tracks?.length ?? 0,
   (newLen, oldLen) => {
     if (newLen > oldLen) {
       setTimeout(() => {
+        refreshTracks()
         fitToTracks()
       }, 50)
     }
   },
 )
 
+watch(
+  () => props.terrainExaggeration,
+  () => {
+    applyTerrainState()
+    applyHillshadeState()
+  },
+)
+
+watch(
+  () => props.hillshadeStrength,
+  () => {
+    applyHillshadeState()
+  },
+)
+
+watch(
+  () => props.labelFont,
+  () => {
+    refreshTracks()
+  },
+)
+
 onBeforeUnmount(() => {
+  window.removeEventListener('pointerup', handleGlobalPointerUp, true)
+
   if (map) {
     map.getCanvas().style.cursor = ''
     if (isDraggingLabel) {
@@ -632,7 +1073,12 @@ onBeforeUnmount(() => {
   map?.remove()
   map = null
   draggedTrackId = null
+  draggedPlacedSymbolId = null
   isDraggingLabel = false
+  isSymbolDragOver.value = false
+  isDraggingPlacedSymbol.value = false
+  isPlacedSymbolOverTrash.value = false
+  symbolMarkers.clear()
 })
 </script>
 
@@ -648,29 +1094,67 @@ onBeforeUnmount(() => {
   height: 100%;
 }
 
-.map-toolbar {
+.map.symbol-drop-active {
+  filter: saturate(1.05);
+}
+
+.symbol-drop-overlay {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 10;
+  inset: 24px;
+  z-index: 12;
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(96, 165, 250, 0.9);
+  border-radius: 24px;
+  background: rgba(15, 23, 42, 0.16);
+  color: #eff6ff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
 }
 
-.map-toolbar button {
-  border: 1px solid #d1d5db;
-  background: rgba(255, 255, 255, 0.96);
-  color: #111827;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+.trash-dropzone {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 14;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border-radius: 20px;
+  border: 1px solid rgba(248, 113, 113, 0.24);
+  background: rgba(15, 23, 42, 0.94);
+  color: #fecaca;
+  box-shadow: 0 16px 34px rgba(2, 6, 23, 0.34);
+  backdrop-filter: blur(14px);
+  pointer-events: none;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
 }
 
-.map-toolbar button:hover {
-  background: #ffffff;
+.trash-dropzone.active {
+  transform: scale(1.06);
+  background: rgba(127, 29, 29, 0.92);
+  border-color: rgba(252, 165, 165, 0.62);
+  color: #ffffff;
+  box-shadow:
+    0 18px 40px rgba(127, 29, 29, 0.34),
+    0 0 0 1px rgba(252, 165, 165, 0.35);
+}
+
+.trash-dropzone-icon {
+  width: 24px;
+  height: 24px;
 }
 
 .baselayer-switcher {
@@ -701,32 +1185,54 @@ onBeforeUnmount(() => {
   color: white;
 }
 
-.terrain-slider {
-  position: absolute;
-  right: 16px;
-  bottom: 80px;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
+:global(.map-symbol-marker) {
+  --symbol-color: #3b82f6;
+  --marker-size: 28px;
+  --marker-core-size: 24px;
+  --marker-icon-size: 17px;
+  --marker-rotation: 0deg;
+  --marker-scale-x: 1;
+  --marker-scale-y: 1;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 8px;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  justify-content: center;
+  width: var(--marker-size);
+  height: var(--marker-size);
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--symbol-color) 20%, white);
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.58);
+  cursor: grab;
 }
 
-.terrain-slider input[type='range'] {
-  writing-mode: vertical-lr;
-  direction: rtl;
-  height: 120px;
-  width: 24px;
-  cursor: pointer;
+:global(.map-symbol-marker:active) {
+  cursor: grabbing;
 }
 
-.terrain-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #111827;
+:global(.map-symbol-marker__core) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--marker-core-size);
+  height: var(--marker-core-size);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+}
+
+:global(.map-symbol-marker__icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(var(--marker-rotation)) scaleX(var(--marker-scale-x)) scaleY(var(--marker-scale-y));
+  transition: transform 0.18s ease;
+}
+
+:global(.map-symbol-marker__icon svg) {
+  width: var(--marker-icon-size);
+  height: var(--marker-icon-size);
 }
 </style>

@@ -1,4 +1,5 @@
-export type TrackStyle = 'solid' | 'dashed' | 'dotted'
+export type TrackStyle = 'solid' | 'arrow' | 'arrow-reverse' | 'dashed' | 'dotted'
+export type TrackLabelStyle = 'classic' | 'soft' | 'bold' | 'ghost' | 'stamp'
 
 export type GpxTrack = {
   id: string
@@ -10,4 +11,6 @@ export type GpxTrack = {
   visible: boolean
   geojson: GeoJSON.FeatureCollection
   labelPosition?: [number, number]
+  labelSize: number
+  labelStyle: TrackLabelStyle
 }
