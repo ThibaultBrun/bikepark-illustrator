@@ -44,6 +44,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
 import { Trash2 } from 'lucide-vue-next'
 import type { GpxTrack } from '../types/gpx'
+import type { MapCameraState } from '../types/project'
 import type { MapLabelFont } from './sidebar/map-settings'
 import { getSymbolDefinition, getSymbolSvg, type MapSymbol, type SymbolDefinition, type SymbolId } from '../types/symbol'
 
@@ -57,6 +58,9 @@ const props = withDefaults(
     terrainExaggeration?: number
     hillshadeStrength?: number
     labelFont?: MapLabelFont
+    savedCamera?: MapCameraState | null
+    cameraRestoreKey?: number
+    fitRequest?: { type: 'project' | 'track'; trackId?: string; nonce: number } | null
   }>(),
   {
     tracks: () => [],
@@ -67,6 +71,9 @@ const props = withDefaults(
     terrainExaggeration: 1.4,
     hillshadeStrength: 100,
     labelFont: 'segoe',
+    savedCamera: null,
+    cameraRestoreKey: 0,
+    fitRequest: null,
   },
 )
 
@@ -78,6 +85,7 @@ const emit = defineEmits<{
   (e: 'select-symbol', payload: { symbolId: string | null }): void
   (e: 'update-symbol-position', payload: { symbolId: string; position: [number, number] }): void
   (e: 'update-symbol-size', payload: { symbolId: string; iconSize: number }): void
+  (e: 'update-camera', payload: MapCameraState): void
 }>()
 
 const mapContainer = ref<HTMLDivElement | null>(null)
@@ -91,18 +99,39 @@ let map: maplibregl.Map | null = null
 let draggedTrackId: string | null = null
 let draggedPlacedSymbolId: string | null = null
 let isDraggingLabel = false
+let suppressNextCameraEmit = false
+let restoredSavedCameraOnLoad = false
+let skipNextTrackAutoFit = false
 const symbolMarkers = new Map<string, maplibregl.Marker>()
 
 const baseLayer = ref<'cyclosm' | 'esri'>('cyclosm')
 
 const initialCenter: [number, number] = [-1.69, 43.31]
 const initialZoom = 14
-const initialPitch = 65
+const initialPitch = 0
 const initialBearing = -20
 const arrivalBounds = [
   [-9.492188, 41.558114],
   [13.183594, 54.445336],
 ] as const satisfies [[number, number], [number, number]]
+
+function initialCamera() {
+  if (props.savedCamera) {
+    return {
+      center: props.savedCamera.center,
+      zoom: props.savedCamera.zoom,
+      pitch: props.savedCamera.pitch,
+      bearing: props.savedCamera.bearing,
+    }
+  }
+
+  return {
+    center: initialCenter,
+    zoom: initialZoom,
+    pitch: initialPitch,
+    bearing: initialBearing,
+  }
+}
 
 function buildStyle(): maplibregl.StyleSpecification {
   return {
@@ -162,17 +191,60 @@ function setBaseLayer(layer: 'cyclosm' | 'esri') {
 function fitToArrivalBounds(duration = 1000) {
   if (!map) return
 
-  map.fitBounds(arrivalBounds, {
-    padding: 60,
+  fitMapToBounds(new maplibregl.LngLatBounds(arrivalBounds[0], arrivalBounds[1]), duration)
+}
+
+function currentCameraState(): MapCameraState | null {
+  if (!map) return null
+
+  const center = map.getCenter()
+  return {
+    center: [center.lng, center.lat],
+    zoom: map.getZoom(),
+    pitch: map.getPitch(),
+    bearing: map.getBearing(),
+  }
+}
+
+function fitMapToBounds(bounds: maplibregl.LngLatBounds, duration = 1000) {
+  if (!map || bounds.isEmpty()) return
+
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 960px)').matches
+  const padding = isMobile
+    ? { top: 96, right: 28, bottom: 140, left: 28 }
+    : { top: 72, right: 72, bottom: 92, left: 96 }
+  const targetPitch = Math.min(map.getPitch(), 44)
+  const fitPitch = 10
+  suppressNextCameraEmit = true
+
+  map.fitBounds(bounds, {
+    padding,
     duration,
-    pitch: Math.min(initialPitch, 55),
-    bearing: initialBearing,
+    pitch: fitPitch,
+    bearing: map.getBearing(),
     essential: true,
   })
+
+  // In perspective view, a bounds fit that looks perfect in 2D often feels too tight.
+  // We fit flatter first, then restore the 3D pitch with a slight zoom-out compensation.
+  if (targetPitch > fitPitch) {
+    map.once('moveend', () => {
+      if (!map) return
+
+      suppressNextCameraEmit = true
+      map.easeTo({
+        pitch: targetPitch,
+        zoom: map.getZoom() - 0.45,
+        duration: 450,
+        essential: true,
+      })
+    })
+  }
 }
 
 function applyTerrainState() {
   if (!map) return
+  if (!map.getSource('terrain-dem')) return
 
   if (props.terrainExaggeration > 0) {
     map.setTerrain({
@@ -187,7 +259,7 @@ function applyTerrainState() {
     map.setPaintProperty(
       'terrain-hillshade',
       'hillshade-exaggeration',
-      Math.min(props.terrainExaggeration * 0.6, 6),
+      Math.min(props.terrainExaggeration * 0.2, 1),
     )
   }
 }
@@ -773,13 +845,55 @@ function fitToTracks() {
   }
 
   if (!bounds.isEmpty()) {
-    map.fitBounds(bounds, {
-      padding: 60,
-      duration: 1000,
-      pitch: Math.min(map.getPitch(), 55),
-      bearing: map.getBearing(),
-    })
+    fitMapToBounds(bounds, 1000)
   }
+}
+
+function fitToTrack(trackId: string) {
+  if (!map) return
+
+  const track = props.tracks.find((item) => item.id === trackId)
+  if (!track) return
+
+  const bounds = new maplibregl.LngLatBounds()
+
+  for (const coord of flattenLineCoordinates(track.geojson)) {
+    bounds.extend(coord)
+  }
+
+  if (!bounds.isEmpty()) {
+    fitMapToBounds(bounds, 900)
+  }
+}
+
+function restoreSavedCamera() {
+  if (!map || !props.savedCamera) return false
+
+  map.stop()
+  suppressNextCameraEmit = true
+  restoredSavedCameraOnLoad = true
+  map.jumpTo({
+    center: props.savedCamera.center,
+    zoom: props.savedCamera.zoom,
+    pitch: props.savedCamera.pitch,
+    bearing: props.savedCamera.bearing,
+  })
+  return true
+}
+
+function setupCameraTracking() {
+  if (!map) return
+
+  map.on('moveend', () => {
+    const camera = currentCameraState()
+    if (!camera) return
+
+    if (suppressNextCameraEmit) {
+      suppressNextCameraEmit = false
+    }
+
+    emit('update-camera', camera)
+  })
 }
 
 function setupLabelDragging() {
@@ -876,13 +990,15 @@ onMounted(() => {
 
   window.addEventListener('pointerup', handleGlobalPointerUp, true)
 
+  const camera = initialCamera()
+
   map = new maplibregl.Map({
     container: mapContainer.value,
     style: buildStyle(),
-    center: initialCenter,
-    zoom: initialZoom,
-    pitch: initialPitch,
-    bearing: initialBearing,
+    center: camera.center,
+    zoom: camera.zoom,
+    pitch: camera.pitch,
+    bearing: camera.bearing,
     maxPitch: 85,
     maxTileCacheSize: 100,
     maxZoom: 20,
@@ -909,7 +1025,7 @@ onMounted(() => {
       type: 'hillshade',
       source: 'terrain-dem',
       paint: {
-        'hillshade-exaggeration': Math.min(props.terrainExaggeration * 0.6, 6),
+        'hillshade-exaggeration': Math.min(props.terrainExaggeration * 0.2, 1),
         'hillshade-shadow-color': '#000000',
         'hillshade-highlight-color': '#ffffff',
         'hillshade-accent-color': '#1f2937',
@@ -940,19 +1056,16 @@ onMounted(() => {
     refreshTracks()
     refreshSymbols()
     setupLabelDragging()
+    setupCameraTracking()
 
-    if (props.tracks.length > 0) {
-      fitToTracks()
-    } else {
-      fitToArrivalBounds(0)
+    if (!props.savedCamera) {
+      map.easeTo({
+        pitch: initialPitch,
+        bearing: initialBearing,
+        duration: 600,
+        essential: true,
+      })
     }
-
-    map.easeTo({
-      pitch: initialPitch,
-      bearing: initialBearing,
-      duration: 600,
-      essential: true,
-    })
 
     requestAnimationFrame(() => {
       refreshTracks()
@@ -962,6 +1075,16 @@ onMounted(() => {
     map.once('idle', () => {
       refreshTracks()
       refreshSymbols()
+
+      if (props.savedCamera) {
+        return
+      }
+
+      if (props.tracks.length > 0) {
+        fitToTracks()
+      } else {
+        fitToArrivalBounds(0)
+      }
     })
   })
 })
@@ -1030,6 +1153,16 @@ watch(
   () => props.tracks?.length ?? 0,
   (newLen, oldLen) => {
     if (newLen > oldLen) {
+      if (skipNextTrackAutoFit) {
+        skipNextTrackAutoFit = false
+        return
+      }
+
+      if (restoredSavedCameraOnLoad) {
+        restoredSavedCameraOnLoad = false
+        return
+      }
+
       setTimeout(() => {
         refreshTracks()
         fitToTracks()
@@ -1060,6 +1193,65 @@ watch(
   },
 )
 
+watch(
+  () => [props.savedCamera, props.cameraRestoreKey] as const,
+  ([savedCamera], [previousCamera]) => {
+    if (!map) return
+
+    if (!savedCamera) {
+      if (props.cameraRestoreKey === 0) return
+
+      map.stop()
+      suppressNextCameraEmit = true
+
+      if (props.tracks.length > 0) {
+        fitToTracks()
+      } else {
+        fitToArrivalBounds(0)
+      }
+      return
+    }
+
+    const hasChanged =
+      !previousCamera ||
+      savedCamera.center[0] !== previousCamera.center[0] ||
+      savedCamera.center[1] !== previousCamera.center[1] ||
+      savedCamera.zoom !== previousCamera.zoom ||
+      savedCamera.pitch !== previousCamera.pitch ||
+      savedCamera.bearing !== previousCamera.bearing
+
+    if (!hasChanged && props.cameraRestoreKey === 0) return
+
+    skipNextTrackAutoFit = true
+    map.stop()
+    suppressNextCameraEmit = true
+    map.jumpTo({
+      center: savedCamera.center,
+      zoom: savedCamera.zoom,
+      pitch: savedCamera.pitch,
+      bearing: savedCamera.bearing,
+    })
+  },
+  { deep: true },
+)
+
+watch(
+  () => props.fitRequest,
+  (request) => {
+    if (!request) return
+
+    if (request.type === 'project') {
+      fitToTracks()
+      return
+    }
+
+    if (request.type === 'track' && request.trackId) {
+      fitToTrack(request.trackId)
+    }
+  },
+  { deep: true },
+)
+
 onBeforeUnmount(() => {
   window.removeEventListener('pointerup', handleGlobalPointerUp, true)
 
@@ -1078,6 +1270,7 @@ onBeforeUnmount(() => {
   isSymbolDragOver.value = false
   isDraggingPlacedSymbol.value = false
   isPlacedSymbolOverTrash.value = false
+  restoredSavedCameraOnLoad = false
   symbolMarkers.clear()
 })
 </script>

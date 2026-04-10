@@ -1,5 +1,18 @@
 <template>
   <section class="panel">
+    <label class="field">
+      <span>Nom du projet</span>
+      <input
+        :value="projectName"
+        class="text-input"
+        type="text"
+        placeholder="Nom du projet"
+        @input="$emit('update:project-name', ($event.target as HTMLInputElement).value)"
+      />
+    </label>
+  </section>
+
+  <section class="panel">
     <label class="upload-btn">
       <span>Importer des GPX</span>
       <input type="file" accept=".gpx" multiple @change="$emit('gpx-files', $event)" />
@@ -9,7 +22,19 @@
   <section class="panel">
     <div class="panel-title-row">
       <h2>Pistes</h2>
-      <span class="count-badge">{{ tracks.length }}</span>
+      <div class="panel-title-actions">
+        <button
+          v-if="tracks.length > 0"
+          type="button"
+          class="title-action-button"
+          title="Zoomer sur tout le projet"
+          @click="$emit('fit-project')"
+        >
+          <Repeat2 class="title-action-icon" />
+        </button>
+
+        <span class="count-badge">{{ tracks.length }}</span>
+      </div>
     </div>
 
     <div v-if="tracks.length === 0" class="empty-state">
@@ -30,6 +55,15 @@
         </button>
 
         <input v-model="track.label" class="text-input grow" type="text" placeholder="Libelle" />
+
+        <button
+          type="button"
+          class="visibility-button"
+          title="Zoomer sur cette piste"
+          @click="$emit('fit-track', track.id)"
+        >
+          <Repeat2 class="visibility-icon" />
+        </button>
 
         <button
           type="button"
@@ -197,18 +231,22 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { ChevronUp, Eye, EyeOff, Pencil, Trash2 } from 'lucide-vue-next'
+import { ChevronUp, Eye, EyeOff, Pencil, Repeat2, Trash2 } from 'lucide-vue-next'
 import type { GpxTrack, TrackLabelStyle, TrackStyle } from '../../types/gpx'
 
 const props = defineProps<{
   tracks: GpxTrack[]
   predefinedColors: string[]
+  projectName: string
 }>()
 
 const emit = defineEmits<{
   (e: 'gpx-files', event: Event): void
   (e: 'track-width-change', track: GpxTrack): void
   (e: 'remove-track', trackId: string): void
+  (e: 'fit-project'): void
+  (e: 'fit-track', trackId: string): void
+  (e: 'update:project-name', value: string): void
 }>()
 
 const widthLevels = [2, 4, 6, 8, 10]
@@ -284,10 +322,48 @@ function removeTrack(trackId: string) {
   margin-bottom: 12px;
 }
 
+.panel-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .panel h2 {
   margin: 0;
   font-size: 14px;
   color: #cbd5e1;
+}
+
+.title-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #bfdbfe;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.title-action-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(147, 197, 253, 0.5);
+  background: rgba(37, 99, 235, 0.18);
+}
+
+.title-action-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .count-badge {

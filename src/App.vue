@@ -10,10 +10,14 @@
       :selected-symbol-id="selectedSymbolId"
       :predefined-colors="predefinedColors"
       :map-settings="mapSettings"
+      :project-name="projectName"
       @toggle="toggleSidebar"
       @close="closeSidebar"
       @open-section="openSection"
       @gpx-files="onGpxFiles"
+      @update:project-name="projectName = $event"
+      @fit-project="onFitProject"
+      @fit-track="onFitTrack"
       @remove-track="onRemoveTrack"
       @start-symbol-drag="onStartSymbolDrag"
       @upload-svg="onUploadSvg"
@@ -21,6 +25,8 @@
       @update-symbol-transform="onUpdateSymbolTransform"
       @track-width-change="onWidthChange"
       @update:map-settings="mapSettings = $event"
+      @export-zip="exportProjectZip"
+      @import-zip="importProjectZip"
     />
 
     <main class="map-wrapper">
@@ -33,10 +39,14 @@
         :terrain-exaggeration="mapSettings.terrain"
         :hillshade-strength="mapSettings.hillshade"
         :label-font="mapSettings.labelFont"
+        :saved-camera="mapCamera"
+        :camera-restore-key="cameraRestoreKey"
+        :fit-request="fitRequest"
         @add-symbol="onAddSymbol"
         @complete-symbol-drag="onCompleteSymbolDrag"
         @remove-symbol="onRemoveSymbol"
         @select-symbol="onSelectSymbol"
+        @update-camera="mapCamera = $event"
         @update-symbol-size="onUpdateSymbolSize"
         @update-symbol-position="onUpdateSymbolPosition"
         @update-label-position="onUpdateLabelPosition"
@@ -54,6 +64,29 @@
           <button type="button" class="app-empty-state__cta" @click="startProject">
             Commencer
           </button>
+        </div>
+      </div>
+
+      <div v-if="pendingResumeProject" class="app-resume-state">
+        <div class="app-resume-state__card">
+          <div class="app-resume-state__eyebrow">Projet retrouve</div>
+          <h2>Reprendre ton dernier projet ?</h2>
+          <p>
+            <strong>{{ pendingResumeProject.projectName }}</strong>
+            <span v-if="pendingResumeProject.savedAtLabel">
+              sauvegarde le {{ pendingResumeProject.savedAtLabel }}
+            </span>
+          </p>
+
+          <div class="app-resume-state__actions">
+            <button type="button" class="app-resume-state__primary" @click="resumeSavedProject">
+              Reprendre
+            </button>
+
+            <button type="button" class="app-resume-state__secondary" @click="dismissSavedProject">
+              Nouveau projet
+            </button>
+          </div>
         </div>
       </div>
 
@@ -81,13 +114,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { gpx } from '@mapbox/togeojson'
+import JSZip from 'jszip'
+import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
 import type { SidebarSection, SidebarSectionId } from './components/sidebar/types'
 import type { GpxTrack } from './types/gpx'
+import {
+  PROJECT_ARCHIVE_NAME,
+  PROJECT_STORAGE_KEY,
+  PROJECT_VERSION,
+  type MapCameraState,
+  type BikeparkProject,
+} from './types/project'
 import {
   buildCustomSymbolDefinition,
   getSymbolDefinition,
@@ -143,9 +185,13 @@ const sidebarSections: SidebarSection[] = [
 const tracks = ref<GpxTrack[]>([])
 const symbols = ref<MapSymbol[]>([])
 const customSymbols = ref<SymbolDefinition[]>([])
+const projectName = ref('Mon bikepark')
+const mapCamera = ref<MapCameraState | null>(null)
+const cameraRestoreKey = ref(0)
 const draggingSymbolId = ref<SymbolId | null>(null)
 const selectedSymbolId = ref<string | null>(null)
 const dragPointer = ref({ x: 0, y: 0 })
+const fitRequest = ref<{ type: 'project' | 'track'; trackId?: string; nonce: number } | null>(null)
 const isSidebarOpen = ref(false)
 const hasStartedWelcome = ref(false)
 const activeSection = ref<SidebarSectionId>('track')
@@ -154,7 +200,15 @@ const mapSettings = ref<MapSettings>({
   hillshade: 100,
   labelFont: 'segoe',
 })
+const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+const saveStatusMessage = ref('')
+const lastSavedAt = ref<string | null>(null)
+const hasSavedProject = ref(false)
+const hasHydratedProject = ref(false)
+const pendingSavedProject = ref<BikeparkProject | null>(null)
+const showResumePrompt = ref(false)
 let stopSymbolDragListeners: (() => void) | null = null
+let saveProjectTimer: number | null = null
 
 const dragPreview = computed(() => {
   if (!draggingSymbolId.value) return null
@@ -166,7 +220,19 @@ const isProjectEmpty = computed(() => {
 })
 
 const showWelcomeCard = computed(() => {
-  return isProjectEmpty.value && !hasStartedWelcome.value
+  return isProjectEmpty.value && !hasStartedWelcome.value && !showResumePrompt.value
+})
+
+const pendingResumeProject = computed(() => {
+  if (!showResumePrompt.value || !pendingSavedProject.value || hasStartedWelcome.value || !isProjectEmpty.value) return null
+
+  const savedAt = new Date(pendingSavedProject.value.savedAt)
+  const savedAtLabel = Number.isNaN(savedAt.getTime()) ? '' : savedAt.toLocaleString()
+
+  return {
+    projectName: pendingSavedProject.value.projectName,
+    savedAtLabel,
+  }
 })
 
 function uid() {
@@ -191,13 +257,274 @@ function openSection(sectionId: SidebarSectionId) {
 }
 
 function startProject() {
+  pendingSavedProject.value = null
+  showResumePrompt.value = false
   hasStartedWelcome.value = true
   activeSection.value = 'track'
   isSidebarOpen.value = true
 }
 
+function inferProjectName() {
+  const firstNamedTrack = tracks.value.find((track) => track.label.trim() || track.name.trim())
+  return firstNamedTrack?.label?.trim() || firstNamedTrack?.name?.trim() || 'Mon bikepark'
+}
+
+function sanitizeProjectName(value: string) {
+  const sanitized = value.trim().replace(/\s+/g, ' ')
+  return sanitized || inferProjectName()
+}
+
+function slugifyProjectName(value: string) {
+  return sanitizeProjectName(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'bikepark-project'
+}
+
+function createProjectSnapshot(): BikeparkProject {
+  return {
+    version: PROJECT_VERSION,
+    savedAt: new Date().toISOString(),
+    projectName: sanitizeProjectName(projectName.value),
+    hasStartedWelcome: hasStartedWelcome.value,
+    tracks: JSON.parse(JSON.stringify(tracks.value)) as GpxTrack[],
+    symbols: JSON.parse(JSON.stringify(symbols.value)) as MapSymbol[],
+    customSymbols: JSON.parse(JSON.stringify(customSymbols.value)) as SymbolDefinition[],
+    mapSettings: JSON.parse(JSON.stringify(mapSettings.value)) as MapSettings,
+    mapCamera: JSON.parse(JSON.stringify(mapCamera.value)) as MapCameraState | null,
+  }
+}
+
+function normalizeProject(raw: Partial<BikeparkProject> | null | undefined): BikeparkProject {
+  return {
+    version: typeof raw?.version === 'number' ? raw.version : PROJECT_VERSION,
+    savedAt: typeof raw?.savedAt === 'string' ? raw.savedAt : new Date().toISOString(),
+    projectName:
+      typeof raw?.projectName === 'string' && raw.projectName.trim()
+        ? raw.projectName.trim()
+        : 'Mon bikepark',
+    hasStartedWelcome: Boolean(raw?.hasStartedWelcome),
+    tracks: Array.isArray(raw?.tracks) ? raw.tracks : [],
+    symbols: Array.isArray(raw?.symbols) ? raw.symbols : [],
+    customSymbols: Array.isArray(raw?.customSymbols) ? raw.customSymbols : [],
+    mapSettings: {
+      terrain: Number(raw?.mapSettings?.terrain ?? 1.4),
+      hillshade: Number(raw?.mapSettings?.hillshade ?? 100),
+      labelFont: raw?.mapSettings?.labelFont ?? 'segoe',
+    },
+    mapCamera:
+      raw?.mapCamera &&
+      Array.isArray(raw.mapCamera.center) &&
+      raw.mapCamera.center.length === 2
+        ? {
+            center: [Number(raw.mapCamera.center[0]), Number(raw.mapCamera.center[1])],
+            zoom: Number(raw.mapCamera.zoom ?? 14),
+            pitch: Number(raw.mapCamera.pitch ?? 0),
+            bearing: Number(raw.mapCamera.bearing ?? 0),
+          }
+        : null,
+  }
+}
+
+function applyProject(project: BikeparkProject) {
+  tracks.value = project.tracks
+  symbols.value = project.symbols
+  customSymbols.value = project.customSymbols
+  mapSettings.value = project.mapSettings
+  mapCamera.value = project.mapCamera
+  cameraRestoreKey.value += 1
+  projectName.value = sanitizeProjectName(project.projectName)
+  hasStartedWelcome.value = project.hasStartedWelcome || project.tracks.length > 0 || project.symbols.length > 0
+  selectedSymbolId.value = null
+  saveStatus.value = 'saved'
+  saveStatusMessage.value = 'Projet recharge.'
+  lastSavedAt.value = project.savedAt
+  hasSavedProject.value = true
+}
+
+async function saveProjectToBrowser() {
+  try {
+    saveStatus.value = 'saving'
+    saveStatusMessage.value = 'Sauvegarde locale en cours.'
+
+    const snapshot = createProjectSnapshot()
+    await localforage.setItem(PROJECT_STORAGE_KEY, snapshot)
+
+    lastSavedAt.value = snapshot.savedAt
+    hasSavedProject.value = true
+    saveStatus.value = 'saved'
+    saveStatusMessage.value = 'Projet enregistre dans ce navigateur.'
+  } catch (error) {
+    console.error(error)
+    saveStatus.value = 'error'
+    saveStatusMessage.value = 'Impossible de sauvegarder dans le navigateur.'
+  }
+}
+
+function queueProjectSave() {
+  if (!hasHydratedProject.value) return
+
+  if (saveProjectTimer !== null) {
+    window.clearTimeout(saveProjectTimer)
+  }
+
+  saveProjectTimer = window.setTimeout(() => {
+    saveProjectTimer = null
+    void saveProjectToBrowser()
+  }, 350)
+}
+
+async function restoreProjectFromBrowser() {
+  try {
+    const stored = await localforage.getItem<BikeparkProject>(PROJECT_STORAGE_KEY)
+    if (!stored) {
+      hasSavedProject.value = false
+      saveStatus.value = 'idle'
+      saveStatusMessage.value = ''
+      return
+    }
+
+    applyProject(normalizeProject(stored))
+  } catch (error) {
+    console.error(error)
+    saveStatus.value = 'error'
+    saveStatusMessage.value = 'Impossible de relire la sauvegarde locale.'
+  }
+}
+
+async function hydrateInitialProjectState() {
+  try {
+    const stored = await localforage.getItem<BikeparkProject>(PROJECT_STORAGE_KEY)
+    if (!stored) {
+      hasSavedProject.value = false
+      saveStatus.value = 'idle'
+      saveStatusMessage.value = ''
+      hasHydratedProject.value = true
+      return
+    }
+
+    const project = normalizeProject(stored)
+    mapCamera.value = project.mapCamera
+    pendingSavedProject.value = project
+    showResumePrompt.value = true
+    hasSavedProject.value = true
+    lastSavedAt.value = project.savedAt
+    saveStatus.value = 'idle'
+    saveStatusMessage.value = ''
+  } catch (error) {
+    console.error(error)
+    saveStatus.value = 'error'
+    saveStatusMessage.value = 'Impossible de relire la sauvegarde locale.'
+    hasHydratedProject.value = true
+  }
+}
+
+function resumeSavedProject() {
+  if (!pendingSavedProject.value) {
+    hasHydratedProject.value = true
+    return
+  }
+
+  const project = pendingSavedProject.value
+  showResumePrompt.value = false
+  pendingSavedProject.value = null
+  applyProject(project)
+  hasHydratedProject.value = true
+}
+
+function dismissSavedProject() {
+  showResumePrompt.value = false
+  pendingSavedProject.value = null
+  mapCamera.value = null
+  cameraRestoreKey.value += 1
+  hasHydratedProject.value = true
+}
+
+async function clearProjectFromBrowser() {
+  try {
+    await localforage.removeItem(PROJECT_STORAGE_KEY)
+    hasSavedProject.value = false
+    saveStatus.value = 'idle'
+    saveStatusMessage.value = 'Sauvegarde locale effacee.'
+    lastSavedAt.value = null
+  } catch (error) {
+    console.error(error)
+    saveStatus.value = 'error'
+    saveStatusMessage.value = 'Impossible d effacer la sauvegarde locale.'
+  }
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  document.body.append(anchor)
+  anchor.click()
+  anchor.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 0)
+}
+
+async function exportProjectZip() {
+  try {
+    const snapshot = createProjectSnapshot()
+    const zip = new JSZip()
+    zip.file(PROJECT_ARCHIVE_NAME, JSON.stringify(snapshot, null, 2))
+
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const stamp = snapshot.savedAt.slice(0, 10)
+    downloadBlob(blob, `${slugifyProjectName(snapshot.projectName)}-${stamp}.zip`)
+    saveStatusMessage.value = 'ZIP exporte.'
+  } catch (error) {
+    console.error(error)
+    saveStatus.value = 'error'
+    saveStatusMessage.value = 'Impossible d exporter le ZIP.'
+  }
+}
+
+async function importProjectZip(file: File) {
+  try {
+    const zip = await JSZip.loadAsync(file)
+    const projectEntry = zip.file(PROJECT_ARCHIVE_NAME)
+
+    if (!projectEntry) {
+      saveStatus.value = 'error'
+      saveStatusMessage.value = `Le ZIP doit contenir ${PROJECT_ARCHIVE_NAME}.`
+      return
+    }
+
+    const content = await projectEntry.async('string')
+    const parsed = JSON.parse(content) as BikeparkProject
+    const project = normalizeProject(parsed)
+
+    applyProject(project)
+    await saveProjectToBrowser()
+  } catch (error) {
+    console.error(error)
+    saveStatus.value = 'error'
+    saveStatusMessage.value = 'Le ZIP n a pas pu etre importe.'
+  }
+}
+
 function onWidthChange(_track: GpxTrack) {
   // La reactivite naturelle de Vue devrait suffire.
+}
+
+function onFitProject() {
+  fitRequest.value = {
+    type: 'project',
+    nonce: Date.now(),
+  }
+}
+
+function onFitTrack(trackId: string) {
+  fitRequest.value = {
+    type: 'track',
+    trackId,
+    nonce: Date.now(),
+  }
 }
 
 function onRemoveTrack(trackId: string) {
@@ -364,8 +691,21 @@ async function onGpxFiles(event: Event) {
     })
   }
 
+  hasStartedWelcome.value = true
   input.value = ''
 }
+
+onMounted(async () => {
+  await hydrateInitialProjectState()
+})
+
+watch(
+  [tracks, symbols, customSymbols, mapSettings, hasStartedWelcome, projectName],
+  () => {
+    queueProjectSave()
+  },
+  { deep: true },
+)
 </script>
 
 <style scoped>
@@ -397,6 +737,18 @@ async function onGpxFiles(event: Event) {
   pointer-events: none;
 }
 
+.app-resume-state {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(2, 6, 23, 0.3);
+  backdrop-filter: blur(8px);
+}
+
 .app-empty-state__card {
   max-width: 440px;
   padding: 26px 28px;
@@ -414,7 +766,31 @@ async function onGpxFiles(event: Event) {
   pointer-events: auto;
 }
 
+.app-resume-state__card {
+  max-width: 460px;
+  padding: 28px;
+  border: 1px solid rgba(96, 165, 250, 0.26);
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, rgba(15, 23, 42, 0.94), rgba(2, 6, 23, 0.9)),
+    radial-gradient(circle at top, rgba(96, 165, 250, 0.14), transparent 58%);
+  color: #f8fafc;
+  text-align: center;
+  box-shadow:
+    0 24px 60px rgba(2, 6, 23, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .app-empty-state__eyebrow {
+  margin-bottom: 10px;
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.app-resume-state__eyebrow {
   margin-bottom: 10px;
   color: #93c5fd;
   font-size: 11px;
@@ -430,11 +806,29 @@ async function onGpxFiles(event: Event) {
   letter-spacing: -0.04em;
 }
 
+.app-resume-state h2 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
 .app-empty-state p {
   margin: 0;
   color: #cbd5e1;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.app-resume-state p {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.app-resume-state p strong {
+  color: #f8fafc;
 }
 
 .app-empty-state__cta {
@@ -467,6 +861,52 @@ async function onGpxFiles(event: Event) {
     0 18px 38px rgba(30, 64, 175, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.16);
   filter: brightness(1.04);
+}
+
+.app-resume-state__actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.app-resume-state__primary,
+.app-resume-state__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 138px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.app-resume-state__primary {
+  border: 1px solid rgba(96, 165, 250, 0.42);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.88), rgba(59, 130, 246, 0.88));
+  color: #eff6ff;
+  box-shadow:
+    0 16px 34px rgba(30, 64, 175, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.app-resume-state__secondary {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.66);
+  color: #e2e8f0;
+}
+
+.app-resume-state__primary:hover,
+.app-resume-state__secondary:hover {
+  transform: translateY(-1px);
 }
 
 .app-floating-brand {
@@ -545,7 +985,20 @@ async function onGpxFiles(event: Event) {
     padding: 76px 18px 24px;
   }
 
+  .app-resume-state {
+    align-items: flex-start;
+    padding: 76px 18px 24px;
+  }
+
   .app-empty-state__card {
+    width: 100%;
+    max-width: none;
+    padding: 22px 20px;
+    border-radius: 24px;
+    text-align: left;
+  }
+
+  .app-resume-state__card {
     width: 100%;
     max-width: none;
     padding: 22px 20px;
@@ -555,6 +1008,15 @@ async function onGpxFiles(event: Event) {
 
   .app-empty-state h1 {
     font-size: 30px;
+  }
+
+  .app-resume-state h2 {
+    font-size: 28px;
+  }
+
+  .app-resume-state__actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .app-floating-brand {

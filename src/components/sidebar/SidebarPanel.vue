@@ -68,9 +68,13 @@
         v-if="activeSection === 'track'"
         :tracks="tracks"
         :predefined-colors="predefinedColors"
+        :project-name="projectName"
         @gpx-files="$emit('gpx-files', $event)"
+        @fit-project="$emit('fit-project')"
+        @fit-track="$emit('fit-track', $event)"
         @remove-track="$emit('remove-track', $event)"
         @track-width-change="$emit('track-width-change', $event)"
+        @update:project-name="$emit('update:project-name', $event)"
       />
 
       <SymbolPanel
@@ -88,7 +92,11 @@
         :settings="mapSettings"
         @update:settings="$emit('update:map-settings', $event)"
       />
-      <ExportPanel v-else />
+      <ExportPanel
+        v-else
+        @export-zip="$emit('export-zip')"
+        @import-zip="$emit('import-zip', $event)"
+      />
     </aside>
 
     <button
@@ -125,6 +133,7 @@ const props = defineProps<{
   selectedSymbolId: string | null
   predefinedColors: string[]
   mapSettings: MapSettings
+  projectName: string
 }>()
 
 defineEmits<{
@@ -132,7 +141,10 @@ defineEmits<{
   (e: 'close'): void
   (e: 'open-section', sectionId: SidebarSectionId): void
   (e: 'gpx-files', event: Event): void
+  (e: 'fit-project'): void
+  (e: 'fit-track', trackId: string): void
   (e: 'remove-track', trackId: string): void
+  (e: 'update:project-name', value: string): void
   (e: 'start-symbol-drag', payload: {
     symbolId: import('../../types/symbol').SymbolId
     clientX: number
@@ -148,6 +160,8 @@ defineEmits<{
   }): void
   (e: 'track-width-change', track: GpxTrack): void
   (e: 'update:map-settings', value: MapSettings): void
+  (e: 'export-zip'): void
+  (e: 'import-zip', file: File): void
 }>()
 
 const activeSectionMeta = computed(() => {
