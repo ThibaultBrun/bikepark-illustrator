@@ -61,6 +61,7 @@ const props = withDefaults(
     savedCamera?: MapCameraState | null
     cameraRestoreKey?: number
     fitRequest?: { type: 'project' | 'track'; trackId?: string; nonce: number } | null
+    renderSessionId?: number
   }>(),
   {
     tracks: () => [],
@@ -74,6 +75,7 @@ const props = withDefaults(
     savedCamera: null,
     cameraRestoreKey: 0,
     fitRequest: null,
+    renderSessionId: 0,
   },
 )
 
@@ -86,6 +88,12 @@ const emit = defineEmits<{
   (e: 'update-symbol-position', payload: { symbolId: string; position: [number, number] }): void
   (e: 'update-symbol-size', payload: { symbolId: string; iconSize: number }): void
   (e: 'update-camera', payload: MapCameraState): void
+  (e: 'project-render-progress', payload: {
+    sessionId: number
+    stage: 'tracks' | 'symbols' | 'map'
+    loaded: number
+    total: number
+  }): void
 }>()
 
 const mapContainer = ref<HTMLDivElement | null>(null)
@@ -102,9 +110,15 @@ let isDraggingLabel = false
 let suppressNextCameraEmit = false
 let restoredSavedCameraOnLoad = false
 let skipNextTrackAutoFit = false
-const symbolMarkers = new Map<string, maplibregl.Marker>()
+let lastCompletedRenderSessionId = 0
+let symbolRefreshToken = 0
+const symbolImageIds = new Set<string>()
+const symbolPositionOverrides = new Map<string, [number, number]>()
 
 const baseLayer = ref<'cyclosm' | 'esri'>('cyclosm')
+
+const placedSymbolSourceId = 'placed-symbol-source'
+const placedSymbolLayerId = 'placed-symbol-layer'
 
 const initialCenter: [number, number] = [-1.69, 43.31]
 const initialZoom = 14
@@ -449,107 +463,182 @@ function buildTrackLineData(track: GpxTrack): GeoJSON.FeatureCollection {
   }
 }
 
-function refreshSymbols() {
+function symbolImageId(symbolId: string) {
+  return `placed-symbol-${symbolId}`
+}
+
+function getSymbolLngLat(symbol: MapSymbol): [number, number] {
+  const override = symbolPositionOverrides.get(symbol.id)
+  if (!override) return symbol.lngLat
+
+  if (override[0] === symbol.lngLat[0] && override[1] === symbol.lngLat[1]) {
+    symbolPositionOverrides.delete(symbol.id)
+    return symbol.lngLat
+  }
+
+  return override
+}
+
+function buildPlacedSymbolSvg(symbol: MapSymbol, definition: SymbolDefinition) {
+  const outerSize = Math.max(28, Math.min(symbol.iconSize + 15, 46))
+  const coreSize = Math.max(22, Math.min(symbol.iconSize + 9, 38))
+  const canvasHeight = outerSize
+  const centerX = outerSize / 2
+  const centerY = canvasHeight / 2
+  const scaleX = symbol.flipX ? -1 : 1
+  const scaleY = symbol.flipY ? -1 : 1
+  const iconSvg = getSymbolSvg(symbol.symbolId, props.customSymbols)
+    .trim()
+    .replace(
+      /^<svg\b/i,
+      `<svg x="${centerX - symbol.iconSize / 2}" y="${centerY - symbol.iconSize / 2}" width="${symbol.iconSize}" height="${symbol.iconSize}" color="#0f172a" style="overflow: visible; transform-box: fill-box; transform-origin: center; transform: rotate(${symbol.rotation}deg) scale(${scaleX}, ${scaleY});"`,
+    )
+  const badgeColor = `${definition.color}33`
+
+  return {
+    width: outerSize,
+    height: canvasHeight,
+    svg: `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${outerSize}" height="${canvasHeight}" viewBox="0 0 ${outerSize} ${canvasHeight}">
+        <defs>
+          <filter id="shadow-${symbol.id}" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2.4" flood-color="rgba(15,23,42,0.2)" />
+          </filter>
+        </defs>
+        <g filter="url(#shadow-${symbol.id})">
+          <circle cx="${centerX}" cy="${centerY}" r="${outerSize / 2 - 1.2}" fill="${badgeColor}" />
+          <circle cx="${centerX}" cy="${centerY}" r="${coreSize / 2}" fill="rgba(255,255,255,0.96)" />
+        </g>
+        ${iconSvg}
+      </svg>
+    `,
+  }
+}
+
+async function loadSymbolImage(symbol: MapSymbol, definition: SymbolDefinition) {
+  const { svg, width, height } = buildPlacedSymbolSvg(symbol, definition)
+  const img = new Image()
+  img.decoding = 'async'
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve()
+    img.onerror = () => reject(new Error(`Unable to load symbol image for ${symbol.id}`))
+  })
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    throw new Error('Unable to create symbol canvas context')
+  }
+
+  ctx.drawImage(img, 0, 0, width, height)
+  return ctx.getImageData(0, 0, width, height)
+}
+
+function ensurePlacedSymbolSource() {
+  if (!map || map.getSource(placedSymbolSourceId)) return
+
+  map.addSource(placedSymbolSourceId, {
+    type: 'geojson',
+    data: {
+      type: 'FeatureCollection',
+      features: [],
+    } as GeoJSON.FeatureCollection,
+  })
+}
+
+function ensurePlacedSymbolLayer() {
+  if (!map || map.getLayer(placedSymbolLayerId)) return
+
+  ensurePlacedSymbolSource()
+  map.addLayer({
+    id: placedSymbolLayerId,
+    type: 'symbol',
+    source: placedSymbolSourceId,
+    layout: {
+      'icon-image': ['get', 'imageId'],
+      'icon-anchor': 'center',
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+      'icon-pitch-alignment': 'viewport',
+      'icon-rotation-alignment': 'viewport',
+    },
+    paint: {
+      'icon-opacity': 1,
+    },
+  })
+}
+
+function updatePlacedSymbolSource() {
   if (!map) return
 
-  const nextIds = new Set(props.symbols.map((symbol) => symbol.id))
+  ensurePlacedSymbolSource()
+  ensurePlacedSymbolLayer()
+
+  const source = map.getSource(placedSymbolSourceId) as maplibregl.GeoJSONSource | undefined
+  if (!source) return
+
+  source.setData({
+    type: 'FeatureCollection',
+    features: props.symbols.map((symbol) => ({
+      type: 'Feature',
+      properties: {
+        placedSymbolId: symbol.id,
+        imageId: symbolImageId(symbol.id),
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: getSymbolLngLat(symbol),
+      },
+    })),
+  } as GeoJSON.FeatureCollection)
+}
+
+function refreshSymbols() {
+  if (!map || !map.isStyleLoaded()) return
+
+  void syncPlacedSymbols()
+}
+
+async function syncPlacedSymbols() {
+  if (!map || !map.isStyleLoaded()) return
+
+  const token = ++symbolRefreshToken
+  ensurePlacedSymbolSource()
+  ensurePlacedSymbolLayer()
+  const nextImageIds = new Set<string>()
 
   for (const symbol of props.symbols) {
     const definition = getSymbolDefinition(symbol.symbolId, props.customSymbols)
-    const existingMarker = symbolMarkers.get(symbol.id)
+    const imageId = symbolImageId(symbol.id)
+    const image = await loadSymbolImage(symbol, definition)
 
-    if (existingMarker) {
-      const element = existingMarker.getElement()
-      const outerSize = Math.max(24, Math.min(symbol.iconSize + 11, 42))
-      const coreSize = Math.max(18, Math.min(symbol.iconSize + 7, 34))
-      element.style.setProperty('--marker-size', `${outerSize}px`)
-      element.style.setProperty('--marker-core-size', `${coreSize}px`)
-      element.style.setProperty('--marker-icon-size', `${symbol.iconSize}px`)
-      element.style.setProperty('--marker-rotation', `${symbol.rotation}deg`)
-      element.style.setProperty('--marker-scale-x', symbol.flipX ? '-1' : '1')
-      element.style.setProperty('--marker-scale-y', symbol.flipY ? '-1' : '1')
-      existingMarker.setLngLat(symbol.lngLat)
-      continue
+    if (!map || token !== symbolRefreshToken) return
+
+    if (map.hasImage(imageId)) {
+      map.updateImage(imageId, image)
+    } else {
+      map.addImage(imageId, image)
     }
 
-    const element = document.createElement('button')
-    element.type = 'button'
-    element.className = 'map-symbol-marker'
-    element.style.setProperty('--symbol-color', definition.color)
-    element.style.setProperty('--marker-size', `${Math.max(24, Math.min(symbol.iconSize + 11, 42))}px`)
-    element.style.setProperty('--marker-core-size', `${Math.max(18, Math.min(symbol.iconSize + 7, 34))}px`)
-    element.style.setProperty('--marker-icon-size', `${symbol.iconSize}px`)
-    element.style.setProperty('--marker-rotation', `${symbol.rotation}deg`)
-    element.style.setProperty('--marker-scale-x', symbol.flipX ? '-1' : '1')
-    element.style.setProperty('--marker-scale-y', symbol.flipY ? '-1' : '1')
-    element.title = definition.label
-    element.innerHTML = `<span class="map-symbol-marker__core"><span class="map-symbol-marker__icon">${getSymbolSvg(symbol.symbolId, props.customSymbols)}</span></span>`
-    element.addEventListener('click', (event) => {
-      event.stopPropagation()
-      emit('select-symbol', { symbolId: symbol.id })
-    })
-
-    const marker = new maplibregl.Marker({
-      element,
-      anchor: 'center',
-      draggable: true,
-    })
-      .setLngLat(symbol.lngLat)
-      .addTo(map)
-
-    marker.on('dragstart', () => {
-      draggedPlacedSymbolId = symbol.id
-      isDraggingPlacedSymbol.value = true
-      isPlacedSymbolOverTrash.value = false
-    })
-
-    marker.on('drag', () => {
-      const markerRect = element.getBoundingClientRect()
-      const trashRect = trashDropzone.value?.getBoundingClientRect()
-
-      if (!trashRect) {
-        isPlacedSymbolOverTrash.value = false
-        return
-      }
-
-      const markerCenterX = markerRect.left + markerRect.width / 2
-      const markerCenterY = markerRect.top + markerRect.height / 2
-
-      isPlacedSymbolOverTrash.value =
-        markerCenterX >= trashRect.left &&
-        markerCenterX <= trashRect.right &&
-        markerCenterY >= trashRect.top &&
-        markerCenterY <= trashRect.bottom
-    })
-
-    marker.on('dragend', () => {
-      if (draggedPlacedSymbolId === symbol.id && isPlacedSymbolOverTrash.value) {
-        emit('remove-symbol', { symbolId: symbol.id })
-        draggedPlacedSymbolId = null
-        isDraggingPlacedSymbol.value = false
-        isPlacedSymbolOverTrash.value = false
-        return
-      }
-
-      const lngLat = marker.getLngLat()
-      emit('update-symbol-position', {
-        symbolId: symbol.id,
-        position: [lngLat.lng, lngLat.lat],
-      })
-
-      draggedPlacedSymbolId = null
-      isDraggingPlacedSymbol.value = false
-      isPlacedSymbolOverTrash.value = false
-    })
-
-    symbolMarkers.set(symbol.id, marker)
+    nextImageIds.add(imageId)
+    symbolImageIds.add(imageId)
   }
 
-  for (const [symbolId, marker] of symbolMarkers.entries()) {
-    if (nextIds.has(symbolId)) continue
-    marker.remove()
-    symbolMarkers.delete(symbolId)
+  if (!map || token !== symbolRefreshToken) return
+
+  for (const imageId of Array.from(symbolImageIds)) {
+    if (nextImageIds.has(imageId)) continue
+    if (map.hasImage(imageId)) {
+      map.removeImage(imageId)
+    }
+    symbolImageIds.delete(imageId)
   }
+
+  updatePlacedSymbolSource()
+  emitRenderStage('symbols')
 }
 
 function ensureTrackSource(track: GpxTrack) {
@@ -810,9 +899,39 @@ function refreshTracks() {
   }
 
   removeDeletedTrackLayers()
+  emitRenderStage('tracks')
   map.triggerRepaint()
   requestAnimationFrame(() => {
     map?.triggerRepaint()
+  })
+}
+
+function emitRenderStage(stage: 'tracks' | 'symbols') {
+  if (props.renderSessionId <= 0) return
+
+  const total = stage === 'tracks' ? props.tracks.length : props.symbols.length
+  emit('project-render-progress', {
+    sessionId: props.renderSessionId,
+    stage,
+    loaded: total,
+    total,
+  })
+}
+
+function queueMapRenderCompletion() {
+  if (!map || props.renderSessionId <= 0) return
+
+  const sessionId = props.renderSessionId
+  map.once('idle', () => {
+    if (!map || sessionId !== props.renderSessionId || sessionId === lastCompletedRenderSessionId) return
+
+    lastCompletedRenderSessionId = sessionId
+    emit('project-render-progress', {
+      sessionId,
+      stage: 'map',
+      loaded: 1,
+      total: 1,
+    })
   })
 }
 
@@ -896,11 +1015,139 @@ function setupCameraTracking() {
   })
 }
 
+function symbolFeatureAtPoint(point: maplibregl.PointLike) {
+  if (!map || !map.getLayer(placedSymbolLayerId)) return null
+
+  const features = map.queryRenderedFeatures(point, {
+    layers: [placedSymbolLayerId],
+  })
+
+  return features[0] ?? null
+}
+
+function updateTrashHoverFromClientPoint(clientX: number, clientY: number) {
+  const trashRect = trashDropzone.value?.getBoundingClientRect()
+  if (!trashRect) {
+    isPlacedSymbolOverTrash.value = false
+    return
+  }
+
+  isPlacedSymbolOverTrash.value =
+    clientX >= trashRect.left &&
+    clientX <= trashRect.right &&
+    clientY >= trashRect.top &&
+    clientY <= trashRect.bottom
+}
+
+function endPlacedSymbolDrag() {
+  if (!map) return
+
+  const symbolId = draggedPlacedSymbolId
+  const position = symbolId ? symbolPositionOverrides.get(symbolId) : null
+
+  if (symbolId && isPlacedSymbolOverTrash.value) {
+    symbolPositionOverrides.delete(symbolId)
+    emit('remove-symbol', { symbolId })
+  } else if (symbolId && position) {
+    emit('update-symbol-position', {
+      symbolId,
+      position,
+    })
+  }
+
+  draggedPlacedSymbolId = null
+  isDraggingPlacedSymbol.value = false
+  isPlacedSymbolOverTrash.value = false
+  map.dragPan.enable()
+  map.getCanvas().style.cursor = ''
+  updatePlacedSymbolSource()
+}
+
+function setupPlacedSymbolInteractions() {
+  if (!map) return
+
+  map.on('click', (e) => {
+    if (isDraggingPlacedSymbol.value) return
+
+    const feature = symbolFeatureAtPoint(e.point)
+    const symbolId = feature?.properties?.placedSymbolId as string | undefined
+    emit('select-symbol', { symbolId: symbolId ?? null })
+  })
+
+  map.on('mousemove', (e) => {
+    if (!map) return
+
+    if (isDraggingPlacedSymbol.value && draggedPlacedSymbolId) {
+      symbolPositionOverrides.set(draggedPlacedSymbolId, [e.lngLat.lng, e.lngLat.lat])
+      updatePlacedSymbolSource()
+
+      const pointerEvent = e.originalEvent as MouseEvent | PointerEvent | undefined
+      if (pointerEvent) {
+        updateTrashHoverFromClientPoint(pointerEvent.clientX, pointerEvent.clientY)
+      }
+
+      map.getCanvas().style.cursor = 'grabbing'
+      return
+    }
+
+    if (isDraggingLabel) {
+      map.getCanvas().style.cursor = 'grabbing'
+      return
+    }
+
+    const feature = symbolFeatureAtPoint(e.point)
+    if (feature) {
+      map.getCanvas().style.cursor = 'grab'
+      return
+    }
+  })
+
+  map.on('mousedown', (e) => {
+    if (!map) return
+
+    const feature = symbolFeatureAtPoint(e.point)
+    const symbolId = feature?.properties?.placedSymbolId as string | undefined
+    if (!symbolId) return
+
+    draggedPlacedSymbolId = symbolId
+    symbolPositionOverrides.set(symbolId, [e.lngLat.lng, e.lngLat.lat])
+    isDraggingPlacedSymbol.value = true
+    isPlacedSymbolOverTrash.value = false
+    emit('select-symbol', { symbolId })
+    map.dragPan.disable()
+    map.getCanvas().style.cursor = 'grabbing'
+    e.preventDefault()
+  })
+
+  map.on('mouseup', () => {
+    if (!isDraggingPlacedSymbol.value) return
+    endPlacedSymbolDrag()
+  })
+
+  map.on('mouseleave', () => {
+    if (!map) return
+
+    if (isDraggingPlacedSymbol.value) {
+      endPlacedSymbolDrag()
+      return
+    }
+
+    if (!isDraggingLabel) {
+      map.getCanvas().style.cursor = ''
+    }
+  })
+}
+
 function setupLabelDragging() {
   if (!map) return
 
   map.on('mousemove', (e) => {
     if (!map) return
+
+    if (isDraggingPlacedSymbol.value) {
+      map.getCanvas().style.cursor = 'grabbing'
+      return
+    }
 
     if (isDraggingLabel) {
       map.getCanvas().style.cursor = 'grabbing'
@@ -1006,9 +1253,6 @@ onMounted(() => {
 
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right')
   map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right')
-  map.on('click', () => {
-    emit('select-symbol', { symbolId: null })
-  })
 
   map.on('load', () => {
     if (!map) return
@@ -1055,6 +1299,7 @@ onMounted(() => {
     setBaseLayer(baseLayer.value)
     refreshTracks()
     refreshSymbols()
+    setupPlacedSymbolInteractions()
     setupLabelDragging()
     setupCameraTracking()
 
@@ -1070,6 +1315,7 @@ onMounted(() => {
     requestAnimationFrame(() => {
       refreshTracks()
       refreshSymbols()
+      queueMapRenderCompletion()
     })
 
     map.once('idle', () => {
@@ -1093,6 +1339,7 @@ watch(
   () => props.tracks,
   () => {
     refreshTracks()
+    queueMapRenderCompletion()
   },
   { deep: true, flush: 'post' },
 )
@@ -1101,6 +1348,7 @@ watch(
   () => props.symbols,
   () => {
     refreshSymbols()
+    queueMapRenderCompletion()
   },
   { deep: true, flush: 'post' },
 )
@@ -1252,6 +1500,18 @@ watch(
   { deep: true },
 )
 
+watch(
+  () => props.renderSessionId,
+  (sessionId, previousSessionId) => {
+    if (sessionId <= 0 || sessionId === previousSessionId) return
+
+    lastCompletedRenderSessionId = 0
+    refreshTracks()
+    refreshSymbols()
+    queueMapRenderCompletion()
+  },
+)
+
 onBeforeUnmount(() => {
   window.removeEventListener('pointerup', handleGlobalPointerUp, true)
 
@@ -1271,7 +1531,8 @@ onBeforeUnmount(() => {
   isDraggingPlacedSymbol.value = false
   isPlacedSymbolOverTrash.value = false
   restoredSavedCameraOnLoad = false
-  symbolMarkers.clear()
+  symbolPositionOverrides.clear()
+  symbolImageIds.clear()
 })
 </script>
 
@@ -1396,7 +1657,7 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   background: color-mix(in srgb, var(--symbol-color) 20%, white);
   box-shadow:
-    0 4px 12px rgba(15, 23, 42, 0.14),
+    0 2px 6px rgba(15, 23, 42, 0.12),
     0 0 0 1px rgba(255, 255, 255, 0.58);
   cursor: grab;
 }

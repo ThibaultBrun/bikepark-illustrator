@@ -42,8 +42,10 @@
         :saved-camera="mapCamera"
         :camera-restore-key="cameraRestoreKey"
         :fit-request="fitRequest"
+        :render-session-id="projectLoadOverlay?.sessionId ?? 0"
         @add-symbol="onAddSymbol"
         @complete-symbol-drag="onCompleteSymbolDrag"
+        @project-render-progress="onProjectRenderProgress"
         @remove-symbol="onRemoveSymbol"
         @select-symbol="onSelectSymbol"
         @update-camera="mapCamera = $event"
@@ -87,6 +89,67 @@
               Nouveau projet
             </button>
           </div>
+        </div>
+      </div>
+
+      <div v-if="projectLoadOverlay" class="app-load-state">
+        <div class="app-load-state__card">
+          <div class="app-load-state__eyebrow">Chargement du projet</div>
+          <h2>{{ projectLoadOverlay.title }}</h2>
+          <p>{{ projectLoadOverlay.currentLabel }}</p>
+
+          <div
+            class="app-load-state__bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            :aria-valuenow="projectLoadOverlay.progress"
+          >
+            <span
+              class="app-load-state__bar-fill"
+              :style="{ width: `${projectLoadOverlay.progress}%` }"
+            ></span>
+          </div>
+
+          <div class="app-load-state__meta">
+            <strong>{{ projectLoadOverlay.progress }}%</strong>
+            <span>{{ projectLoadOverlay.completedCount }}/{{ projectLoadOverlay.steps.length }} ok</span>
+          </div>
+
+          <ul class="app-load-state__steps">
+            <li
+              v-for="step in projectLoadOverlay.steps"
+              :key="step.id"
+              class="app-load-state__step"
+              :class="`is-${step.status}`"
+            >
+              <span class="app-load-state__step-icon" aria-hidden="true">
+                <svg
+                  v-if="step.status === 'done'"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M4.5 10.5 8 14l7.5-8" />
+                </svg>
+                <svg
+                  v-else-if="step.status === 'active'"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                >
+                  <path d="M10 3.5a6.5 6.5 0 1 1-6.5 6.5" opacity="0.35" />
+                  <path d="M10 3.5a6.5 6.5 0 0 1 5.3 2.7" />
+                </svg>
+              </span>
+              <span class="app-load-state__step-label">{{ step.label }}</span>
+            </li>
+          </ul>
         </div>
       </div>
 
@@ -207,6 +270,16 @@ const hasSavedProject = ref(false)
 const hasHydratedProject = ref(false)
 const pendingSavedProject = ref<BikeparkProject | null>(null)
 const showResumePrompt = ref(false)
+const projectLoadSessionId = ref(0)
+const projectLoadState = ref<{
+  sessionId: number
+  title: string
+  steps: {
+    id: 'read' | 'tracks' | 'symbols' | 'customSymbols' | 'settings' | 'camera' | 'map'
+    label: string
+    status: 'pending' | 'active' | 'done'
+  }[]
+} | null>(null)
 let stopSymbolDragListeners: (() => void) | null = null
 let saveProjectTimer: number | null = null
 
@@ -232,6 +305,23 @@ const pendingResumeProject = computed(() => {
   return {
     projectName: pendingSavedProject.value.projectName,
     savedAtLabel,
+  }
+})
+
+const projectLoadOverlay = computed(() => {
+  const state = projectLoadState.value
+  if (!state) return null
+
+  const completedCount = state.steps.filter((step) => step.status === 'done').length
+  const progress = state.steps.length === 0 ? 0 : Math.round((completedCount / state.steps.length) * 100)
+  const currentStep = state.steps.find((step) => step.status === 'active')
+  const currentLabel = currentStep?.label ?? (completedCount === state.steps.length ? 'Finalisation terminee.' : 'Preparation du projet...')
+
+  return {
+    ...state,
+    completedCount,
+    progress,
+    currentLabel,
   }
 })
 
@@ -272,6 +362,93 @@ function inferProjectName() {
 function sanitizeProjectName(value: string) {
   const sanitized = value.trim().replace(/\s+/g, ' ')
   return sanitized || inferProjectName()
+}
+
+function pluralize(count: number, singular: string, plural: string) {
+  return `${count} ${count > 1 ? plural : singular}`
+}
+
+function createProjectLoadSteps(project: BikeparkProject) {
+  return [
+    {
+      id: 'read',
+      label: 'Lecture du projet',
+      status: 'active',
+    },
+    {
+      id: 'tracks',
+      label: pluralize(project.tracks.length, 'track', 'tracks'),
+      status: 'pending',
+    },
+    {
+      id: 'symbols',
+      label: pluralize(project.symbols.length, 'symbole', 'symboles'),
+      status: 'pending',
+    },
+    {
+      id: 'customSymbols',
+      label: pluralize(project.customSymbols.length, 'symbole perso', 'symboles perso'),
+      status: 'pending',
+    },
+    {
+      id: 'settings',
+      label: 'Reglages carte',
+      status: 'pending',
+    },
+    {
+      id: 'camera',
+      label: 'Camera',
+      status: 'pending',
+    },
+    {
+      id: 'map',
+      label: 'Rendu carte',
+      status: 'pending',
+    },
+  ] satisfies {
+    id: 'read' | 'tracks' | 'symbols' | 'customSymbols' | 'settings' | 'camera' | 'map'
+    label: string
+    status: 'pending' | 'active' | 'done'
+  }[]
+}
+
+function updateProjectLoadStep(
+  id: 'read' | 'tracks' | 'symbols' | 'customSymbols' | 'settings' | 'camera' | 'map',
+  status: 'pending' | 'active' | 'done',
+) {
+  if (!projectLoadState.value) return
+
+  projectLoadState.value = {
+    ...projectLoadState.value,
+    steps: projectLoadState.value.steps.map((step) => {
+      if (step.id !== id) return step
+      return { ...step, status }
+    }),
+  }
+}
+
+function beginProjectLoad(title: string, project: BikeparkProject) {
+  projectLoadSessionId.value += 1
+  projectLoadState.value = {
+    sessionId: projectLoadSessionId.value,
+    title,
+    steps: createProjectLoadSteps(project),
+  }
+}
+
+function finishProjectLoad(sessionId: number) {
+  if (!projectLoadState.value || projectLoadState.value.sessionId !== sessionId) return
+
+  projectLoadState.value = {
+    ...projectLoadState.value,
+    steps: projectLoadState.value.steps.map((step) => ({ ...step, status: 'done' })),
+  }
+
+  window.setTimeout(() => {
+    if (projectLoadState.value?.sessionId === sessionId) {
+      projectLoadState.value = null
+    }
+  }, 500)
 }
 
 function slugifyProjectName(value: string) {
@@ -329,12 +506,24 @@ function normalizeProject(raw: Partial<BikeparkProject> | null | undefined): Bik
 }
 
 function applyProject(project: BikeparkProject) {
+  updateProjectLoadStep('read', 'done')
+  updateProjectLoadStep('tracks', 'active')
   tracks.value = project.tracks
+  updateProjectLoadStep('tracks', 'done')
+  updateProjectLoadStep('symbols', 'active')
   symbols.value = project.symbols
+  updateProjectLoadStep('symbols', 'done')
+  updateProjectLoadStep('customSymbols', 'active')
   customSymbols.value = project.customSymbols
+  updateProjectLoadStep('customSymbols', 'done')
+  updateProjectLoadStep('settings', 'active')
   mapSettings.value = project.mapSettings
+  updateProjectLoadStep('settings', 'done')
+  updateProjectLoadStep('camera', 'active')
   mapCamera.value = project.mapCamera
   cameraRestoreKey.value += 1
+  updateProjectLoadStep('camera', 'done')
+  updateProjectLoadStep('map', 'active')
   projectName.value = sanitizeProjectName(project.projectName)
   hasStartedWelcome.value = project.hasStartedWelcome || project.tracks.length > 0 || project.symbols.length > 0
   selectedSymbolId.value = null
@@ -430,6 +619,7 @@ function resumeSavedProject() {
   const project = pendingSavedProject.value
   showResumePrompt.value = false
   pendingSavedProject.value = null
+  beginProjectLoad('Reprise de la sauvegarde', project)
   applyProject(project)
   hasHydratedProject.value = true
 }
@@ -499,6 +689,7 @@ async function importProjectZip(file: File) {
     const parsed = JSON.parse(content) as BikeparkProject
     const project = normalizeProject(parsed)
 
+    beginProjectLoad('Import du projet ZIP', project)
     applyProject(project)
     await saveProjectToBrowser()
   } catch (error) {
@@ -665,22 +856,49 @@ function onUploadSvg(payload: UploadedSymbolPayload) {
   customSymbols.value = [...customSymbols.value, buildCustomSymbolDefinition(symbolId, payload)]
 }
 
+function onProjectRenderProgress(payload: {
+  sessionId: number
+  stage: 'tracks' | 'symbols' | 'map'
+  loaded: number
+  total: number
+}) {
+  if (!projectLoadState.value || payload.sessionId !== projectLoadState.value.sessionId) return
+
+  if (payload.stage === 'tracks') {
+    updateProjectLoadStep('tracks', payload.total === 0 || payload.loaded >= payload.total ? 'done' : 'active')
+    return
+  }
+
+  if (payload.stage === 'symbols') {
+    updateProjectLoadStep('symbols', payload.total === 0 || payload.loaded >= payload.total ? 'done' : 'active')
+    return
+  }
+
+  if (payload.stage === 'map') {
+    updateProjectLoadStep('map', 'done')
+    finishProjectLoad(payload.sessionId)
+  }
+}
+
 async function onGpxFiles(event: Event) {
   const input = event.target as HTMLInputElement
   const files = input.files
   if (!files?.length) return
 
-  for (const file of Array.from(files)) {
+  const importedTracks: GpxTrack[] = []
+  const startIndex = tracks.value.length
+
+  for (const [index, file] of Array.from(files).entries()) {
     const text = await file.text()
     const xml = new DOMParser().parseFromString(text, 'application/xml')
     const geojson = gpx(xml) as GeoJSON.FeatureCollection
 
     const baseName = file.name.replace(/\.gpx$/i, '')
 
-    tracks.value.push({
+    importedTracks.push({
       id: uid(),
       name: baseName,
-      color: predefinedColors[tracks.value.length % predefinedColors.length],
+      color: predefinedColors[(startIndex + index) % predefinedColors.length],
       width: 4,
       style: 'solid',
       label: baseName,
@@ -691,7 +909,10 @@ async function onGpxFiles(event: Event) {
     })
   }
 
+  tracks.value = [...tracks.value, ...importedTracks]
   hasStartedWelcome.value = true
+  activeSection.value = 'track'
+  isSidebarOpen.value = true
   input.value = ''
 }
 
@@ -749,6 +970,18 @@ watch(
   backdrop-filter: blur(8px);
 }
 
+.app-load-state {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(2, 6, 23, 0.42);
+  backdrop-filter: blur(12px);
+}
+
 .app-empty-state__card {
   max-width: 440px;
   padding: 26px 28px;
@@ -781,6 +1014,20 @@ watch(
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+.app-load-state__card {
+  width: min(460px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.92)),
+    radial-gradient(circle at top, rgba(96, 165, 250, 0.18), transparent 58%);
+  color: #f8fafc;
+  box-shadow:
+    0 24px 60px rgba(2, 6, 23, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .app-empty-state__eyebrow {
   margin-bottom: 10px;
   color: #93c5fd;
@@ -791,6 +1038,15 @@ watch(
 }
 
 .app-resume-state__eyebrow {
+  margin-bottom: 10px;
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.app-load-state__eyebrow {
   margin-bottom: 10px;
   color: #93c5fd;
   font-size: 11px;
@@ -813,6 +1069,13 @@ watch(
   letter-spacing: -0.04em;
 }
 
+.app-load-state h2 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
 .app-empty-state p {
   margin: 0;
   color: #cbd5e1;
@@ -825,6 +1088,121 @@ watch(
   color: #cbd5e1;
   font-size: 14px;
   line-height: 1.65;
+}
+
+.app-load-state p {
+  margin: 0 0 18px;
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.app-load-state__bar {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.95);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.04);
+}
+
+.app-load-state__bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+  box-shadow: 0 0 28px rgba(59, 130, 246, 0.4);
+  transition: width 0.24s ease;
+}
+
+.app-load-state__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.app-load-state__meta strong {
+  color: #f8fafc;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.app-load-state__steps {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.app-load-state__step {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.68);
+  color: #cbd5e1;
+}
+
+.app-load-state__step.is-done {
+  border-color: rgba(96, 165, 250, 0.3);
+  background: rgba(15, 23, 42, 0.84);
+  color: #eff6ff;
+}
+
+.app-load-state__step.is-active {
+  border-color: rgba(96, 165, 250, 0.4);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(15, 23, 42, 0.84));
+  color: #f8fafc;
+}
+
+.app-load-state__step-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-height: 28px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.9);
+  color: #93c5fd;
+}
+
+.app-load-state__step.is-done .app-load-state__step-icon {
+  background: rgba(30, 64, 175, 0.28);
+  color: #dbeafe;
+}
+
+.app-load-state__step.is-active .app-load-state__step-icon svg {
+  animation: app-load-spin 0.9s linear infinite;
+}
+
+.app-load-state__step-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.app-load-state__step-label {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@keyframes app-load-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .app-resume-state p strong {
@@ -990,6 +1368,11 @@ watch(
     padding: 76px 18px 24px;
   }
 
+  .app-load-state {
+    align-items: flex-start;
+    padding: 76px 18px 24px;
+  }
+
   .app-empty-state__card {
     width: 100%;
     max-width: none;
@@ -1006,11 +1389,22 @@ watch(
     text-align: left;
   }
 
+  .app-load-state__card {
+    width: 100%;
+    max-width: none;
+    padding: 22px 20px;
+    border-radius: 24px;
+  }
+
   .app-empty-state h1 {
     font-size: 30px;
   }
 
   .app-resume-state h2 {
+    font-size: 28px;
+  }
+
+  .app-load-state h2 {
     font-size: 28px;
   }
 
