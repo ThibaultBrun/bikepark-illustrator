@@ -42,58 +42,28 @@
         :saved-camera="mapCamera"
         :camera-restore-key="cameraRestoreKey"
         :fit-request="fitRequest"
-        :render-session-id="projectLoadOverlay?.sessionId ?? 0"
+        :render-session-id="activeProjectRenderSessionId"
         @add-symbol="onAddSymbol"
         @complete-symbol-drag="onCompleteSymbolDrag"
         @project-render-progress="onProjectRenderProgress"
         @remove-symbol="onRemoveSymbol"
         @select-symbol="onSelectSymbol"
-        @update-camera="mapCamera = $event"
+        @update-camera="onUpdateCamera"
         @update-symbol-size="onUpdateSymbolSize"
         @update-symbol-position="onUpdateSymbolPosition"
         @update-label-position="onUpdateLabelPosition"
       />
 
-      <div v-if="showWelcomeCard" class="app-empty-state">
-        <div class="app-empty-state__card">
-          <div class="app-empty-state__eyebrow">pista.bike</div>
-          <h1>Bikepark Illustrator</h1>
-          <p>
-            Importe une trace GPX, ajoute des symboles et compose ton plan de bikepark
-            directement sur la carte.
-          </p>
-
-          <button type="button" class="app-empty-state__cta" @click="startProject">
-            Commencer
-          </button>
-        </div>
-      </div>
-
-      <div v-if="pendingResumeProject" class="app-resume-state">
-        <div class="app-resume-state__card">
-          <div class="app-resume-state__eyebrow">Projet retrouve</div>
-          <h2>Reprendre ton dernier projet ?</h2>
-          <p>
-            <strong>{{ pendingResumeProject.projectName }}</strong>
-            <span v-if="pendingResumeProject.savedAtLabel">
-              sauvegarde le {{ pendingResumeProject.savedAtLabel }}
-            </span>
-          </p>
-
-          <div class="app-resume-state__actions">
-            <button type="button" class="app-resume-state__primary" @click="resumeSavedProject">
-              Reprendre
-            </button>
-
-            <button type="button" class="app-resume-state__secondary" @click="dismissSavedProject">
-              Nouveau projet
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="projectLoadOverlay" class="app-load-state">
+<div v-if="projectLoadOverlay" class="app-load-state">
         <div class="app-load-state__card">
+          <button
+            type="button"
+            class="app-load-state__dismiss"
+            aria-label="Masquer le panneau de chargement"
+            @click="dismissProjectLoadOverlay"
+          >
+            Fermer
+          </button>
           <div class="app-load-state__eyebrow">Chargement du projet</div>
           <h2>{{ projectLoadOverlay.title }}</h2>
           <p>{{ projectLoadOverlay.currentLabel }}</p>
@@ -268,9 +238,9 @@ const saveStatusMessage = ref('')
 const lastSavedAt = ref<string | null>(null)
 const hasSavedProject = ref(false)
 const hasHydratedProject = ref(false)
-const pendingSavedProject = ref<BikeparkProject | null>(null)
-const showResumePrompt = ref(false)
 const projectLoadSessionId = ref(0)
+const dismissedProjectLoadSessionId = ref<number | null>(null)
+let projectLoadFinishTimer: number | null = null
 const projectLoadState = ref<{
   sessionId: number
   title: string
@@ -288,29 +258,9 @@ const dragPreview = computed(() => {
   return getSymbolDefinition(draggingSymbolId.value, customSymbols.value)
 })
 
-const isProjectEmpty = computed(() => {
-  return tracks.value.length === 0 && symbols.value.length === 0
-})
-
-const showWelcomeCard = computed(() => {
-  return isProjectEmpty.value && !hasStartedWelcome.value && !showResumePrompt.value
-})
-
-const pendingResumeProject = computed(() => {
-  if (!showResumePrompt.value || !pendingSavedProject.value || hasStartedWelcome.value || !isProjectEmpty.value) return null
-
-  const savedAt = new Date(pendingSavedProject.value.savedAt)
-  const savedAtLabel = Number.isNaN(savedAt.getTime()) ? '' : savedAt.toLocaleString()
-
-  return {
-    projectName: pendingSavedProject.value.projectName,
-    savedAtLabel,
-  }
-})
-
 const projectLoadOverlay = computed(() => {
   const state = projectLoadState.value
-  if (!state) return null
+  if (!state || dismissedProjectLoadSessionId.value === state.sessionId) return null
 
   const completedCount = state.steps.filter((step) => step.status === 'done').length
   const progress = state.steps.length === 0 ? 0 : Math.round((completedCount / state.steps.length) * 100)
@@ -324,6 +274,8 @@ const projectLoadOverlay = computed(() => {
     currentLabel,
   }
 })
+
+const activeProjectRenderSessionId = computed(() => projectLoadState.value?.sessionId ?? 0)
 
 function uid() {
   return Math.random().toString(36).slice(2, 10)
@@ -343,14 +295,6 @@ function closeSidebar() {
 
 function openSection(sectionId: SidebarSectionId) {
   activeSection.value = sectionId
-  isSidebarOpen.value = true
-}
-
-function startProject() {
-  pendingSavedProject.value = null
-  showResumePrompt.value = false
-  hasStartedWelcome.value = true
-  activeSection.value = 'track'
   isSidebarOpen.value = true
 }
 
@@ -400,35 +344,41 @@ function createProjectLoadSteps(project: BikeparkProject) {
       label: 'Camera',
       status: 'pending',
     },
-    {
-      id: 'map',
-      label: 'Rendu carte',
-      status: 'pending',
-    },
   ] satisfies {
-    id: 'read' | 'tracks' | 'symbols' | 'customSymbols' | 'settings' | 'camera' | 'map'
+    id: 'read' | 'tracks' | 'symbols' | 'customSymbols' | 'settings' | 'camera'
     label: string
     status: 'pending' | 'active' | 'done'
   }[]
 }
 
 function updateProjectLoadStep(
-  id: 'read' | 'tracks' | 'symbols' | 'customSymbols' | 'settings' | 'camera' | 'map',
+  id: 'read' | 'tracks' | 'symbols' | 'customSymbols' | 'settings' | 'camera',
   status: 'pending' | 'active' | 'done',
 ) {
   if (!projectLoadState.value) return
 
+  let hasChanged = false
+  const nextSteps = projectLoadState.value.steps.map((step) => {
+    if (step.id !== id) return step
+    if (step.status === status) return step
+    hasChanged = true
+    return { ...step, status }
+  })
+
+  if (!hasChanged) return
   projectLoadState.value = {
     ...projectLoadState.value,
-    steps: projectLoadState.value.steps.map((step) => {
-      if (step.id !== id) return step
-      return { ...step, status }
-    }),
+    steps: nextSteps,
   }
 }
 
 function beginProjectLoad(title: string, project: BikeparkProject) {
   projectLoadSessionId.value += 1
+  dismissedProjectLoadSessionId.value = null
+  if (projectLoadFinishTimer !== null) {
+    window.clearTimeout(projectLoadFinishTimer)
+    projectLoadFinishTimer = null
+  }
   projectLoadState.value = {
     sessionId: projectLoadSessionId.value,
     title,
@@ -436,17 +386,31 @@ function beginProjectLoad(title: string, project: BikeparkProject) {
   }
 }
 
+function dismissProjectLoadOverlay() {
+  if (!projectLoadState.value) return
+  dismissedProjectLoadSessionId.value = projectLoadState.value.sessionId
+}
+
 function finishProjectLoad(sessionId: number) {
   if (!projectLoadState.value || projectLoadState.value.sessionId !== sessionId) return
 
-  projectLoadState.value = {
-    ...projectLoadState.value,
-    steps: projectLoadState.value.steps.map((step) => ({ ...step, status: 'done' })),
+  const allDone = projectLoadState.value.steps.every((step) => step.status === 'done')
+  if (!allDone) {
+    projectLoadState.value = {
+      ...projectLoadState.value,
+      steps: projectLoadState.value.steps.map((step) => (step.status === 'done' ? step : { ...step, status: 'done' })),
+    }
   }
 
-  window.setTimeout(() => {
+  if (projectLoadFinishTimer !== null) return
+
+  projectLoadFinishTimer = window.setTimeout(() => {
+    projectLoadFinishTimer = null
     if (projectLoadState.value?.sessionId === sessionId) {
       projectLoadState.value = null
+    }
+    if (dismissedProjectLoadSessionId.value === sessionId) {
+      dismissedProjectLoadSessionId.value = null
     }
   }, 500)
 }
@@ -523,7 +487,6 @@ function applyProject(project: BikeparkProject) {
   mapCamera.value = project.mapCamera
   cameraRestoreKey.value += 1
   updateProjectLoadStep('camera', 'done')
-  updateProjectLoadStep('map', 'active')
   projectName.value = sanitizeProjectName(project.projectName)
   hasStartedWelcome.value = project.hasStartedWelcome || project.tracks.length > 0 || project.symbols.length > 0
   selectedSymbolId.value = null
@@ -591,45 +554,23 @@ async function hydrateInitialProjectState() {
       saveStatus.value = 'idle'
       saveStatusMessage.value = ''
       hasHydratedProject.value = true
+      hasStartedWelcome.value = true
       return
     }
 
     const project = normalizeProject(stored)
-    mapCamera.value = project.mapCamera
-    pendingSavedProject.value = project
-    showResumePrompt.value = true
+    beginProjectLoad('Reprise de la sauvegarde', project)
+    applyProject(project)
     hasSavedProject.value = true
     lastSavedAt.value = project.savedAt
-    saveStatus.value = 'idle'
-    saveStatusMessage.value = ''
+    hasHydratedProject.value = true
   } catch (error) {
     console.error(error)
     saveStatus.value = 'error'
     saveStatusMessage.value = 'Impossible de relire la sauvegarde locale.'
     hasHydratedProject.value = true
+    hasStartedWelcome.value = true
   }
-}
-
-function resumeSavedProject() {
-  if (!pendingSavedProject.value) {
-    hasHydratedProject.value = true
-    return
-  }
-
-  const project = pendingSavedProject.value
-  showResumePrompt.value = false
-  pendingSavedProject.value = null
-  beginProjectLoad('Reprise de la sauvegarde', project)
-  applyProject(project)
-  hasHydratedProject.value = true
-}
-
-function dismissSavedProject() {
-  showResumePrompt.value = false
-  pendingSavedProject.value = null
-  mapCamera.value = null
-  cameraRestoreKey.value += 1
-  hasHydratedProject.value = true
 }
 
 async function clearProjectFromBrowser() {
@@ -740,7 +681,7 @@ function onAddSymbol(payload: {
     id: uid(),
     symbolId: payload.symbolId,
     lngLat: payload.position,
-    iconSize: 17,
+    iconSize: 20,
     rotation: 0,
     flipX: false,
     flipY: false,
@@ -870,14 +811,27 @@ function onProjectRenderProgress(payload: {
   }
 
   if (payload.stage === 'symbols') {
-    updateProjectLoadStep('symbols', payload.total === 0 || payload.loaded >= payload.total ? 'done' : 'active')
+    const done = payload.total === 0 || payload.loaded >= payload.total
+    updateProjectLoadStep('symbols', done ? 'done' : 'active')
+    if (done) finishProjectLoad(payload.sessionId)
+    return
+  }
+}
+
+function onUpdateCamera(nextCamera: MapCameraState) {
+  const current = mapCamera.value
+  if (
+    current &&
+    current.center[0] === nextCamera.center[0] &&
+    current.center[1] === nextCamera.center[1] &&
+    current.zoom === nextCamera.zoom &&
+    current.pitch === nextCamera.pitch &&
+    current.bearing === nextCamera.bearing
+  ) {
     return
   }
 
-  if (payload.stage === 'map') {
-    updateProjectLoadStep('map', 'done')
-    finishProjectLoad(payload.sessionId)
-  }
+  mapCamera.value = nextCamera
 }
 
 async function onGpxFiles(event: Event) {
@@ -1015,6 +969,7 @@ watch(
 }
 
 .app-load-state__card {
+  position: relative;
   width: min(460px, 100%);
   padding: 28px;
   border: 1px solid rgba(96, 165, 250, 0.3);
@@ -1026,6 +981,34 @@ watch(
   box-shadow:
     0 24px 60px rgba(2, 6, 23, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.app-load-state__dismiss {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.app-load-state__dismiss:hover {
+  border-color: rgba(96, 165, 250, 0.4);
+  background: rgba(30, 41, 59, 0.92);
+  color: #f8fafc;
+  transform: translateY(-1px);
 }
 
 .app-empty-state__eyebrow {
