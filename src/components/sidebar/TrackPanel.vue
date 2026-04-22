@@ -300,6 +300,14 @@ function toggleExpanded(trackId: string) {
 }
 
 function removeTrack(trackId: string) {
+  const track = props.tracks.find((item) => item.id === trackId)
+  const label = track?.label?.trim() || track?.name?.trim() || 'cette piste'
+
+  if (typeof window !== 'undefined') {
+    const confirmed = window.confirm(`Supprimer ${label} ?`)
+    if (!confirmed) return
+  }
+
   expandedTrackIds.value = expandedTrackIds.value.filter((id) => id !== trackId)
   emit('remove-track', trackId)
 }
