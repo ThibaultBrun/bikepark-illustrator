@@ -111,9 +111,14 @@ let suppressNextCameraEmit = false
 let restoredSavedCameraOnLoad = false
 let skipNextTrackAutoFit = false
 let lastCompletedRenderSessionId = 0
-let symbolRefreshToken = 0
+let pendingMapCompletionSessionId = 0
+let symbolSyncFrameId = 0
+let symbolSyncRetryQueued = false
+let mapResizeObserver: ResizeObserver | null = null
+let resizeFrameId = 0
 const symbolImageIds = new Set<string>()
 const symbolPositionOverrides = new Map<string, [number, number]>()
+const emittedRenderStages = new Set<string>()
 
 const baseLayer = ref<'cyclosm' | 'esri'>('cyclosm')
 
@@ -491,8 +496,12 @@ function buildPlacedSymbolSvg(symbol: MapSymbol, definition: SymbolDefinition) {
     .trim()
     .replace(
       /^<svg\b/i,
-      `<svg x="${centerX - symbol.iconSize / 2}" y="${centerY - symbol.iconSize / 2}" width="${symbol.iconSize}" height="${symbol.iconSize}" color="#0f172a" style="overflow: visible; transform-box: fill-box; transform-origin: center; transform: rotate(${symbol.rotation}deg) scale(${scaleX}, ${scaleY});"`,
+      `<svg x="${centerX - symbol.iconSize / 2}" y="${centerY - symbol.iconSize / 2}" width="${symbol.iconSize}" height="${symbol.iconSize}" color="#0f172a" overflow="visible"`,
     )
+  const hasTransform = symbol.rotation !== 0 || symbol.flipX || symbol.flipY
+  const iconContent = hasTransform
+    ? `<g transform="translate(${centerX},${centerY}) rotate(${symbol.rotation}) scale(${scaleX},${scaleY}) translate(${-centerX},${-centerY})">${iconSvg}</g>`
+    : iconSvg
   const badgeColor = `${definition.color}33`
 
   return {
@@ -509,7 +518,7 @@ function buildPlacedSymbolSvg(symbol: MapSymbol, definition: SymbolDefinition) {
           <circle cx="${centerX}" cy="${centerY}" r="${outerSize / 2 - 1.2}" fill="${badgeColor}" />
           <circle cx="${centerX}" cy="${centerY}" r="${coreSize / 2}" fill="rgba(255,255,255,0.96)" />
         </g>
-        ${iconSvg}
+        ${iconContent}
       </svg>
     `,
   }
@@ -597,15 +606,37 @@ function updatePlacedSymbolSource() {
 }
 
 function refreshSymbols() {
-  if (!map || !map.isStyleLoaded()) return
+  if (!map) return
+  if (!map.isStyleLoaded()) {
+    queueSymbolSyncRetry()
+    return
+  }
+  if (symbolSyncFrameId) {
+    cancelAnimationFrame(symbolSyncFrameId)
+  }
 
-  void syncPlacedSymbols()
+  symbolSyncFrameId = requestAnimationFrame(() => {
+    symbolSyncFrameId = 0
+    void syncPlacedSymbols()
+  })
+}
+
+function queueSymbolSyncRetry() {
+  if (!map || symbolSyncRetryQueued) return
+
+  symbolSyncRetryQueued = true
+  map.once('idle', () => {
+    symbolSyncRetryQueued = false
+    refreshSymbols()
+  })
 }
 
 async function syncPlacedSymbols() {
-  if (!map || !map.isStyleLoaded()) return
-
-  const token = ++symbolRefreshToken
+  if (!map) return
+  if (!map.isStyleLoaded()) {
+    queueSymbolSyncRetry()
+    return
+  }
   ensurePlacedSymbolSource()
   ensurePlacedSymbolLayer()
   const nextImageIds = new Set<string>()
@@ -613,21 +644,39 @@ async function syncPlacedSymbols() {
   for (const symbol of props.symbols) {
     const definition = getSymbolDefinition(symbol.symbolId, props.customSymbols)
     const imageId = symbolImageId(symbol.id)
-    const image = await loadSymbolImage(symbol, definition)
 
-    if (!map || token !== symbolRefreshToken) return
+    try {
+      const image = await loadSymbolImage(symbol, definition)
 
-    if (map.hasImage(imageId)) {
-      map.updateImage(imageId, image)
-    } else {
-      map.addImage(imageId, image)
+      if (!map) return
+      if (!map.isStyleLoaded()) {
+        queueSymbolSyncRetry()
+        return
+      }
+
+      if (map.hasImage(imageId)) {
+        map.updateImage(imageId, image)
+      } else {
+        map.addImage(imageId, image)
+      }
+
+      nextImageIds.add(imageId)
+      symbolImageIds.add(imageId)
+    } catch (error) {
+      console.error('[symbols] failed to build image', {
+        id: symbol.id,
+        symbolId: symbol.symbolId,
+        imageId,
+        error,
+      })
     }
-
-    nextImageIds.add(imageId)
-    symbolImageIds.add(imageId)
   }
 
-  if (!map || token !== symbolRefreshToken) return
+  if (!map) return
+  if (!map.isStyleLoaded()) {
+    queueSymbolSyncRetry()
+    return
+  }
 
   for (const imageId of Array.from(symbolImageIds)) {
     if (nextImageIds.has(imageId)) continue
@@ -638,7 +687,25 @@ async function syncPlacedSymbols() {
   }
 
   updatePlacedSymbolSource()
+  map.triggerRepaint()
   emitRenderStage('symbols')
+}
+
+function queueMapResizeRefresh() {
+  if (!map) return
+  if (resizeFrameId) {
+    cancelAnimationFrame(resizeFrameId)
+  }
+
+  resizeFrameId = requestAnimationFrame(() => {
+    resizeFrameId = 0
+    if (!map) return
+
+    map.resize()
+    refreshTracks()
+    refreshSymbols()
+    queueMapRenderCompletion()
+  })
 }
 
 function ensureTrackSource(track: GpxTrack) {
@@ -908,6 +975,9 @@ function refreshTracks() {
 
 function emitRenderStage(stage: 'tracks' | 'symbols') {
   if (props.renderSessionId <= 0) return
+  const stageKey = `${props.renderSessionId}:${stage}`
+  if (emittedRenderStages.has(stageKey)) return
+  emittedRenderStages.add(stageKey)
 
   const total = stage === 'tracks' ? props.tracks.length : props.symbols.length
   emit('project-render-progress', {
@@ -920,9 +990,14 @@ function emitRenderStage(stage: 'tracks' | 'symbols') {
 
 function queueMapRenderCompletion() {
   if (!map || props.renderSessionId <= 0) return
+  if (pendingMapCompletionSessionId === props.renderSessionId) return
 
   const sessionId = props.renderSessionId
+  pendingMapCompletionSessionId = sessionId
   map.once('idle', () => {
+    if (pendingMapCompletionSessionId === sessionId) {
+      pendingMapCompletionSessionId = 0
+    }
     if (!map || sessionId !== props.renderSessionId || sessionId === lastCompletedRenderSessionId) return
 
     lastCompletedRenderSessionId = sessionId
@@ -1009,6 +1084,7 @@ function setupCameraTracking() {
 
     if (suppressNextCameraEmit) {
       suppressNextCameraEmit = false
+      return
     }
 
     emit('update-camera', camera)
@@ -1237,6 +1313,13 @@ onMounted(() => {
 
   window.addEventListener('pointerup', handleGlobalPointerUp, true)
 
+  if (typeof ResizeObserver !== 'undefined' && mapShell.value) {
+    mapResizeObserver = new ResizeObserver(() => {
+      queueMapResizeRefresh()
+    })
+    mapResizeObserver.observe(mapShell.value)
+  }
+
   const camera = initialCamera()
 
   map = new maplibregl.Map({
@@ -1346,6 +1429,15 @@ watch(
 
 watch(
   () => props.symbols,
+  () => {
+    refreshSymbols()
+    queueMapRenderCompletion()
+  },
+  { deep: true, flush: 'post' },
+)
+
+watch(
+  () => props.customSymbols,
   () => {
     refreshSymbols()
     queueMapRenderCompletion()
@@ -1506,6 +1598,8 @@ watch(
     if (sessionId <= 0 || sessionId === previousSessionId) return
 
     lastCompletedRenderSessionId = 0
+    pendingMapCompletionSessionId = 0
+    emittedRenderStages.clear()
     refreshTracks()
     refreshSymbols()
     queueMapRenderCompletion()
@@ -1514,6 +1608,12 @@ watch(
 
 onBeforeUnmount(() => {
   window.removeEventListener('pointerup', handleGlobalPointerUp, true)
+  mapResizeObserver?.disconnect()
+  mapResizeObserver = null
+  if (resizeFrameId) {
+    cancelAnimationFrame(resizeFrameId)
+    resizeFrameId = 0
+  }
 
   if (map) {
     map.getCanvas().style.cursor = ''
@@ -1531,6 +1631,13 @@ onBeforeUnmount(() => {
   isDraggingPlacedSymbol.value = false
   isPlacedSymbolOverTrash.value = false
   restoredSavedCameraOnLoad = false
+  pendingMapCompletionSessionId = 0
+  if (symbolSyncFrameId) {
+    cancelAnimationFrame(symbolSyncFrameId)
+    symbolSyncFrameId = 0
+  }
+  symbolSyncRetryQueued = false
+  emittedRenderStages.clear()
   symbolPositionOverrides.clear()
   symbolImageIds.clear()
 })
