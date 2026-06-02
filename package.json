@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@mapbox/togeojson": "^0.16.2",
+    "driver.js": "^1.4.0",
     "jszip": "^3.10.1",
     "localforage": "^1.10.0",
     "lucide-vue-next": "^1.0.0",

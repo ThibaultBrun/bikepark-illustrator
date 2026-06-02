@@ -13,6 +13,7 @@
         <button
           type="button"
           class="rail-toggle"
+          data-tour="menu"
           :class="{ open: isOpen }"
           :aria-expanded="isOpen"
           :aria-controls="'app-sidebar'"
@@ -31,6 +32,7 @@
             :key="section.id"
             type="button"
             class="rail-nav-button"
+            :data-tour="`tool-${section.id}`"
             :class="{ active: activeSection === section.id }"
             :title="section.title"
             :aria-label="section.title"
@@ -55,6 +57,7 @@
           :key="section.id"
           type="button"
           class="mobile-section-button"
+          :data-tour="`m-tool-${section.id}`"
           :class="{ active: activeSection === section.id }"
           :aria-pressed="activeSection === section.id"
           @click="$emit('open-section', section.id)"
@@ -93,9 +96,13 @@
         @update:settings="$emit('update:map-settings', $event)"
       />
       <ExportPanel
-        v-else
+        v-else-if="activeSection === 'export'"
         @export-zip="$emit('export-zip')"
         @import-zip="$emit('import-zip', $event)"
+      />
+      <HelpPanel
+        v-else
+        @start-tour="$emit('start-tour')"
       />
     </aside>
 
@@ -116,6 +123,7 @@ import { computed } from 'vue'
 import type { GpxTrack } from '../../types/gpx'
 import type { MapSymbol, SymbolDefinition } from '../../types/symbol'
 import ExportPanel from './ExportPanel.vue'
+import HelpPanel from './HelpPanel.vue'
 import MapPanel from './MapPanel.vue'
 import type { MapSettings } from './map-settings'
 import SidebarIcon from './SidebarIcon.vue'
@@ -162,6 +170,7 @@ defineEmits<{
   (e: 'update:map-settings', value: MapSettings): void
   (e: 'export-zip'): void
   (e: 'import-zip', file: File): void
+  (e: 'start-tour'): void
 }>()
 
 const activeSectionMeta = computed(() => {

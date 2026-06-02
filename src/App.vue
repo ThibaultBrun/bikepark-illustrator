@@ -27,9 +27,10 @@
       @update:map-settings="mapSettings = $event"
       @export-zip="exportProjectZip"
       @import-zip="importProjectZip"
+      @start-tour="launchTour"
     />
 
-    <main class="map-wrapper">
+    <main class="map-wrapper" data-tour="map">
       <MapView
         :tracks="tracks"
         :symbols="symbols"
@@ -152,6 +153,7 @@ import { gpx } from '@mapbox/togeojson'
 import JSZip from 'jszip'
 import localforage from 'localforage'
 import MapView from './components/MapView.vue'
+import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
 import type { SidebarSection, SidebarSectionId } from './components/sidebar/types'
@@ -212,6 +214,13 @@ const sidebarSections: SidebarSection[] = [
     title: 'Export',
     description: 'Preparer les sorties et exports finaux.',
     placeholder: 'Section reservee aux options d export et de rendu final.',
+  },
+  {
+    id: 'help',
+    icon: 'H',
+    title: 'Aide',
+    description: 'Visite guidee et rappel des fonctionnalites.',
+    placeholder: 'Section reservee a l aide et au tutoriel.',
   },
 ]
 
@@ -296,6 +305,15 @@ function closeSidebar() {
 function openSection(sectionId: SidebarSectionId) {
   activeSection.value = sectionId
   isSidebarOpen.value = true
+}
+
+function launchTour() {
+  startTour({
+    openSection,
+    setSidebarOpen: (open) => {
+      isSidebarOpen.value = open
+    },
+  })
 }
 
 function inferProjectName() {
@@ -872,6 +890,11 @@ async function onGpxFiles(event: Event) {
 
 onMounted(async () => {
   await hydrateInitialProjectState()
+
+  // Premiere visite : on lance le tutoriel automatiquement une seule fois.
+  if (!hasSeenTour() && !hasSavedProject.value) {
+    window.setTimeout(() => launchTour(), 600)
+  }
 })
 
 watch(
