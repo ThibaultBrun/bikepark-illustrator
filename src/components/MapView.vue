@@ -1387,11 +1387,15 @@ function beginDrawTrack() {
 
 function loadEditFeature(coords: [number, number][]) {
   if (!draw) return
+  // terra-draw rejette par défaut les coordonnées au-delà de 9 décimales.
+  const safe = coords.map(
+    ([lng, lat]) => [Math.round(lng * 1e8) / 1e8, Math.round(lat * 1e8) / 1e8] as [number, number],
+  )
   draw.clear()
   draw.addFeatures([
     {
       type: 'Feature',
-      geometry: { type: 'LineString', coordinates: coords },
+      geometry: { type: 'LineString', coordinates: safe },
       properties: { mode: 'linestring' },
     },
   ])

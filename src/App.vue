@@ -1037,6 +1037,9 @@ watch(
   z-index: 8;
   left: 50%;
   bottom: 24px;
+  /* override de la règle globale `.map-wrapper > *` qui force 100%/100% */
+  width: auto;
+  height: auto;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
