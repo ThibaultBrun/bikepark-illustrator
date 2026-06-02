@@ -46,7 +46,8 @@ const helpItems = [
   {
     icon: Route,
     title: 'Pistes',
-    description: 'Importe tes GPX puis change couleur, épaisseur, style de ligne et labels.',
+    description:
+      'Importe tes GPX ou dessine une piste à la main, retouche les points (déplacer, ajouter, clic droit = supprimer), puis change couleur, épaisseur, style et labels.',
   },
   {
     icon: Shapes,

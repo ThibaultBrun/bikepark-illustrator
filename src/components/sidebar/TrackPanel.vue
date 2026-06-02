@@ -18,7 +18,7 @@
       <input type="file" accept=".gpx" multiple @change="$emit('gpx-files', $event)" />
     </label>
 
-    <button type="button" class="draw-btn" @click="$emit('new-track')">
+    <button type="button" class="draw-btn" data-tour="draw-track" @click="$emit('new-track')">
       <PencilLine class="draw-btn__icon" aria-hidden="true" />
       <span>Dessiner une piste</span>
     </button>

@@ -73,6 +73,16 @@ function buildSteps(isDesktop: boolean): TourStep[] {
       },
     },
     {
+      element: '[data-tour="draw-track"]',
+      section: 'track',
+      popover: {
+        title: 'Dessiner & éditer',
+        description:
+          'Pas de GPX ? Dessine une piste à la main sur la carte. Et sur chaque piste, l’icône « tracé » te laisse retoucher les points : glisser pour déplacer, clic sur la ligne pour ajouter, clic droit pour supprimer.',
+        side,
+      },
+    },
+    {
       element: `[data-tour="${tool}-symbol"]`,
       section: 'symbol',
       popover: {
