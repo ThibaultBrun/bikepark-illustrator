@@ -1385,16 +1385,9 @@ function beginDrawTrack() {
   draw.setMode('linestring')
 }
 
-function beginEditTrack(track: GpxTrack) {
-  if (!map) return
-  const coords = flattenLineCoordinates(track.geojson)
-  if (coords.length < 2) return
-  ensureDrawInstance()
+function loadEditFeature(coords: [number, number][]) {
   if (!draw) return
-  editingTrackId = track.id
-  editorActive = true
-  setTrackLayersVisible(track.id, false)
-  draw.start()
+  draw.clear()
   draw.addFeatures([
     {
       type: 'Feature',
@@ -1405,6 +1398,48 @@ function beginEditTrack(track: GpxTrack) {
   draw.setMode('select')
   const snapshot = draw.getSnapshot()
   if (snapshot[0]) draw.selectFeature(snapshot[0].id)
+}
+
+// Clic droit sur un point en mode édition : supprime le sommet le plus proche.
+function handleEditorContextMenu(e: maplibregl.MapMouseEvent) {
+  if (!map || !draw || editingTrackId === null) return
+  e.preventDefault()
+  const feature = draw.getSnapshot()[0]
+  if (!feature || feature.geometry.type !== 'LineString') return
+  const coords = feature.geometry.coordinates as [number, number][]
+  if (coords.length <= 2) return
+
+  let nearest = -1
+  let best = Infinity
+  for (let i = 0; i < coords.length; i++) {
+    const p = map.project(coords[i] as [number, number])
+    const dx = p.x - e.point.x
+    const dy = p.y - e.point.y
+    const d = dx * dx + dy * dy
+    if (d < best) {
+      best = d
+      nearest = i
+    }
+  }
+
+  const hitRadius = 14
+  if (nearest === -1 || best > hitRadius * hitRadius) return
+  coords.splice(nearest, 1)
+  loadEditFeature(coords)
+}
+
+function beginEditTrack(track: GpxTrack) {
+  if (!map) return
+  const coords = flattenLineCoordinates(track.geojson)
+  if (coords.length < 2) return
+  ensureDrawInstance()
+  if (!draw) return
+  editingTrackId = track.id
+  editorActive = true
+  setTrackLayersVisible(track.id, false)
+  draw.start()
+  loadEditFeature(coords)
+  map.on('contextmenu', handleEditorContextMenu)
 }
 
 function commitEditor() {
@@ -1426,6 +1461,7 @@ function cancelEditor() {
 
 function exitEditor() {
   const restoreId = editingTrackId
+  if (map) map.off('contextmenu', handleEditorContextMenu)
   if (draw) {
     try {
       draw.stop()

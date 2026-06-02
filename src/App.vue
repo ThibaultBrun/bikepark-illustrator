@@ -67,7 +67,7 @@
             ✏️ Clique sur la carte pour ajouter des points, double-clic pour terminer la piste.
           </template>
           <template v-else>
-            🔧 Glisse les points pour ajuster, clique un point du milieu pour en ajouter, sélectionne + Suppr pour en retirer.
+            🔧 Glisse un point pour le déplacer · clique un point clair au milieu d'un segment pour en ajouter · clic droit sur un point pour le supprimer.
           </template>
         </span>
         <div class="track-editor-bar__actions">
