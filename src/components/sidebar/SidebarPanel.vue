@@ -76,6 +76,8 @@
         @fit-project="$emit('fit-project')"
         @fit-track="$emit('fit-track', $event)"
         @remove-track="$emit('remove-track', $event)"
+        @new-track="$emit('new-track')"
+        @edit-track="$emit('edit-track', $event)"
         @track-width-change="$emit('track-width-change', $event)"
         @update:project-name="$emit('update:project-name', $event)"
       />
@@ -152,6 +154,8 @@ defineEmits<{
   (e: 'fit-project'): void
   (e: 'fit-track', trackId: string): void
   (e: 'remove-track', trackId: string): void
+  (e: 'new-track'): void
+  (e: 'edit-track', trackId: string): void
   (e: 'update:project-name', value: string): void
   (e: 'start-symbol-drag', payload: {
     symbolId: import('../../types/symbol').SymbolId

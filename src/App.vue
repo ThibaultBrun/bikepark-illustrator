@@ -19,6 +19,8 @@
       @fit-project="onFitProject"
       @fit-track="onFitTrack"
       @remove-track="onRemoveTrack"
+      @new-track="beginNewTrack"
+      @edit-track="beginEditTrack"
       @start-symbol-drag="onStartSymbolDrag"
       @upload-svg="onUploadSvg"
       @update-symbol-size="onUpdateSymbolSize"
@@ -32,6 +34,7 @@
 
     <main class="map-wrapper" data-tour="map">
       <MapView
+        ref="mapViewRef"
         :tracks="tracks"
         :symbols="symbols"
         :custom-symbols="customSymbols"
@@ -53,7 +56,34 @@
         @update-symbol-size="onUpdateSymbolSize"
         @update-symbol-position="onUpdateSymbolPosition"
         @update-label-position="onUpdateLabelPosition"
+        @track-drawn="onTrackDrawn"
+        @track-geometry-updated="onTrackGeometryUpdated"
+        @editor-closed="onEditorClosed"
       />
+
+      <div v-if="editorMode !== 'idle'" class="track-editor-bar">
+        <span class="track-editor-bar__hint">
+          <template v-if="editorMode === 'draw'">
+            ✏️ Clique sur la carte pour ajouter des points, double-clic pour terminer la piste.
+          </template>
+          <template v-else>
+            🔧 Glisse les points pour ajuster, clique un point du milieu pour en ajouter, sélectionne + Suppr pour en retirer.
+          </template>
+        </span>
+        <div class="track-editor-bar__actions">
+          <button
+            v-if="editorMode === 'edit'"
+            type="button"
+            class="track-editor-bar__btn primary"
+            @click="commitEdit"
+          >
+            Terminer
+          </button>
+          <button type="button" class="track-editor-bar__btn" @click="cancelEdit">
+            Annuler
+          </button>
+        </div>
+      </div>
 
 <div v-if="projectLoadOverlay" class="app-load-state">
         <div class="app-load-state__card">
@@ -225,6 +255,13 @@ const sidebarSections: SidebarSection[] = [
 ]
 
 const tracks = ref<GpxTrack[]>([])
+const mapViewRef = ref<{
+  beginDrawTrack: () => void
+  beginEditTrack: (track: GpxTrack) => void
+  commitEditor: () => void
+  cancelEditor: () => void
+} | null>(null)
+const editorMode = ref<'idle' | 'draw' | 'edit'>('idle')
 const symbols = ref<MapSymbol[]>([])
 const customSymbols = ref<SymbolDefinition[]>([])
 const projectName = ref('Mon bikepark')
@@ -662,6 +699,77 @@ function onWidthChange(_track: GpxTrack) {
   // La reactivite naturelle de Vue devrait suffire.
 }
 
+// --- Dessin / édition des tracés ---------------------------------------------
+
+function lineFeatureCollection(coords: [number, number][]): GeoJSON.FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: coords },
+      },
+    ],
+  }
+}
+
+function beginNewTrack() {
+  editorMode.value = 'draw'
+  activeSection.value = 'track'
+  mapViewRef.value?.beginDrawTrack()
+}
+
+function beginEditTrack(trackId: string) {
+  const track = tracks.value.find((t) => t.id === trackId)
+  if (!track) return
+  editorMode.value = 'edit'
+  mapViewRef.value?.beginEditTrack(track)
+}
+
+function commitEdit() {
+  mapViewRef.value?.commitEditor()
+}
+
+function cancelEdit() {
+  mapViewRef.value?.cancelEditor()
+}
+
+function onTrackDrawn(payload: { coords: [number, number][] }) {
+  const index = tracks.value.length
+  const baseName = `Piste ${index + 1}`
+  tracks.value = [
+    ...tracks.value,
+    {
+      id: uid(),
+      name: baseName,
+      color: predefinedColors[index % predefinedColors.length],
+      width: 4,
+      style: 'solid',
+      label: baseName,
+      visible: true,
+      labelSize: 16,
+      labelStyle: 'classic',
+      geojson: lineFeatureCollection(payload.coords),
+    },
+  ]
+  hasStartedWelcome.value = true
+  activeSection.value = 'track'
+  isSidebarOpen.value = true
+}
+
+function onTrackGeometryUpdated(payload: { trackId: string; coords: [number, number][] }) {
+  tracks.value = tracks.value.map((track) =>
+    track.id === payload.trackId
+      ? { ...track, geojson: lineFeatureCollection(payload.coords) }
+      : track,
+  )
+}
+
+function onEditorClosed() {
+  editorMode.value = 'idle'
+}
+
 function onFitProject() {
   fitRequest.value = {
     type: 'project',
@@ -922,6 +1030,73 @@ watch(
   min-width: 0;
   width: 100%;
   height: 100%;
+}
+
+.track-editor-bar {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: min(680px, calc(100% - 32px));
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.92);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.track-editor-bar__hint {
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.track-editor-bar__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.track-editor-bar__btn {
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: transparent;
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.track-editor-bar__btn:hover {
+  transform: translateY(-1px);
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.track-editor-bar__btn.primary {
+  border-color: rgba(96, 165, 250, 0.5);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(59, 130, 246, 0.95));
+  color: #eff6ff;
+}
+
+@media (max-width: 960px) {
+  .track-editor-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    bottom: 16px;
+  }
+
+  .track-editor-bar__actions {
+    justify-content: flex-end;
+  }
 }
 
 .app-empty-state {

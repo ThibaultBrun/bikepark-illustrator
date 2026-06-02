@@ -17,6 +17,11 @@
       <span>Importer des GPX</span>
       <input type="file" accept=".gpx" multiple @change="$emit('gpx-files', $event)" />
     </label>
+
+    <button type="button" class="draw-btn" @click="$emit('new-track')">
+      <PencilLine class="draw-btn__icon" aria-hidden="true" />
+      <span>Dessiner une piste</span>
+    </button>
   </section>
 
   <section class="panel">
@@ -55,6 +60,15 @@
         </button>
 
         <input v-model="track.label" class="text-input grow" type="text" placeholder="Libelle" />
+
+        <button
+          type="button"
+          class="visibility-button"
+          title="Éditer le tracé sur la carte"
+          @click="$emit('edit-track', track.id)"
+        >
+          <Spline class="visibility-icon" />
+        </button>
 
         <button
           type="button"
@@ -231,7 +245,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { ChevronUp, Eye, EyeOff, Pencil, Repeat2, Trash2 } from 'lucide-vue-next'
+import { ChevronUp, Eye, EyeOff, Pencil, PencilLine, Repeat2, Spline, Trash2 } from 'lucide-vue-next'
 import type { GpxTrack, TrackLabelStyle, TrackStyle } from '../../types/gpx'
 
 const props = defineProps<{
@@ -244,6 +258,8 @@ const emit = defineEmits<{
   (e: 'gpx-files', event: Event): void
   (e: 'track-width-change', track: GpxTrack): void
   (e: 'remove-track', trackId: string): void
+  (e: 'new-track'): void
+  (e: 'edit-track', trackId: string): void
   (e: 'fit-project'): void
   (e: 'fit-track', trackId: string): void
   (e: 'update:project-name', value: string): void
@@ -411,6 +427,39 @@ function removeTrack(trackId: string) {
 
 .upload-btn input {
   display: none;
+}
+
+.draw-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  background: rgba(37, 99, 235, 0.12);
+  color: #dbeafe;
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.draw-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(37, 99, 235, 0.2);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+}
+
+.draw-btn__icon {
+  width: 16px;
+  height: 16px;
 }
 
 .empty-state {

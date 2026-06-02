@@ -43,6 +43,8 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
 import { Trash2 } from 'lucide-vue-next'
+import { TerraDraw, TerraDrawLineStringMode, TerraDrawSelectMode } from 'terra-draw'
+import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import type { GpxTrack } from '../types/gpx'
 import type { MapCameraState } from '../types/project'
 import type { MapLabelFont } from './sidebar/map-settings'
@@ -88,6 +90,9 @@ const emit = defineEmits<{
   (e: 'update-symbol-position', payload: { symbolId: string; position: [number, number] }): void
   (e: 'update-symbol-size', payload: { symbolId: string; iconSize: number }): void
   (e: 'update-camera', payload: MapCameraState): void
+  (e: 'track-drawn', payload: { coords: [number, number][] }): void
+  (e: 'track-geometry-updated', payload: { trackId: string; coords: [number, number][] }): void
+  (e: 'editor-closed'): void
   (e: 'project-render-progress', payload: {
     sessionId: number
     stage: 'tracks' | 'symbols' | 'map'
@@ -104,6 +109,9 @@ const isDraggingPlacedSymbol = ref(false)
 const isPlacedSymbolOverTrash = ref(false)
 
 let map: maplibregl.Map | null = null
+let draw: TerraDraw | null = null
+let editorActive = false
+let editingTrackId: string | null = null
 let draggedTrackId: string | null = null
 let draggedPlacedSymbolId: string | null = null
 let isDraggingLabel = false
@@ -1143,6 +1151,7 @@ function setupPlacedSymbolInteractions() {
   if (!map) return
 
   map.on('click', (e) => {
+    if (editorActive) return
     if (isDraggingPlacedSymbol.value) return
 
     const feature = symbolFeatureAtPoint(e.point)
@@ -1152,6 +1161,7 @@ function setupPlacedSymbolInteractions() {
 
   map.on('mousemove', (e) => {
     if (!map) return
+    if (editorActive) return
 
     if (isDraggingPlacedSymbol.value && draggedPlacedSymbolId) {
       symbolPositionOverrides.set(draggedPlacedSymbolId, [e.lngLat.lng, e.lngLat.lat])
@@ -1180,6 +1190,7 @@ function setupPlacedSymbolInteractions() {
 
   map.on('mousedown', (e) => {
     if (!map) return
+    if (editorActive) return
 
     const feature = symbolFeatureAtPoint(e.point)
     const symbolId = feature?.properties?.placedSymbolId as string | undefined
@@ -1219,6 +1230,7 @@ function setupLabelDragging() {
 
   map.on('mousemove', (e) => {
     if (!map) return
+    if (editorActive) return
 
     if (isDraggingPlacedSymbol.value) {
       map.getCanvas().style.cursor = 'grabbing'
@@ -1247,6 +1259,7 @@ function setupLabelDragging() {
 
   map.on('mousedown', (e) => {
     if (!map) return
+    if (editorActive) return
 
     const labelLayerIds = props.tracks.map((track) => `track-label-${track.id}`)
     const existingLayerIds = labelLayerIds.filter((id) => map!.getLayer(id))
@@ -1307,6 +1320,126 @@ function setupLabelDragging() {
     map.getCanvas().style.cursor = ''
   })
 }
+
+// --- Édition / dessin des tracés (terra-draw) ---------------------------------
+
+function setTrackLayersVisible(trackId: string, visible: boolean) {
+  if (!map) return
+  const track = props.tracks.find((t) => t.id === trackId)
+  const lineVis = visible ? (track?.visible ? 'visible' : 'none') : 'none'
+  const arrowVis = visible && track ? arrowLayerVisibility(track) : 'none'
+  if (map.getLayer(`track-line-${trackId}`)) {
+    map.setLayoutProperty(`track-line-${trackId}`, 'visibility', lineVis)
+  }
+  if (map.getLayer(`track-label-${trackId}`)) {
+    map.setLayoutProperty(`track-label-${trackId}`, 'visibility', lineVis)
+  }
+  if (map.getLayer(`track-arrow-${trackId}`)) {
+    map.setLayoutProperty(`track-arrow-${trackId}`, 'visibility', arrowVis)
+  }
+}
+
+function ensureDrawInstance() {
+  if (draw || !map) return
+  draw = new TerraDraw({
+    adapter: new TerraDrawMapLibreGLAdapter({ map }),
+    modes: [
+      new TerraDrawLineStringMode(),
+      new TerraDrawSelectMode({
+        flags: {
+          linestring: {
+            feature: {
+              draggable: true,
+              coordinates: { midpoints: true, draggable: true, deletable: true },
+            },
+          },
+        },
+      }),
+    ],
+  })
+
+  draw.on('finish', (id, context) => {
+    // En mode dessin, on ne capture que la fin d'un nouveau tracé.
+    if (context.action !== 'draw' || editingTrackId !== null) return
+    const coords = lineCoordsFromFeatureId(id)
+    if (coords && coords.length >= 2) {
+      emit('track-drawn', { coords })
+    }
+    exitEditor()
+  })
+}
+
+function lineCoordsFromFeatureId(id: string | number): [number, number][] | null {
+  const feature = draw?.getSnapshotFeature(id)
+  if (!feature || feature.geometry.type !== 'LineString') return null
+  return feature.geometry.coordinates as [number, number][]
+}
+
+function beginDrawTrack() {
+  if (!map) return
+  ensureDrawInstance()
+  if (!draw) return
+  editingTrackId = null
+  editorActive = true
+  draw.start()
+  draw.setMode('linestring')
+}
+
+function beginEditTrack(track: GpxTrack) {
+  if (!map) return
+  const coords = flattenLineCoordinates(track.geojson)
+  if (coords.length < 2) return
+  ensureDrawInstance()
+  if (!draw) return
+  editingTrackId = track.id
+  editorActive = true
+  setTrackLayersVisible(track.id, false)
+  draw.start()
+  draw.addFeatures([
+    {
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: coords },
+      properties: { mode: 'linestring' },
+    },
+  ])
+  draw.setMode('select')
+  const snapshot = draw.getSnapshot()
+  if (snapshot[0]) draw.selectFeature(snapshot[0].id)
+}
+
+function commitEditor() {
+  if (editingTrackId && draw) {
+    const feature = draw.getSnapshot()[0]
+    if (feature && feature.geometry.type === 'LineString') {
+      const coords = feature.geometry.coordinates as [number, number][]
+      if (coords.length >= 2) {
+        emit('track-geometry-updated', { trackId: editingTrackId, coords })
+      }
+    }
+  }
+  exitEditor()
+}
+
+function cancelEditor() {
+  exitEditor()
+}
+
+function exitEditor() {
+  const restoreId = editingTrackId
+  if (draw) {
+    try {
+      draw.stop()
+    } catch {
+      /* déjà arrêté */
+    }
+  }
+  editorActive = false
+  editingTrackId = null
+  if (restoreId) setTrackLayersVisible(restoreId, true)
+  emit('editor-closed')
+}
+
+defineExpose({ beginDrawTrack, beginEditTrack, commitEditor, cancelEditor })
 
 onMounted(() => {
   if (!mapContainer.value) return
@@ -1608,6 +1741,14 @@ watch(
 
 onBeforeUnmount(() => {
   window.removeEventListener('pointerup', handleGlobalPointerUp, true)
+  if (draw) {
+    try {
+      draw.stop()
+    } catch {
+      /* déjà arrêté */
+    }
+    draw = null
+  }
   mapResizeObserver?.disconnect()
   mapResizeObserver = null
   if (resizeFrameId) {

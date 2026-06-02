@@ -16,6 +16,8 @@
     "localforage": "^1.10.0",
     "lucide-vue-next": "^1.0.0",
     "maplibre-gl": "^5.22.0",
+    "terra-draw": "^1.31.0",
+    "terra-draw-maplibre-gl-adapter": "^1.4.1",
     "vue": "^3.5.32"
   },
   "devDependencies": {
