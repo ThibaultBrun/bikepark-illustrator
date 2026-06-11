@@ -286,6 +286,7 @@ async function onSignOut() {
 
 const predefinedColors = [
   '#22c55e',
+  '#2563eb',
   '#dcb469',
   '#ef4444',
   '#000000',
