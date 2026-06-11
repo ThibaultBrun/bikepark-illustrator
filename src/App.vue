@@ -365,7 +365,12 @@ async function syncPistaDraft() {
     .map((t) => {
       const geometry = trackToGeometry(t)
       if (!geometry) return null
-      return { name: t.label?.trim() || t.name?.trim() || 'Piste', trail_type: 'enduro', difficulty: 'blue', geometry }
+      return {
+        name: t.label?.trim() || t.name?.trim() || 'Piste',
+        trail_type: t.trailType ?? 'enduro',
+        difficulty: t.difficulty ?? 'blue',
+        geometry,
+      }
     })
     .filter((t): t is NonNullable<typeof t> => t !== null)
   if (trails.length === 0) return
@@ -638,7 +643,9 @@ function normalizeProject(raw: Partial<BikeparkProject> | null | undefined): Bik
         ? raw.projectName.trim()
         : 'Mon bikepark',
     hasStartedWelcome: Boolean(raw?.hasStartedWelcome),
-    tracks: Array.isArray(raw?.tracks) ? raw.tracks : [],
+    tracks: Array.isArray(raw?.tracks)
+      ? raw.tracks.map((t) => ({ trailType: 'enduro', difficulty: 'blue', ...t }) as GpxTrack)
+      : [],
     symbols: Array.isArray(raw?.symbols) ? raw.symbols : [],
     customSymbols: Array.isArray(raw?.customSymbols) ? raw.customSymbols : [],
     mapSettings: {
@@ -978,6 +985,8 @@ function onTrackDrawn(payload: { coords: [number, number][] }) {
       visible: true,
       labelSize: 16,
       labelStyle: 'classic',
+      trailType: 'enduro',
+      difficulty: 'blue',
       geojson: lineFeatureCollection(payload.coords),
     },
   ]
@@ -1213,6 +1222,8 @@ async function onGpxFiles(event: Event) {
       visible: true,
       labelSize: 16,
       labelStyle: 'classic',
+      trailType: 'enduro',
+      difficulty: 'blue',
       geojson,
     })
   }

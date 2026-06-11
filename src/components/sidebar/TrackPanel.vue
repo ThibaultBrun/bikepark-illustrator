@@ -125,6 +125,21 @@
       </div>
 
       <div v-if="isExpanded(track.id)" class="track-settings">
+        <div class="track-row track-row--pista">
+          <label class="field">
+            <span>Type (Pista)</span>
+            <select v-model="track.trailType" class="text-input">
+              <option v-for="o in pistaTrailTypes" :key="o.value" :value="o.value">{{ o.label }}</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Difficulté</span>
+            <select v-model="track.difficulty" class="text-input" :class="`diff-${track.difficulty}`">
+              <option v-for="o in pistaDifficulties" :key="o.value" :value="o.value">{{ o.label }}</option>
+            </select>
+          </label>
+        </div>
+
         <div class="track-row">
           <label class="field">
             <span>Couleur</span>
@@ -302,6 +317,19 @@ function confirmDeleteProject() {
     emit('delete-project', props.currentProjectId)
   }
 }
+
+const pistaTrailTypes = [
+  { value: 'enduro', label: 'Enduro' },
+  { value: 'dh', label: 'Descente (DH)' },
+  { value: 'uplift_lift', label: 'Remontée (télésiège)' },
+  { value: 'uplift_bike', label: 'Navette' },
+]
+const pistaDifficulties = [
+  { value: 'green', label: 'Vert' },
+  { value: 'blue', label: 'Bleu' },
+  { value: 'red', label: 'Rouge' },
+  { value: 'black', label: 'Noir' },
+]
 
 const widthLevels = [2, 4, 6, 8, 10]
 const labelSizeLevels = [13, 15, 17, 19]
@@ -631,6 +659,17 @@ function removeTrack(trackId: string) {
   width: 15px;
   height: 15px;
 }
+
+.track-row--pista {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.text-input.diff-green { color: #86efac; }
+.text-input.diff-blue { color: #93c5fd; }
+.text-input.diff-red { color: #fca5a5; }
+.text-input.diff-black { color: #e5e7eb; }
 
 .text-input:focus {
   outline: none;
