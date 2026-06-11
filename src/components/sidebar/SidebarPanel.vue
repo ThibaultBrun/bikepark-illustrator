@@ -227,9 +227,11 @@ const activeSectionMeta = computed(() => {
   z-index: 35;
   width: 64px;
   pointer-events: none;
-  background: #020817;
-  border-right: 1px solid rgba(30, 41, 59, 0.9);
-  box-shadow: inset -1px 0 0 rgba(15, 23, 42, 0.45);
+  /* Même look que le header de pista.bike : taupe translucide + flou. */
+  background: rgba(47, 42, 34, 0.72);
+  border-right: 1px solid rgba(179, 168, 144, 0.12);
+  backdrop-filter: blur(12px);
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.18);
 }
 
 .rail-stack {
@@ -256,14 +258,14 @@ const activeSectionMeta = computed(() => {
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(179, 168, 144, 0.16);
   border-radius: 14px;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(28, 24, 19, 0.55);
   color: #d8ccb6;
   font: inherit;
   cursor: pointer;
   backdrop-filter: blur(10px);
-  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
   transition:
     background 0.2s ease,
     transform 0.2s ease,
@@ -273,7 +275,7 @@ const activeSectionMeta = computed(() => {
 
 .rail-toggle:hover,
 .rail-nav-button:hover {
-  background: rgba(30, 41, 59, 0.96);
+  background: rgba(28, 24, 19, 0.85);
   transform: translateY(-1px);
   border-color: rgba(220, 180, 105, 0.35);
 }
