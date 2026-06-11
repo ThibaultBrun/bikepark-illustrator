@@ -19,7 +19,8 @@
     "maplibre-gl": "^5.22.0",
     "terra-draw": "^1.31.0",
     "terra-draw-maplibre-gl-adapter": "^1.4.1",
-    "vue": "^3.5.32"
+    "vue": "^3.5.32",
+    "vue-i18n": "^11.4.5"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",

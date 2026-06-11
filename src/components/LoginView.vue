@@ -4,25 +4,25 @@
       <div class="login-brand">
         <img src="/favicon.svg" alt="" width="44" height="44" />
         <div>
-          <h1>Bikepark Illustrator</h1>
-          <p>Connecte-toi avec ton compte Pista pour créer et soumettre tes spots.</p>
+          <h1>{{ t('app.name') }}</h1>
+          <p>{{ t('login.tagline') }}</p>
         </div>
       </div>
 
       <button type="button" class="google-btn" :disabled="busy" @click="onGoogle">
         <span class="google-g">G</span>
-        Continuer avec Google
+        {{ t('login.google') }}
       </button>
 
-      <div class="sep"><span>ou</span></div>
+      <div class="sep"><span>{{ t('login.or') }}</span></div>
 
       <form class="login-form" @submit.prevent="onSubmit">
         <label class="field">
-          <span>Email</span>
+          <span>{{ t('login.email') }}</span>
           <input v-model="email" type="email" autocomplete="email" required placeholder="toi@exemple.fr" />
         </label>
         <label class="field">
-          <span>Mot de passe</span>
+          <span>{{ t('login.password') }}</span>
           <input v-model="password" type="password" autocomplete="current-password" required minlength="6" placeholder="••••••••" />
         </label>
 
@@ -30,21 +30,37 @@
         <p v-if="info" class="info">{{ info }}</p>
 
         <button type="submit" class="primary-btn" :disabled="busy">
-          {{ mode === 'signin' ? 'Se connecter' : 'Créer un compte' }}
+          {{ mode === 'signin' ? t('login.signin') : t('login.signup') }}
         </button>
       </form>
 
       <button type="button" class="toggle" @click="toggleMode">
-        {{ mode === 'signin' ? "Pas encore de compte ? S'inscrire" : 'Déjà un compte ? Se connecter' }}
+        {{ mode === 'signin' ? t('login.toSignup') : t('login.toSignin') }}
       </button>
+
+      <div class="lang-row">
+        <button
+          v-for="l in SUPPORTED_LOCALES"
+          :key="l"
+          type="button"
+          class="lang-btn"
+          :class="{ active: locale === l }"
+          @click="setLocale(l)"
+        >
+          {{ t('lang.' + l) }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuth } from '../lib/useAuth'
+import { SUPPORTED_LOCALES, setLocale } from '../i18n'
 
+const { t, locale } = useI18n()
 const { signInWithPassword, signUp, signInWithGoogle } = useAuth()
 
 const mode = ref<'signin' | 'signup'>('signin')
@@ -71,7 +87,7 @@ async function onSubmit() {
     } else {
       const { error: e } = await signUp(email.value, password.value)
       if (e) error.value = traduire(e.message)
-      else info.value = 'Compte créé. Vérifie tes mails si une confirmation est demandée.'
+      else info.value = t('login.accountCreated')
     }
   } finally {
     busy.value = false
@@ -90,8 +106,8 @@ async function onGoogle() {
 }
 
 function traduire(msg: string) {
-  if (/invalid login credentials/i.test(msg)) return 'Email ou mot de passe incorrect.'
-  if (/already registered/i.test(msg)) return 'Cet email a déjà un compte.'
+  if (/invalid login credentials/i.test(msg)) return t('login.errInvalid')
+  if (/already registered/i.test(msg)) return t('login.errExists')
   return msg
 }
 </script>
@@ -247,5 +263,28 @@ function traduire(msg: string) {
   margin: 0;
   font-size: 13px;
   color: #86efac;
+}
+
+.lang-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.lang-btn {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: #b3a890;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.lang-btn.active {
+  color: #f0cd8a;
+  border-color: rgba(220, 180, 105, 0.4);
 }
 </style>

@@ -1,0 +1,154 @@
+export default {
+  app: { name: 'Bikepark Illustrator' },
+  common: { cancel: 'Annuler', close: 'Fermer', delete: 'Supprimer', new: 'Nouveau' },
+  lang: { label: 'Langue', fr: 'Français', en: 'English', eu: 'Euskara' },
+
+  login: {
+    tagline: 'Connecte-toi avec ton compte Pista pour créer et soumettre tes spots.',
+    google: 'Continuer avec Google',
+    or: 'ou',
+    email: 'Email',
+    password: 'Mot de passe',
+    signin: 'Se connecter',
+    signup: 'Créer un compte',
+    toSignup: "Pas encore de compte ? S'inscrire",
+    toSignin: 'Déjà un compte ? Se connecter',
+    accountCreated: 'Compte créé. Vérifie tes mails si une confirmation est demandée.',
+    errInvalid: 'Email ou mot de passe incorrect.',
+    errExists: 'Cet email a déjà un compte.',
+  },
+
+  account: { logout: 'Déconnexion' },
+  loading: 'Chargement…',
+
+  sections: {
+    track: { title: 'Pistes', desc: 'Importer et styliser les traces GPX.' },
+    symbol: { title: 'Symboles', desc: 'Préparer les icônes et marqueurs.' },
+    map: { title: 'Carte', desc: 'Régler le fond de carte et les options visuelles.' },
+    locate: { title: 'Localiser', desc: 'Rechercher une adresse ou un lieu.' },
+    export: { title: 'Export', desc: 'Préparer les sorties et exports finaux.' },
+    help: { title: 'Aide', desc: 'Visite guidée et rappel des fonctionnalités.' },
+  },
+
+  track: {
+    project: 'Projet',
+    projectName: 'Nom du projet',
+    projectNamePh: 'Mon bikepark',
+    newProject: 'Nouveau projet',
+    deleteProject: 'Supprimer ce projet',
+    deleteConfirm: 'Supprimer « {name} » ? Cette action est définitive.',
+    unnamed: 'Sans nom',
+    importGpx: 'Importer des GPX',
+    draw: 'Dessiner une piste',
+    tracks: 'Pistes',
+    fitProject: 'Zoomer sur tout le projet',
+    empty: 'Aucune trace chargée.',
+    labelPh: 'Libellé',
+    editTrack: 'Éditer le tracé sur la carte',
+    fitTrack: 'Zoomer sur cette piste',
+    hideTrack: 'Masquer la trace',
+    showTrack: 'Afficher la trace',
+    showSettings: 'Afficher les réglages',
+    hideSettings: 'Masquer les réglages',
+    deleteTrack: 'Supprimer la piste',
+    typePista: 'Type (Pista)',
+    difficulty: 'Difficulté',
+    color: 'Couleur',
+    width: 'Épaisseur',
+    style: 'Style',
+  },
+
+  trailType: {
+    enduro: 'Enduro',
+    dh: 'Descente (DH)',
+    uplift_lift: 'Remontée (télésiège)',
+    uplift_bike: 'Navette',
+  },
+  difficulty: { green: 'Vert', blue: 'Bleu', red: 'Rouge', black: 'Noir' },
+
+  symbol: {
+    selected: 'Symbole sélectionné',
+    size: 'Taille',
+    mirror: 'Miroir',
+    move: 'Déplacer',
+    delete: 'Supprimer',
+    defaultLib: 'Symboles par défaut',
+    customLib: 'Mes symboles',
+  },
+
+  map: {
+    relief: 'Relief',
+    reliefDesc: "Règle l'intensité du terrain entre 0 et 5.",
+    intensity: 'Intensité',
+    shade: 'Ombrage',
+    shadeDesc: "Règle la force de l'ombrage entre 0 et 100 %.",
+    font: 'Police des labels',
+    fontDesc: 'Une seule police pour tous les noms de pistes.',
+    pistaTitle: 'Pistes Pista',
+    pistaDesc: 'Afficher en référence les pistes déjà publiées sur Pista.',
+    showPista: 'Afficher les pistes Pista existantes',
+  },
+
+  exportPanel: {
+    title: 'Projet',
+    desc: 'Ton projet se sauvegarde tout seul dans ton compte. Ici : soumettre à Pista ou exporter.',
+    pubTitle: 'Publication',
+    pubHintNew:
+      'Dessine des pistes : ton spot est créé automatiquement en privé dans ton espace Pista (visible seulement par toi). Demande ensuite la publication pour le mettre en ligne.',
+    requestPub: 'Demander la publication',
+    pubHintDraft:
+      'Ton spot est privé. La demande l’envoie à un admin Pista qui validera avant la mise en ligne publique.',
+    pending: '⏳ Publication demandée — en attente de validation par un admin.',
+    cancelRequest: 'Annuler la demande (pour modifier)',
+    cancelHint: 'Ta soumission est gelée le temps de la revue. Annule pour la modifier puis re-demander.',
+    published: '✅ Publié sur Pista.',
+    localTitle: 'Export local',
+    exportZip: 'Exporter en ZIP',
+    importZip: 'Importer un ZIP',
+  },
+
+  editor: {
+    drawHint: '✏️ Clique sur la carte pour ajouter des points, double-clic pour terminer la piste.',
+    editHint:
+      "🔧 Glisse un point pour le déplacer · clique un point clair au milieu d'un segment pour en ajouter · clic droit sur un point pour le supprimer.",
+    finish: 'Terminer',
+  },
+
+  reposition: {
+    add: '📍 Touche la carte pour ajouter le symbole',
+    move: '📍 Touche la carte pour déplacer le symbole',
+  },
+
+  toast: {
+    private: 'Enregistré sur Pista en privé. Demande la publication quand tu es prêt.',
+    pendingUpdated: 'Soumission mise à jour. Toujours en attente de validation.',
+    pubRequested: 'Demande de publication envoyée — en attente de validation.',
+    pubFail: 'Échec de la demande de publication.',
+    cancelled: 'Demande annulée — tu peux modifier puis re-demander la publication.',
+    cancelFail: 'Impossible d’annuler la demande.',
+  },
+
+  help: {
+    title: 'Aide & tutoriel',
+    desc: 'Une visite guidée et un rappel des fonctionnalités pour prendre l’app en main.',
+    startTour: 'Lancer la visite guidée',
+    tip: '💡 Astuce : maintiens le clic droit sur la carte pour l’incliner et profiter du relief 3D.',
+    tracksTitle: 'Pistes',
+    tracksDesc:
+      'Importe tes GPX ou dessine une piste à la main, retouche les points (déplacer, ajouter, clic droit = supprimer), puis change couleur, épaisseur, style et labels.',
+    symbolsTitle: 'Symboles',
+    symbolsDesc: 'Glisse-dépose des symboles sur la carte, ou importe tes propres SVG.',
+    mapTitle: 'Carte',
+    mapDesc: 'Fond satellite/OSM, relief 3D et ombrage réglables.',
+    exportTitle: 'Export',
+    exportDesc: 'Sauvegarde automatique dans ton compte, export/import en ZIP.',
+  },
+
+  locate: {
+    title: 'Localiser',
+    desc: 'Recherche une adresse, une ville ou un lieu (OpenStreetMap).',
+    placeholder: 'ex : Hossegor, ou une adresse…',
+    none: 'Aucun résultat.',
+    unavailable: 'Recherche indisponible, réessaie.',
+  },
+}

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!authReady" class="auth-loading">Chargement…</div>
+  <div v-if="!authReady" class="auth-loading">{{ t('loading') }}</div>
 
   <LoginView v-else-if="!authSession" />
 
@@ -84,12 +84,7 @@
 
       <div v-if="editorMode !== 'idle'" class="track-editor-bar">
         <span class="track-editor-bar__hint">
-          <template v-if="editorMode === 'draw'">
-            ✏️ Clique sur la carte pour ajouter des points, double-clic pour terminer la piste.
-          </template>
-          <template v-else>
-            🔧 Glisse un point pour le déplacer · clique un point clair au milieu d'un segment pour en ajouter · clic droit sur un point pour le supprimer.
-          </template>
+          {{ editorMode === 'draw' ? t('editor.drawHint') : t('editor.editHint') }}
         </span>
         <div class="track-editor-bar__actions">
           <button
@@ -98,10 +93,10 @@
             class="track-editor-bar__btn primary"
             @click="commitEdit"
           >
-            Terminer
+            {{ t('editor.finish') }}
           </button>
           <button type="button" class="track-editor-bar__btn" @click="cancelEdit">
-            Annuler
+            {{ t('common.cancel') }}
           </button>
         </div>
       </div>
@@ -178,13 +173,13 @@
     </main>
 
     <div class="app-floating-brand">
-      <span class="app-floating-brand__name">Bikepark Illustrator</span>
+      <span class="app-floating-brand__name">{{ t('app.name') }}</span>
     </div>
 
     <div class="account-chip">
       <span class="account-chip__email" :title="authUser?.email ?? ''">{{ authUser?.email }}</span>
-      <button type="button" class="account-chip__logout" title="Se déconnecter" @click="onSignOut">
-        Déconnexion
+      <button type="button" class="account-chip__logout" :title="t('account.logout')" @click="onSignOut">
+        {{ t('account.logout') }}
       </button>
     </div>
 
@@ -192,14 +187,14 @@
 
     <div v-if="repositionSymbolId || pendingAddSymbolType" class="symbol-action-bar">
       <span class="symbol-action-bar__label">
-        {{ pendingAddSymbolType ? '📍 Touche la carte pour ajouter le symbole' : '📍 Touche la carte pour déplacer le symbole' }}
+        {{ pendingAddSymbolType ? t('reposition.add') : t('reposition.move') }}
       </span>
       <button
         type="button"
         class="symbol-action-bar__btn"
         @click="repositionSymbolId = null; pendingAddSymbolType = null"
       >
-        Annuler
+        {{ t('common.cancel') }}
       </button>
     </div>
 
@@ -222,6 +217,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { gpx } from '@mapbox/togeojson'
 import JSZip from 'jszip'
 import localforage from 'localforage'
@@ -251,6 +247,7 @@ import {
   type UploadedSymbolPayload,
 } from './types/symbol'
 
+const { t } = useI18n()
 const { session: authSession, ready: authReady, user: authUser, signOut } = useAuth()
 
 async function onSignOut() {
@@ -268,50 +265,15 @@ const predefinedColors = [
   '#92400e',
 ]
 
-const sidebarSections: SidebarSection[] = [
-  {
-    id: 'track',
-    icon: 'T',
-    title: 'Pistes',
-    description: 'Importer et styliser les traces GPX.',
+const sidebarSections = computed<SidebarSection[]>(() =>
+  (['track', 'symbol', 'map', 'locate', 'export', 'help'] as const).map((id) => ({
+    id,
+    icon: id.charAt(0).toUpperCase(),
+    title: t(`sections.${id}.title`),
+    description: t(`sections.${id}.desc`),
     placeholder: '',
-  },
-  {
-    id: 'symbol',
-    icon: 'S',
-    title: 'Symboles',
-    description: 'Preparer les icones et marqueurs.',
-    placeholder: 'Section reservee aux symboles et reperes a venir.',
-  },
-  {
-    id: 'map',
-    icon: 'M',
-    title: 'Carte',
-    description: 'Regler le fond de carte et les options visuelles.',
-    placeholder: 'Section reservee aux reglages de carte, relief et ombrage.',
-  },
-  {
-    id: 'locate',
-    icon: 'L',
-    title: 'Localiser',
-    description: 'Rechercher une adresse ou un lieu.',
-    placeholder: '',
-  },
-  {
-    id: 'export',
-    icon: 'E',
-    title: 'Export',
-    description: 'Preparer les sorties et exports finaux.',
-    placeholder: 'Section reservee aux options d export et de rendu final.',
-  },
-  {
-    id: 'help',
-    icon: 'H',
-    title: 'Aide',
-    description: 'Visite guidee et rappel des fonctionnalites.',
-    placeholder: 'Section reservee a l aide et au tutoriel.',
-  },
-]
+  })),
+)
 
 const tracks = ref<GpxTrack[]>([])
 const mapViewRef = ref<{
@@ -428,22 +390,22 @@ async function onRequestPublication() {
   if (!currentSpotId.value) return
   const err = await requestPublication(currentSpotId.value)
   if (err) {
-    showToast('Échec de la demande de publication.')
+    showToast(t('toast.pubFail'))
     return
   }
   currentSpotStatus.value = 'submitted'
-  showToast('Demande de publication envoyée — en attente de validation.')
+  showToast(t('toast.pubRequested'))
 }
 
 async function onCancelPublication() {
   if (!currentSpotId.value) return
   const err = await cancelPublication(currentSpotId.value)
   if (err) {
-    showToast('Impossible d’annuler la demande.')
+    showToast(t('toast.cancelFail'))
     return
   }
   currentSpotStatus.value = 'draft'
-  showToast('Demande annulée — tu peux modifier puis re-demander la publication.')
+  showToast(t('toast.cancelled'))
   queuePistaSync() // pousse les éventuelles modifs faites pendant l’attente
 }
 

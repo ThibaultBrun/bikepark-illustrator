@@ -15,7 +15,7 @@
 
   <section v-if="selectedPlacedSymbol && selectedSymbolDefinition" class="panel">
     <div class="library-title-row">
-      <h3>Symbole selectionne</h3>
+      <h3>{{ t('symbol.selected') }}</h3>
       <span class="library-count">Edition</span>
     </div>
 
@@ -39,7 +39,7 @@
       <div class="selected-symbol-meta">
         <div class="symbol-name">{{ selectedSymbolDefinition.label }}</div>
         <div class="size-field">
-          <span>Taille</span>
+          <span>{{ t('symbol.size') }}</span>
 
           <div class="size-options">
             <button
@@ -91,7 +91,7 @@
         </div>
 
         <div class="size-field">
-          <span>Miroir</span>
+          <span>{{ t('symbol.mirror') }}</span>
 
           <div class="size-options">
             <button
@@ -124,14 +124,14 @@
             class="symbol-action-btn"
             @click="$emit('start-move-symbol', selectedPlacedSymbol.id)"
           >
-            <Move class="symbol-action-ic" /> Déplacer
+            <Move class="symbol-action-ic" /> {{ t('symbol.move') }}
           </button>
           <button
             type="button"
             class="symbol-action-btn danger"
             @click="$emit('remove-symbol', { symbolId: selectedPlacedSymbol.id })"
           >
-            <Trash2 class="symbol-action-ic" /> Supprimer
+            <Trash2 class="symbol-action-ic" /> {{ t('symbol.delete') }}
           </button>
         </div>
       </div>
@@ -140,7 +140,7 @@
 
   <section class="panel">
     <div class="library-title-row">
-      <h3>Symboles par defaut</h3>
+      <h3>{{ t('symbol.defaultLib') }}</h3>
       <span class="library-count">{{ defaultSymbolLibrary.length }}</span>
     </div>
 
@@ -170,7 +170,7 @@
 
   <section class="panel">
     <div class="library-title-row">
-      <h3>Symboles utilisateur</h3>
+      <h3>{{ t('symbol.customLib') }}</h3>
       <span class="library-count">{{ customSymbols.length }}</span>
     </div>
 
@@ -205,8 +205,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { FlipHorizontal2, FlipVertical2, Move, RefreshCw, RotateCw, Trash2 } from 'lucide-vue-next'
 import { defaultSymbolLibrary, getSymbolDefinition, type MapSymbol, type SymbolDefinition, type SymbolId } from '../../types/symbol'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   customSymbols: SymbolDefinition[]

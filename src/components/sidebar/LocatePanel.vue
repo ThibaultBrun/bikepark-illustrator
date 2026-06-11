@@ -5,8 +5,8 @@
         <SidebarIcon name="locate" />
       </div>
       <div class="panel-header-copy">
-        <h2>Localiser</h2>
-        <p>Recherche une adresse, une ville ou un lieu (OpenStreetMap).</p>
+        <h2>{{ t('locate.title') }}</h2>
+        <p>{{ t('locate.desc') }}</p>
       </div>
     </div>
 
@@ -15,7 +15,7 @@
         v-model="query"
         type="text"
         class="search-input"
-        placeholder="ex : Hossegor, ou une adresse…"
+        :placeholder="t('locate.placeholder')"
       />
       <button type="submit" class="search-btn" :disabled="busy || !query.trim()">
         {{ busy ? '…' : 'OK' }}
@@ -23,7 +23,7 @@
     </form>
 
     <p v-if="error" class="search-msg error">{{ error }}</p>
-    <p v-else-if="searched && results.length === 0 && !busy" class="search-msg">Aucun résultat.</p>
+    <p v-else-if="searched && results.length === 0 && !busy" class="search-msg">{{ t('locate.none') }}</p>
 
     <ul v-if="results.length" class="results">
       <li v-for="r in results" :key="r.place_id">
@@ -37,7 +37,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SidebarIcon from './SidebarIcon.vue'
+
+const { t } = useI18n()
 
 type NominatimResult = {
   place_id: number
@@ -71,7 +74,7 @@ async function search() {
     results.value = (await res.json()) as NominatimResult[]
   } catch (e) {
     console.error('[nominatim]', e)
-    error.value = 'Recherche indisponible, réessaie.'
+    error.value = t('locate.unavailable')
     results.value = []
   } finally {
     busy.value = false

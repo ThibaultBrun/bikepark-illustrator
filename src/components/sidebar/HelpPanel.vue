@@ -6,64 +6,62 @@
       </div>
 
       <div class="panel-header-copy">
-        <h2>Aide & tutoriel</h2>
-        <p>Une visite guidée et un rappel des fonctionnalités pour prendre l’app en main.</p>
+        <h2>{{ t('help.title') }}</h2>
+        <p>{{ t('help.desc') }}</p>
       </div>
     </div>
 
     <button type="button" class="action-button primary" @click="$emit('start-tour')">
       <Compass class="action-button__icon" aria-hidden="true" />
-      <span>Lancer la visite guidée</span>
+      <span>{{ t('help.startTour') }}</span>
     </button>
 
     <ul class="help-list">
-      <li v-for="item in helpItems" :key="item.title" class="help-item">
+      <li v-for="item in helpItems" :key="item.key" class="help-item">
         <span class="help-item__icon" aria-hidden="true">
           <component :is="item.icon" />
         </span>
         <span class="help-item__copy">
-          <strong>{{ item.title }}</strong>
-          <span>{{ item.description }}</span>
+          <strong>{{ t(`help.${item.key}Title`) }}</strong>
+          <span>{{ t(`help.${item.key}Desc`) }}</span>
         </span>
       </li>
     </ul>
 
-    <p class="help-footnote">
-      💡 Astuce : maintiens le <strong>clic droit</strong> sur la carte pour l’incliner et profiter du relief 3D.
-    </p>
+    <p class="help-footnote">{{ t('help.tip') }}</p>
+
+    <div class="lang-row">
+      <button
+        v-for="l in SUPPORTED_LOCALES"
+        :key="l"
+        type="button"
+        class="lang-btn"
+        :class="{ active: locale === l }"
+        @click="setLocale(l)"
+      >
+        {{ t('lang.' + l) }}
+      </button>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { Compass, Download, Map, Route, Shapes } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import SidebarIcon from './SidebarIcon.vue'
+import { SUPPORTED_LOCALES, setLocale } from '../../i18n'
+
+const { t, locale } = useI18n()
 
 defineEmits<{
   (e: 'start-tour'): void
 }>()
 
 const helpItems = [
-  {
-    icon: Route,
-    title: 'Pistes',
-    description:
-      'Importe tes GPX ou dessine une piste à la main, retouche les points (déplacer, ajouter, clic droit = supprimer), puis change couleur, épaisseur, style et labels.',
-  },
-  {
-    icon: Shapes,
-    title: 'Symboles',
-    description: 'Glisse-dépose des symboles sur la carte, ou importe tes propres SVG.',
-  },
-  {
-    icon: Map,
-    title: 'Carte',
-    description: 'Fond satellite/OSM, relief 3D et ombrage réglables.',
-  },
-  {
-    icon: Download,
-    title: 'Export',
-    description: 'Sauvegarde automatique dans le navigateur, export/import en ZIP.',
-  },
+  { key: 'tracks', icon: Route },
+  { key: 'symbols', icon: Shapes },
+  { key: 'map', icon: Map },
+  { key: 'export', icon: Download },
 ]
 </script>
 
@@ -214,5 +212,28 @@ const helpItems = [
 
 .help-footnote strong {
   color: #f7ecd4;
+}
+
+.lang-row {
+  display: flex;
+  gap: 8px;
+}
+
+.lang-btn {
+  flex: 1;
+  background: #25211a;
+  border: 1px solid #38322a;
+  border-radius: 9px;
+  padding: 8px;
+  color: #b3a890;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lang-btn.active {
+  color: #f0cd8a;
+  border-color: rgba(220, 180, 105, 0.5);
 }
 </style>

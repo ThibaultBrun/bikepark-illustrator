@@ -1,7 +1,7 @@
 <template>
   <section class="panel">
     <label class="field" v-if="projects.length > 1 || currentProjectId">
-      <span>Projet</span>
+      <span>{{ t('track.project') }}</span>
       <div class="project-row">
         <select
           class="text-input grow"
@@ -9,14 +9,14 @@
           @change="$emit('select-project', ($event.target as HTMLSelectElement).value)"
         >
           <option v-for="p in projects" :key="p.id" :value="p.id">
-            {{ p.title || 'Sans nom' }}
+            {{ p.title || t('track.unnamed') }}
           </option>
         </select>
-        <button type="button" class="project-btn" title="Nouveau projet" @click="$emit('new-project')">+</button>
+        <button type="button" class="project-btn" :title="t('track.newProject')" @click="$emit('new-project')">+</button>
         <button
           type="button"
           class="project-btn danger"
-          title="Supprimer ce projet"
+          :title="t('track.deleteProject')"
           @click="confirmDeleteProject"
         >
           <Trash2 class="project-btn__icon" />
@@ -25,12 +25,12 @@
     </label>
 
     <label class="field">
-      <span>Nom du projet</span>
+      <span>{{ t('track.projectName') }}</span>
       <input
         :value="projectName"
         class="text-input"
         type="text"
-        placeholder="Nom du projet"
+        :placeholder="t('track.projectName')"
         @input="$emit('update:project-name', ($event.target as HTMLInputElement).value)"
       />
     </label>
@@ -38,25 +38,25 @@
 
   <section class="panel">
     <label class="upload-btn">
-      <span>Importer des GPX</span>
+      <span>{{ t('track.importGpx') }}</span>
       <input type="file" accept=".gpx" multiple @change="$emit('gpx-files', $event)" />
     </label>
 
     <button type="button" class="draw-btn" data-tour="draw-track" @click="$emit('new-track')">
       <PencilLine class="draw-btn__icon" aria-hidden="true" />
-      <span>Dessiner une piste</span>
+      <span>{{ t('track.draw') }}</span>
     </button>
   </section>
 
   <section class="panel">
     <div class="panel-title-row">
-      <h2>Pistes</h2>
+      <h2>{{ t('track.tracks') }}</h2>
       <div class="panel-title-actions">
         <button
           v-if="tracks.length > 0"
           type="button"
           class="title-action-button"
-          title="Zoomer sur tout le projet"
+          :title="t('track.fitProject')"
           @click="$emit('fit-project')"
         >
           <Repeat2 class="title-action-icon" />
@@ -67,7 +67,7 @@
     </div>
 
     <div v-if="tracks.length === 0" class="empty-state">
-      Aucune trace chargee.
+      {{ t('track.empty') }}
     </div>
 
     <div v-for="track in tracks" :key="track.id" class="track-card" :class="{ expanded: isExpanded(track.id) }">
@@ -76,19 +76,19 @@
           type="button"
           class="expand-button"
           :class="{ open: isExpanded(track.id) }"
-          :title="isExpanded(track.id) ? 'Masquer les reglages' : 'Afficher les reglages'"
+          :title="isExpanded(track.id) ? t('track.hideSettings') : t('track.showSettings')"
           :aria-expanded="isExpanded(track.id)"
           @click="toggleExpanded(track.id)"
         >
           <component :is="isExpanded(track.id) ? ChevronUp : Pencil" class="expand-icon" />
         </button>
 
-        <input v-model="track.label" class="text-input grow" type="text" placeholder="Libelle" />
+        <input v-model="track.label" class="text-input grow" type="text" :placeholder="t('track.labelPh')" />
 
         <button
           type="button"
           class="visibility-button"
-          title="Éditer le tracé sur la carte"
+          :title="t('track.editTrack')"
           @click="$emit('edit-track', track.id)"
         >
           <Spline class="visibility-icon" />
@@ -97,7 +97,7 @@
         <button
           type="button"
           class="visibility-button"
-          title="Zoomer sur cette piste"
+          :title="t('track.fitTrack')"
           @click="$emit('fit-track', track.id)"
         >
           <Repeat2 class="visibility-icon" />
@@ -107,7 +107,7 @@
           type="button"
           class="visibility-button"
           :class="{ active: track.visible }"
-          :title="track.visible ? 'Masquer la trace' : 'Afficher la trace'"
+          :title="track.visible ? t('track.hideTrack') : t('track.showTrack')"
           :aria-pressed="track.visible"
           @click="track.visible = !track.visible"
         >
@@ -117,7 +117,7 @@
         <button
           type="button"
           class="delete-button"
-          title="Supprimer la piste"
+          :title="t('track.deleteTrack')"
           @click="removeTrack(track.id)"
         >
           <Trash2 class="delete-icon" />
@@ -127,22 +127,22 @@
       <div v-if="isExpanded(track.id)" class="track-settings">
         <div class="track-row track-row--pista">
           <label class="field">
-            <span>Type (Pista)</span>
+            <span>{{ t('track.typePista') }}</span>
             <select v-model="track.trailType" class="text-input">
-              <option v-for="o in pistaTrailTypes" :key="o.value" :value="o.value">{{ o.label }}</option>
+              <option v-for="o in pistaTrailTypes" :key="o" :value="o">{{ t('trailType.' + o) }}</option>
             </select>
           </label>
           <label class="field">
-            <span>Difficulté</span>
+            <span>{{ t('track.difficulty') }}</span>
             <select v-model="track.difficulty" class="text-input" :class="`diff-${track.difficulty}`">
-              <option v-for="o in pistaDifficulties" :key="o.value" :value="o.value">{{ o.label }}</option>
+              <option v-for="o in pistaDifficulties" :key="o" :value="o">{{ t('difficulty.' + o) }}</option>
             </select>
           </label>
         </div>
 
         <div class="track-row">
           <label class="field">
-            <span>Couleur</span>
+            <span>{{ t('track.color') }}</span>
             <div class="color-picker">
               <button
                 v-for="color in predefinedColors"
@@ -161,7 +161,7 @@
 
         <div class="track-row">
           <label class="field">
-            <span>Epaisseur</span>
+            <span>{{ t('track.width') }}</span>
             <div class="width-picker">
               <button
                 v-for="width in widthLevels"
@@ -185,7 +185,7 @@
 
         <div class="track-row">
           <label class="field grow">
-            <span>Style</span>
+            <span>{{ t('track.style') }}</span>
             <div class="style-picker">
               <button
                 v-for="styleOption in styleOptions"
@@ -285,8 +285,11 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ChevronUp, Eye, EyeOff, Pencil, PencilLine, Repeat2, Spline, Trash2 } from 'lucide-vue-next'
 import type { GpxTrack, TrackLabelStyle, TrackStyle } from '../../types/gpx'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   tracks: GpxTrack[]
@@ -312,24 +315,14 @@ const emit = defineEmits<{
 
 function confirmDeleteProject() {
   if (!props.currentProjectId) return
-  const name = props.projects.find((p) => p.id === props.currentProjectId)?.title || 'ce projet'
-  if (window.confirm(`Supprimer « ${name} » ? Cette action est définitive.`)) {
+  const name = props.projects.find((p) => p.id === props.currentProjectId)?.title || '—'
+  if (window.confirm(t('track.deleteConfirm', { name }))) {
     emit('delete-project', props.currentProjectId)
   }
 }
 
-const pistaTrailTypes = [
-  { value: 'enduro', label: 'Enduro' },
-  { value: 'dh', label: 'Descente (DH)' },
-  { value: 'uplift_lift', label: 'Remontée (télésiège)' },
-  { value: 'uplift_bike', label: 'Navette' },
-]
-const pistaDifficulties = [
-  { value: 'green', label: 'Vert' },
-  { value: 'blue', label: 'Bleu' },
-  { value: 'red', label: 'Rouge' },
-  { value: 'black', label: 'Noir' },
-]
+const pistaTrailTypes = ['enduro', 'dh', 'uplift_lift', 'uplift_bike'] as const
+const pistaDifficulties = ['green', 'blue', 'red', 'black'] as const
 
 const widthLevels = [2, 4, 6, 8, 10]
 const labelSizeLevels = [13, 15, 17, 19]

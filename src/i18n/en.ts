@@ -1,0 +1,154 @@
+export default {
+  app: { name: 'Bikepark Illustrator' },
+  common: { cancel: 'Cancel', close: 'Close', delete: 'Delete', new: 'New' },
+  lang: { label: 'Language', fr: 'Français', en: 'English', eu: 'Euskara' },
+
+  login: {
+    tagline: 'Sign in with your Pista account to create and submit your spots.',
+    google: 'Continue with Google',
+    or: 'or',
+    email: 'Email',
+    password: 'Password',
+    signin: 'Sign in',
+    signup: 'Create account',
+    toSignup: 'No account yet? Sign up',
+    toSignin: 'Already have an account? Sign in',
+    accountCreated: 'Account created. Check your inbox if a confirmation is required.',
+    errInvalid: 'Wrong email or password.',
+    errExists: 'This email already has an account.',
+  },
+
+  account: { logout: 'Sign out' },
+  loading: 'Loading…',
+
+  sections: {
+    track: { title: 'Trails', desc: 'Import and style GPX tracks.' },
+    symbol: { title: 'Symbols', desc: 'Prepare icons and markers.' },
+    map: { title: 'Map', desc: 'Adjust the basemap and visual options.' },
+    locate: { title: 'Locate', desc: 'Search for an address or place.' },
+    export: { title: 'Export', desc: 'Prepare final outputs and exports.' },
+    help: { title: 'Help', desc: 'Guided tour and feature reminder.' },
+  },
+
+  track: {
+    project: 'Project',
+    projectName: 'Project name',
+    projectNamePh: 'My bikepark',
+    newProject: 'New project',
+    deleteProject: 'Delete this project',
+    deleteConfirm: 'Delete “{name}”? This cannot be undone.',
+    unnamed: 'Untitled',
+    importGpx: 'Import GPX',
+    draw: 'Draw a trail',
+    tracks: 'Trails',
+    fitProject: 'Zoom to whole project',
+    empty: 'No track loaded.',
+    labelPh: 'Label',
+    editTrack: 'Edit the trail on the map',
+    fitTrack: 'Zoom to this trail',
+    hideTrack: 'Hide trail',
+    showTrack: 'Show trail',
+    showSettings: 'Show settings',
+    hideSettings: 'Hide settings',
+    deleteTrack: 'Delete trail',
+    typePista: 'Type (Pista)',
+    difficulty: 'Difficulty',
+    color: 'Color',
+    width: 'Width',
+    style: 'Style',
+  },
+
+  trailType: {
+    enduro: 'Enduro',
+    dh: 'Downhill (DH)',
+    uplift_lift: 'Uplift (chairlift)',
+    uplift_bike: 'Shuttle',
+  },
+  difficulty: { green: 'Green', blue: 'Blue', red: 'Red', black: 'Black' },
+
+  symbol: {
+    selected: 'Selected symbol',
+    size: 'Size',
+    mirror: 'Mirror',
+    move: 'Move',
+    delete: 'Delete',
+    defaultLib: 'Default symbols',
+    customLib: 'My symbols',
+  },
+
+  map: {
+    relief: 'Relief',
+    reliefDesc: 'Set the terrain intensity between 0 and 5.',
+    intensity: 'Intensity',
+    shade: 'Hillshade',
+    shadeDesc: 'Set the hillshade strength between 0 and 100%.',
+    font: 'Label font',
+    fontDesc: 'A single font for all trail names.',
+    pistaTitle: 'Pista trails',
+    pistaDesc: 'Show trails already published on Pista as a reference.',
+    showPista: 'Show existing Pista trails',
+  },
+
+  exportPanel: {
+    title: 'Project',
+    desc: 'Your project saves automatically to your account. Here: submit to Pista or export.',
+    pubTitle: 'Publication',
+    pubHintNew:
+      'Draw trails: your spot is created automatically and privately in your Pista space (visible only to you). Then request publication to put it online.',
+    requestPub: 'Request publication',
+    pubHintDraft:
+      'Your spot is private. The request sends it to a Pista admin who will review it before going public.',
+    pending: '⏳ Publication requested — awaiting admin review.',
+    cancelRequest: 'Cancel request (to edit)',
+    cancelHint: 'Your submission is frozen during review. Cancel to edit it, then request again.',
+    published: '✅ Published on Pista.',
+    localTitle: 'Local export',
+    exportZip: 'Export as ZIP',
+    importZip: 'Import a ZIP',
+  },
+
+  editor: {
+    drawHint: '✏️ Tap the map to add points, double-tap to finish the trail.',
+    editHint:
+      '🔧 Drag a point to move it · tap a light midpoint of a segment to add one · right-click a point to delete it.',
+    finish: 'Done',
+  },
+
+  reposition: {
+    add: '📍 Tap the map to add the symbol',
+    move: '📍 Tap the map to move the symbol',
+  },
+
+  toast: {
+    private: 'Saved privately on Pista. Request publication when you are ready.',
+    pendingUpdated: 'Submission updated. Still awaiting review.',
+    pubRequested: 'Publication requested — awaiting review.',
+    pubFail: 'Publication request failed.',
+    cancelled: 'Request cancelled — you can edit then request publication again.',
+    cancelFail: 'Could not cancel the request.',
+  },
+
+  help: {
+    title: 'Help & tutorial',
+    desc: 'A guided tour and feature reminder to get started.',
+    startTour: 'Start the guided tour',
+    tip: '💡 Tip: hold right-click on the map to tilt it and enjoy the 3D relief.',
+    tracksTitle: 'Trails',
+    tracksDesc:
+      'Import your GPX or draw a trail by hand, edit points (move, add, right-click = delete), then change color, width, style and labels.',
+    symbolsTitle: 'Symbols',
+    symbolsDesc: 'Drag and drop symbols on the map, or import your own SVGs.',
+    mapTitle: 'Map',
+    mapDesc: 'Satellite/OSM basemap, adjustable 3D relief and hillshade.',
+    exportTitle: 'Export',
+    exportDesc: 'Auto-save to your account, ZIP export/import.',
+  },
+
+  locate: {
+    title: 'Locate',
+    desc: 'Search an address, a town or a place (OpenStreetMap).',
+    placeholder: 'e.g. Hossegor, or an address…',
+    none: 'No result.',
+    unavailable: 'Search unavailable, try again.',
+  },
+}

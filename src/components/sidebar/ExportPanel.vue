@@ -6,51 +6,43 @@
       </div>
 
       <div class="panel-header-copy">
-        <h2>Projet</h2>
-        <p>Ton projet se sauvegarde tout seul dans ton compte. Ici : soumettre à Pista ou exporter.</p>
+        <h2>{{ t('exportPanel.title') }}</h2>
+        <p>{{ t('exportPanel.desc') }}</p>
       </div>
     </div>
 
     <div class="block">
-      <div class="block-title">Publication</div>
+      <div class="block-title">{{ t('exportPanel.pubTitle') }}</div>
 
-      <p v-if="!spotStatus" class="hint">
-        Dessine des pistes : ton spot est créé automatiquement <strong>en privé</strong> dans ton
-        espace Pista (visible seulement par toi). Demande ensuite la publication pour le mettre en ligne.
-      </p>
+      <p v-if="!spotStatus" class="hint">{{ t('exportPanel.pubHintNew') }}</p>
 
       <template v-else-if="spotStatus === 'draft'">
         <button type="button" class="action-button primary" @click="$emit('request-publication')">
-          Demander la publication
+          {{ t('exportPanel.requestPub') }}
         </button>
-        <p class="hint">
-          Ton spot est <strong>privé</strong>. La demande l'envoie à un admin Pista qui validera
-          avant la mise en ligne publique.
-        </p>
+        <p class="hint">{{ t('exportPanel.pubHintDraft') }}</p>
       </template>
 
       <template v-else-if="spotStatus === 'submitted'">
-        <p class="status status--pending">
-          ⏳ Publication demandée — en attente de validation par un admin.
-        </p>
+        <p class="status status--pending">{{ t('exportPanel.pending') }}</p>
         <button type="button" class="action-button" @click="$emit('cancel-publication')">
-          Annuler la demande (pour modifier)
+          {{ t('exportPanel.cancelRequest') }}
         </button>
-        <p class="hint">Ta soumission est gelée le temps de la revue. Annule pour la modifier puis re-demander.</p>
+        <p class="hint">{{ t('exportPanel.cancelHint') }}</p>
       </template>
       <p v-else-if="spotStatus === 'published'" class="status status--ok">
-        ✅ Publié sur Pista.
+        {{ t('exportPanel.published') }}
       </p>
     </div>
 
     <div class="block">
-      <div class="block-title">Export local</div>
+      <div class="block-title">{{ t('exportPanel.localTitle') }}</div>
       <div class="action-grid">
         <button type="button" class="action-button" @click="$emit('export-zip')">
-          Exporter en ZIP
+          {{ t('exportPanel.exportZip') }}
         </button>
         <label class="action-button import-button">
-          <span>Importer un ZIP</span>
+          <span>{{ t('exportPanel.importZip') }}</span>
           <input type="file" accept=".zip" @change="onZipSelected" />
         </label>
       </div>
@@ -59,7 +51,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import SidebarIcon from './SidebarIcon.vue'
+
+const { t } = useI18n()
 
 defineProps<{
   spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null

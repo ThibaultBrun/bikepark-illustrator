@@ -5,14 +5,14 @@
         <SidebarIcon name="mountain" />
       </div>
       <div class="panel-header-copy">
-        <h2>Relief</h2>
-        <p>Regle l intensite du terrain entre 0 et 5.</p>
+        <h2>{{ t('map.relief') }}</h2>
+        <p>{{ t('map.reliefDesc') }}</p>
       </div>
     </div>
 
     <label class="slider-field">
       <div class="slider-label-row">
-        <span>Intensite</span>
+        <span>{{ t('map.intensity') }}</span>
         <strong>{{ settings.terrain.toFixed(1) }}</strong>
       </div>
       <input
@@ -32,8 +32,8 @@
         <SidebarIcon name="blend" />
       </div>
       <div class="panel-header-copy">
-        <h2>Ombrage</h2>
-        <p>Regle la force de l ombrage entre 0 et 100 %.</p>
+        <h2>{{ t('map.shade') }}</h2>
+        <p>{{ t('map.shadeDesc') }}</p>
       </div>
     </div>
 
@@ -59,8 +59,8 @@
         <SidebarIcon name="symbol" />
       </div>
       <div class="panel-header-copy">
-        <h2>Police des labels</h2>
-        <p>Une seule police pour tous les noms de pistes.</p>
+        <h2>{{ t('map.font') }}</h2>
+        <p>{{ t('map.fontDesc') }}</p>
       </div>
     </div>
 
@@ -116,8 +116,8 @@
         <SidebarIcon name="track" />
       </div>
       <div class="panel-header-copy">
-        <h2>Pistes Pista</h2>
-        <p>Afficher en référence les pistes déjà publiées sur Pista.</p>
+        <h2>{{ t('map.pistaTitle') }}</h2>
+        <p>{{ t('map.pistaDesc') }}</p>
       </div>
     </div>
 
@@ -127,15 +127,18 @@
         :checked="settings.showPistaTrails"
         @change="updateShowPistaTrails"
       />
-      <span>Afficher les pistes Pista existantes</span>
+      <span>{{ t('map.showPista') }}</span>
     </label>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { mapLabelFontOptions, type MapLabelFont, type MapSettings } from './map-settings'
 import SidebarIcon from './SidebarIcon.vue'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   settings: MapSettings
