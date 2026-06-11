@@ -81,19 +81,46 @@
         @track-drawn="onTrackDrawn"
         @track-geometry-updated="onTrackGeometryUpdated"
         @editor-closed="onEditorClosed"
+        @editor-state="onEditorState"
         @symbol-repositioned="onSymbolRepositioned"
         @request-move-symbol="onStartMoveSymbol"
       />
 
       <div v-if="editorMode !== 'idle'" class="track-editor-bar">
+        <div class="track-editor-bar__modes">
+          <button
+            type="button"
+            class="track-editor-bar__mode"
+            :class="{ active: editorMode === 'draw' }"
+            @click="setEditorMode('draw')"
+          >
+            {{ t('editor.modeDraw') }}
+          </button>
+          <button
+            type="button"
+            class="track-editor-bar__mode"
+            :class="{ active: editorMode === 'edit' }"
+            @click="setEditorMode('edit')"
+          >
+            {{ t('editor.modeEdit') }}
+          </button>
+        </div>
         <span class="track-editor-bar__hint">
           {{ editorMode === 'draw' ? t('editor.drawHint') : t('editor.editHint') }}
         </span>
         <div class="track-editor-bar__actions">
           <button
-            v-if="editorMode === 'edit'"
+            type="button"
+            class="track-editor-bar__btn"
+            :disabled="!editorCanUndo"
+            @click="editorUndo"
+          >
+            {{ t('editor.undo') }}
+          </button>
+          <button
             type="button"
             class="track-editor-bar__btn primary"
+            :disabled="editorPointCount < 2"
             @click="commitEdit"
           >
             {{ t('editor.finish') }}
@@ -284,6 +311,8 @@ const mapViewRef = ref<{
   beginEditTrack: (track: GpxTrack) => void
   commitEditor: () => void
   cancelEditor: () => void
+  setEditorMode: (mode: 'draw' | 'edit') => void
+  editorUndo: () => void
   flyTo: (lng: number, lat: number, zoom?: number) => void
 } | null>(null)
 
@@ -291,6 +320,21 @@ function onLocate(payload: { lng: number; lat: number; label: string }) {
   mapViewRef.value?.flyTo(payload.lng, payload.lat, 14)
 }
 const editorMode = ref<'idle' | 'draw' | 'edit'>('idle')
+const editorPointCount = ref(0)
+const editorCanUndo = ref(false)
+
+function onEditorState(payload: { mode: 'draw' | 'edit'; pointCount: number; canUndo: boolean }) {
+  if (editorMode.value !== 'idle') editorMode.value = payload.mode
+  editorPointCount.value = payload.pointCount
+  editorCanUndo.value = payload.canUndo
+}
+function setEditorMode(mode: 'draw' | 'edit') {
+  editorMode.value = mode
+  mapViewRef.value?.setEditorMode(mode)
+}
+function editorUndo() {
+  mapViewRef.value?.editorUndo()
+}
 const symbols = ref<MapSymbol[]>([])
 const customSymbols = ref<SymbolDefinition[]>([])
 const projectName = ref('Mon bikepark')
@@ -1009,6 +1053,8 @@ function onTrackGeometryUpdated(payload: { trackId: string; coords: [number, num
 
 function onEditorClosed() {
   editorMode.value = 'idle'
+  editorPointCount.value = 0
+  editorCanUndo.value = false
 }
 
 function onFitProject() {
@@ -1367,6 +1413,41 @@ watch(projectName, (name) => {
   border-color: rgba(220, 180, 105, 0.5);
   background: linear-gradient(135deg, rgba(205, 163, 90, 0.95), rgba(220, 180, 105, 0.95));
   color: #f7ecd4;
+}
+
+.track-editor-bar__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.track-editor-bar__modes {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid rgba(220, 180, 105, 0.4);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.track-editor-bar__mode {
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: #d8ccb6;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.track-editor-bar__mode:hover {
+  background: rgba(220, 180, 105, 0.15);
+}
+
+.track-editor-bar__mode.active {
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.95), rgba(220, 180, 105, 0.95));
+  color: #2a2118;
 }
 
 @media (max-width: 960px) {

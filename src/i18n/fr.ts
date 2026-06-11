@@ -115,9 +115,13 @@ export default {
   },
 
   editor: {
-    drawHint: '✏️ Clique pour ajouter des points · glisse un point pour le déplacer · clic droit pour le supprimer · double-clic pour terminer.',
+    modeDraw: 'Dessiner',
+    modeEdit: 'Modifier',
+    undo: 'Défaire',
+    drawHint:
+      '✏️ Clique pour ajouter des points (Maj = au début) · glisse pour placer · glisse un point pour le déplacer · clic droit / appui long pour supprimer.',
     editHint:
-      "🔧 Glisse un point pour le déplacer · clique un point clair au milieu d'un segment pour en ajouter · clic droit sur un point pour le supprimer.",
+      '🔧 Clique sur la ligne pour insérer un point · glisse un point pour le déplacer · clic droit / appui long pour le supprimer.',
     finish: 'Terminer',
   },
 

@@ -115,9 +115,13 @@ export default {
   },
 
   editor: {
-    drawHint: '✏️ Toca para añadir puntos · arrastra un punto para moverlo · clic derecho para eliminar · doble toque para terminar.',
+    modeDraw: 'Dibujar',
+    modeEdit: 'Editar',
+    undo: 'Deshacer',
+    drawHint:
+      '✏️ Toca para añadir puntos (Mayús = al inicio) · arrastra para colocar · arrastra un punto para moverlo · clic derecho / pulsación larga para eliminar.',
     editHint:
-      '🔧 Arrastra un punto para moverlo · toca un punto claro en medio de un segmento para añadir uno · clic derecho en un punto para eliminarlo.',
+      '🔧 Toca la línea para insertar un punto · arrastra un punto para moverlo · clic derecho / pulsación larga para eliminar.',
     finish: 'Terminar',
   },
 

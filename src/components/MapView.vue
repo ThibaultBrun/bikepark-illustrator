@@ -43,8 +43,6 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
 import { Trash2 } from 'lucide-vue-next'
-import { TerraDraw, TerraDrawLineStringMode, TerraDrawSelectMode } from 'terra-draw'
-import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { fetchPublishedTrails } from '../lib/pistaTrails'
 import type { GpxTrack } from '../types/gpx'
 import type { MapCameraState } from '../types/project'
@@ -104,6 +102,7 @@ const emit = defineEmits<{
   (e: 'track-drawn', payload: { coords: [number, number][] }): void
   (e: 'track-geometry-updated', payload: { trackId: string; coords: [number, number][] }): void
   (e: 'editor-closed'): void
+  (e: 'editor-state', payload: { mode: 'draw' | 'edit'; pointCount: number; canUndo: boolean }): void
   (e: 'project-render-progress', payload: {
     sessionId: number
     stage: 'tracks' | 'symbols' | 'map'
@@ -120,9 +119,16 @@ const isDraggingPlacedSymbol = ref(false)
 const isPlacedSymbolOverTrash = ref(false)
 
 let map: maplibregl.Map | null = null
-let draw: TerraDraw | null = null
 let editorActive = false
 let editingTrackId: string | null = null
+// Éditeur de tracé maison (style Pista) : markers DOM + source GeoJSON.
+let editorMode: 'draw' | 'edit' = 'draw'
+let editorCoords: [number, number][] = []
+let editorMarkers: maplibregl.Marker[] = []
+let editorHistory: [number, number][][] = []
+let editorDrawDragIdx: number | null = null
+let editorDocHandlers: Array<() => void> = []
+let suppressNextEditorClick = false
 let draggedTrackId: string | null = null
 let draggedPlacedSymbolId: string | null = null
 let isDraggingLabel = false
@@ -1412,122 +1418,318 @@ function setTrackLayersVisible(trackId: string, visible: boolean) {
   }
 }
 
-function ensureDrawInstance() {
-  if (draw || !map) return
-  draw = new TerraDraw({
-    adapter: new TerraDrawMapLibreGLAdapter({ map }),
-    modes: [
-      new TerraDrawLineStringMode({ editable: true }),
-      new TerraDrawSelectMode({
-        flags: {
-          linestring: {
-            feature: {
-              draggable: true,
-              coordinates: { midpoints: true, draggable: true, deletable: true },
-            },
-          },
-        },
-      }),
-    ],
-  })
+// Couleur de l'éditeur (accent Pista doré).
+const EDITOR_ACCENT = '#dcb469'
 
-  draw.on('finish', (id, context) => {
-    // En mode dessin, on ne capture que la fin d'un nouveau tracé.
-    if (context.action !== 'draw' || editingTrackId !== null) return
-    const coords = lineCoordsFromFeatureId(id)
-    if (coords && coords.length >= 2) {
-      emit('track-drawn', { coords })
-    }
-    exitEditor()
+function emitEditorState() {
+  emit('editor-state', {
+    mode: editorMode,
+    pointCount: editorCoords.length,
+    canUndo: editorHistory.length > 0,
   })
 }
 
-function lineCoordsFromFeatureId(id: string | number): [number, number][] | null {
-  const feature = draw?.getSnapshotFeature(id)
-  if (!feature || feature.geometry.type !== 'LineString') return null
-  return feature.geometry.coordinates as [number, number][]
+function editorSnapshot() {
+  editorHistory.push(editorCoords.map((c) => [c[0], c[1]] as [number, number]))
+  if (editorHistory.length > 50) editorHistory.shift()
+}
+
+function ensureEditorLayers() {
+  if (!map || map.getSource('bpi-edit-line')) return
+  map.addSource('bpi-edit-line', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+  })
+  map.addLayer({
+    id: 'bpi-edit-line',
+    type: 'line',
+    source: 'bpi-edit-line',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': EDITOR_ACCENT, 'line-width': 5, 'line-opacity': 0.95 },
+  })
+  // Couche large invisible pour capter les clics près de la ligne (insertion).
+  map.addLayer({
+    id: 'bpi-edit-line-hit',
+    type: 'line',
+    source: 'bpi-edit-line',
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#000', 'line-width': 28, 'line-opacity': 0.001 },
+  })
+  map.addSource('bpi-edit-ghost', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+  map.addLayer({
+    id: 'bpi-edit-ghost',
+    type: 'circle',
+    source: 'bpi-edit-ghost',
+    paint: {
+      'circle-radius': 7,
+      'circle-color': EDITOR_ACCENT,
+      'circle-stroke-width': 2,
+      'circle-stroke-color': '#fff',
+    },
+  })
+
+  map.on('click', 'bpi-edit-line-hit', onEditorLineClick)
+  map.on('click', onEditorMapClick)
+  map.on('mousedown', onEditorMapMouseDown)
+  map.on('mouseenter', 'bpi-edit-line-hit', onEditorLineEnter)
+  map.on('mouseleave', 'bpi-edit-line-hit', onEditorLineLeave)
+}
+
+function removeEditorLayers() {
+  if (!map) return
+  map.off('click', 'bpi-edit-line-hit', onEditorLineClick)
+  map.off('click', onEditorMapClick)
+  map.off('mousedown', onEditorMapMouseDown)
+  map.off('mouseenter', 'bpi-edit-line-hit', onEditorLineEnter)
+  map.off('mouseleave', 'bpi-edit-line-hit', onEditorLineLeave)
+  for (const id of ['bpi-edit-ghost', 'bpi-edit-line-hit', 'bpi-edit-line']) {
+    if (map.getLayer(id)) map.removeLayer(id)
+  }
+  for (const id of ['bpi-edit-ghost', 'bpi-edit-line']) {
+    if (map.getSource(id)) map.removeSource(id)
+  }
+  map.getCanvas().style.cursor = ''
+}
+
+function clearEditorMarkers() {
+  for (const m of editorMarkers) m.remove()
+  editorMarkers = []
+}
+
+function buildEditorMarker(i: number, c: [number, number]) {
+  const el = document.createElement('div')
+  el.className = 'bpi-edit-marker'
+
+  const marker = new maplibregl.Marker({ element: el, draggable: true, anchor: 'center' })
+    .setLngLat(c)
+    .addTo(map!)
+
+  marker.on('dragstart', editorSnapshot)
+  marker.on('drag', () => {
+    const ll = marker.getLngLat()
+    editorCoords[i] = [ll.lng, ll.lat]
+    updateEditorLine()
+  })
+  marker.on('dragend', emitEditorState)
+
+  const removePoint = () => {
+    if (editorCoords.length <= 2) return
+    editorSnapshot()
+    editorCoords.splice(i, 1)
+    refreshEditorAll()
+  }
+
+  el.addEventListener('click', (ev) => {
+    ev.stopPropagation()
+    if (ev.altKey) removePoint() // Alt+clic = supprimer (desktop)
+  })
+  // Clic droit = supprimer le point.
+  el.addEventListener('contextmenu', (ev) => {
+    ev.preventDefault()
+    ev.stopPropagation()
+    removePoint()
+  })
+  // Appui long (mobile) = supprimer le point.
+  let lpTimer: ReturnType<typeof setTimeout> | null = null
+  el.addEventListener(
+    'touchstart',
+    () => {
+      lpTimer = setTimeout(removePoint, 550)
+    },
+    { passive: true },
+  )
+  const cancelLp = () => {
+    if (lpTimer) clearTimeout(lpTimer)
+    lpTimer = null
+  }
+  el.addEventListener('touchend', cancelLp)
+  el.addEventListener('touchmove', cancelLp)
+
+  return marker
+}
+
+function refreshEditorAll() {
+  if (!map) return
+  clearEditorMarkers()
+  editorCoords.forEach((c, i) => editorMarkers.push(buildEditorMarker(i, c)))
+  updateEditorLine()
+  emitEditorState()
+}
+
+function updateEditorLine() {
+  const src = map?.getSource('bpi-edit-line') as maplibregl.GeoJSONSource | undefined
+  if (!src) return
+  if (editorCoords.length < 2) {
+    src.setData({ type: 'FeatureCollection', features: [] })
+    return
+  }
+  src.setData({
+    type: 'Feature',
+    properties: {},
+    geometry: { type: 'LineString', coordinates: editorCoords },
+  })
+}
+
+function updateEditorGhost(pt: [number, number] | null) {
+  const src = map?.getSource('bpi-edit-ghost') as maplibregl.GeoJSONSource | undefined
+  if (!src) return
+  src.setData(
+    pt
+      ? { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: pt } }
+      : { type: 'FeatureCollection', features: [] },
+  )
+}
+
+function pointToSegmentDist(p: [number, number], a: [number, number], b: [number, number]) {
+  const dx = b[0] - a[0]
+  const dy = b[1] - a[1]
+  const len2 = dx * dx + dy * dy
+  if (len2 === 0) return Math.hypot(p[0] - a[0], p[1] - a[1])
+  let tt = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2
+  tt = Math.max(0, Math.min(1, tt))
+  return Math.hypot(p[0] - (a[0] + tt * dx), p[1] - (a[1] + tt * dy))
+}
+
+function editorInsertionIndex(lng: number, lat: number): number {
+  if (editorCoords.length < 2) return editorCoords.length
+  let bestIdx = -1
+  let bestD = Infinity
+  for (let i = 0; i < editorCoords.length - 1; i++) {
+    const d = pointToSegmentDist([lng, lat], editorCoords[i]!, editorCoords[i + 1]!)
+    if (d < bestD) {
+      bestD = d
+      bestIdx = i + 1
+    }
+  }
+  return bestIdx === -1 ? editorCoords.length : bestIdx
+}
+
+// Mode Modifier : clic sur la ligne → insère un point au segment le plus proche.
+function onEditorLineClick(e: maplibregl.MapLayerMouseEvent) {
+  if (editorMode !== 'edit') return
+  editorSnapshot()
+  const idx = editorInsertionIndex(e.lngLat.lng, e.lngLat.lat)
+  editorCoords.splice(idx, 0, [e.lngLat.lng, e.lngLat.lat])
+  refreshEditorAll()
+  suppressNextEditorClick = true // évite un double-ajout via onEditorMapClick
+}
+
+// Mode Dessiner : tap/clic sur la carte → ajoute un point (mobile + simple clic).
+function onEditorMapClick(e: maplibregl.MapMouseEvent) {
+  if (editorMode !== 'draw') return
+  if (suppressNextEditorClick) {
+    suppressNextEditorClick = false
+    return
+  }
+  const tgt = (e.originalEvent?.target as HTMLElement | null) ?? null
+  if (tgt && tgt.closest('.bpi-edit-marker')) return
+  editorSnapshot()
+  editorCoords.push([e.lngLat.lng, e.lngLat.lat])
+  refreshEditorAll()
+}
+
+// Mode Dessiner (desktop) : mousedown → ajoute + glisse-place dans le même geste.
+function onEditorMapMouseDown(e: maplibregl.MapMouseEvent) {
+  if (editorMode !== 'draw' || !map) return
+  const orig = (e.originalEvent ?? {}) as MouseEvent
+  if (orig.button !== 0 || orig.ctrlKey || orig.metaKey) return
+  const tgt = orig.target as HTMLElement | null
+  if (tgt && tgt.closest('.bpi-edit-marker')) return
+
+  editorSnapshot()
+  const insertAtStart = orig.shiftKey
+  const pt: [number, number] = [e.lngLat.lng, e.lngLat.lat]
+  if (insertAtStart) editorCoords.unshift(pt)
+  else editorCoords.push(pt)
+  editorDrawDragIdx = insertAtStart ? 0 : editorCoords.length - 1
+  suppressNextEditorClick = true // le click qui suit le mousedown ne doit pas re-ajouter
+
+  // Pas de marker DOM tout de suite (il intercepterait le mousemove) — ghost circle.
+  updateEditorLine()
+  updateEditorGhost(pt)
+  map.dragPan.disable()
+  orig.preventDefault()
+}
+
+function onEditorLineEnter() {
+  if (editorMode === 'edit' && map) map.getCanvas().style.cursor = 'crosshair'
+}
+function onEditorLineLeave() {
+  if (map) map.getCanvas().style.cursor = editorMode === 'draw' ? 'crosshair' : ''
+}
+
+function onEditorDocMouseMove(ev: MouseEvent) {
+  if (editorDrawDragIdx === null || !map) return
+  const rect = map.getContainer().getBoundingClientRect()
+  const ll = map.unproject([ev.clientX - rect.left, ev.clientY - rect.top])
+  const c: [number, number] = [ll.lng, ll.lat]
+  editorCoords[editorDrawDragIdx] = c
+  updateEditorLine()
+  updateEditorGhost(c)
+}
+function onEditorDocMouseUp() {
+  if (editorDrawDragIdx === null || !map) return
+  editorDrawDragIdx = null
+  map.dragPan.enable()
+  updateEditorGhost(null)
+  refreshEditorAll() // crée le vrai marker maintenant
+}
+
+function setEditorMode(m: 'draw' | 'edit') {
+  editorMode = m
+  if (map) map.getCanvas().style.cursor = m === 'draw' ? 'crosshair' : ''
+  emitEditorState()
+}
+
+function editorUndo() {
+  const prev = editorHistory.pop()
+  if (!prev) return
+  editorCoords = prev
+  refreshEditorAll()
+}
+
+function startEditor(initialCoords: [number, number][], mode: 'draw' | 'edit') {
+  if (!map) return
+  editorActive = true
+  editorCoords = initialCoords.map(([lng, lat]) => [lng, lat] as [number, number])
+  editorHistory = []
+  editorDrawDragIdx = null
+  suppressNextEditorClick = false
+  editorMode = mode
+  ensureEditorLayers()
+  // Drag-place desktop : on écoute au niveau document (les markers masqueraient sinon).
+  const mm = onEditorDocMouseMove
+  const mu = onEditorDocMouseUp
+  window.addEventListener('mousemove', mm)
+  window.addEventListener('mouseup', mu)
+  editorDocHandlers.push(() => {
+    window.removeEventListener('mousemove', mm)
+    window.removeEventListener('mouseup', mu)
+  })
+  if (map) map.getCanvas().style.cursor = mode === 'draw' ? 'crosshair' : ''
+  refreshEditorAll()
 }
 
 function beginDrawTrack() {
   if (!map) return
-  ensureDrawInstance()
-  if (!draw) return
   editingTrackId = null
-  editorActive = true
-  draw.start()
-  draw.setMode('linestring')
-}
-
-function loadEditFeature(coords: [number, number][]) {
-  if (!draw) return
-  // terra-draw rejette par défaut les coordonnées au-delà de 9 décimales.
-  const safe = coords.map(
-    ([lng, lat]) => [Math.round(lng * 1e8) / 1e8, Math.round(lat * 1e8) / 1e8] as [number, number],
-  )
-  draw.clear()
-  draw.addFeatures([
-    {
-      type: 'Feature',
-      geometry: { type: 'LineString', coordinates: safe },
-      properties: { mode: 'linestring' },
-    },
-  ])
-  draw.setMode('select')
-  const snapshot = draw.getSnapshot()
-  if (snapshot[0]) draw.selectFeature(snapshot[0].id)
-}
-
-// Clic droit sur un point en mode édition : supprime le sommet le plus proche.
-function handleEditorContextMenu(e: maplibregl.MapMouseEvent) {
-  if (!map || !draw || editingTrackId === null) return
-  e.preventDefault()
-  const feature = draw.getSnapshot()[0]
-  if (!feature || feature.geometry.type !== 'LineString') return
-  const coords = feature.geometry.coordinates as [number, number][]
-  if (coords.length <= 2) return
-
-  let nearest = -1
-  let best = Infinity
-  for (let i = 0; i < coords.length; i++) {
-    const p = map.project(coords[i] as [number, number])
-    const dx = p.x - e.point.x
-    const dy = p.y - e.point.y
-    const d = dx * dx + dy * dy
-    if (d < best) {
-      best = d
-      nearest = i
-    }
-  }
-
-  const hitRadius = 14
-  if (nearest === -1 || best > hitRadius * hitRadius) return
-  coords.splice(nearest, 1)
-  loadEditFeature(coords)
+  startEditor([], 'draw')
 }
 
 function beginEditTrack(track: GpxTrack) {
   if (!map) return
   const coords = flattenLineCoordinates(track.geojson)
   if (coords.length < 2) return
-  ensureDrawInstance()
-  if (!draw) return
   editingTrackId = track.id
-  editorActive = true
   setTrackLayersVisible(track.id, false)
-  draw.start()
-  loadEditFeature(coords)
-  map.on('contextmenu', handleEditorContextMenu)
+  startEditor(coords, 'edit')
 }
 
 function commitEditor() {
-  if (editingTrackId && draw) {
-    const feature = draw.getSnapshot()[0]
-    if (feature && feature.geometry.type === 'LineString') {
-      const coords = feature.geometry.coordinates as [number, number][]
-      if (coords.length >= 2) {
-        emit('track-geometry-updated', { trackId: editingTrackId, coords })
-      }
-    }
+  if (editorCoords.length >= 2) {
+    const coords = editorCoords.map(([lng, lat]) => [lng, lat] as [number, number])
+    if (editingTrackId) emit('track-geometry-updated', { trackId: editingTrackId, coords })
+    else emit('track-drawn', { coords })
   }
   exitEditor()
 }
@@ -1538,16 +1740,16 @@ function cancelEditor() {
 
 function exitEditor() {
   const restoreId = editingTrackId
-  if (map) map.off('contextmenu', handleEditorContextMenu)
-  if (draw) {
-    try {
-      draw.stop()
-    } catch {
-      /* déjà arrêté */
-    }
-  }
+  clearEditorMarkers()
+  removeEditorLayers()
+  for (const fn of editorDocHandlers) fn()
+  editorDocHandlers = []
+  editorDrawDragIdx = null
+  editorCoords = []
+  editorHistory = []
   editorActive = false
   editingTrackId = null
+  if (map) map.dragPan.enable()
   if (restoreId) setTrackLayersVisible(restoreId, true)
   emit('editor-closed')
 }
@@ -1635,7 +1837,15 @@ function flyTo(lng: number, lat: number, zoom = 14) {
   map.flyTo({ center: [lng, lat], zoom, essential: true })
 }
 
-defineExpose({ beginDrawTrack, beginEditTrack, commitEditor, cancelEditor, flyTo })
+defineExpose({
+  beginDrawTrack,
+  beginEditTrack,
+  commitEditor,
+  cancelEditor,
+  setEditorMode,
+  editorUndo,
+  flyTo,
+})
 
 onMounted(() => {
   if (!mapContainer.value) return

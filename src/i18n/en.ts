@@ -115,9 +115,13 @@ export default {
   },
 
   editor: {
-    drawHint: '✏️ Tap to add points · drag a point to move it · right-click to delete · double-tap to finish.',
+    modeDraw: 'Draw',
+    modeEdit: 'Edit',
+    undo: 'Undo',
+    drawHint:
+      '✏️ Click to add points (Shift = at start) · drag to place · drag a point to move it · right-click / long-press to delete.',
     editHint:
-      '🔧 Drag a point to move it · tap a light midpoint of a segment to add one · right-click a point to delete it.',
+      '🔧 Click the line to insert a point · drag a point to move it · right-click / long-press to delete.',
     finish: 'Done',
   },
 

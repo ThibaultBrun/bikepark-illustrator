@@ -116,9 +116,13 @@ export default {
   },
 
   editor: {
-    drawHint: '✏️ Sakatu puntuak gehitzeko · arrastatu puntu bat mugitzeko · eskuin-klika ezabatzeko · sakatu bi aldiz amaitzeko.',
+    modeDraw: 'Marraztu',
+    modeEdit: 'Editatu',
+    undo: 'Desegin',
+    drawHint:
+      '✏️ Sakatu puntuak gehitzeko (Maius = hasieran) · arrastatu kokatzeko · arrastatu puntu bat mugitzeko · eskuin-klika / sakatu luze ezabatzeko.',
     editHint:
-      '🔧 Arrastatu puntu bat mugitzeko · sakatu segmentu baten erdiko puntu argi bat gehitzeko · eskuin-klika puntu batean ezabatzeko.',
+      '🔧 Sakatu marran puntu bat txertatzeko · arrastatu puntu bat mugitzeko · eskuin-klika / sakatu luze ezabatzeko.',
     finish: 'Amaitu',
   },
 
