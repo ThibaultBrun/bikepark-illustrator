@@ -1724,6 +1724,21 @@ function handleMapPointerUp(event: PointerEvent) {
 
 function handleGlobalPointerUp(event: PointerEvent) {
   handleMapPointerUp(event)
+
+  // Filet de sécurité tactile : à chaque relâchement, on termine tout drag en
+  // cours et on s'assure que le pan (dragPan) n'est pas resté désactivé — sinon
+  // sur mobile le déplacement un-doigt de la carte peut rester bloqué.
+  if (isDraggingPlacedSymbol.value) {
+    endPlacedSymbolDrag()
+  }
+  if (isDraggingLabel) {
+    isDraggingLabel = false
+    draggedTrackId = null
+  }
+  if (map && !editorActive) {
+    map.dragPan.enable()
+    map.getCanvas().style.cursor = ''
+  }
 }
 
 watch(
