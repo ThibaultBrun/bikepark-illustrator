@@ -103,6 +103,7 @@
         @export-zip="$emit('export-zip')"
         @import-zip="$emit('import-zip', $event)"
         @request-publication="$emit('request-publication')"
+        @cancel-publication="$emit('cancel-publication')"
       />
       <HelpPanel
         v-else
@@ -161,6 +162,7 @@ defineEmits<{
   (e: 'edit-track', trackId: string): void
   (e: 'submit-project'): void
   (e: 'request-publication'): void
+  (e: 'cancel-publication'): void
   (e: 'update:project-name', value: string): void
   (e: 'start-symbol-drag', payload: {
     symbolId: import('../../types/symbol').SymbolId

@@ -27,6 +27,7 @@
       @new-track="beginNewTrack"
       @edit-track="beginEditTrack"
       @request-publication="onRequestPublication"
+      @cancel-publication="onCancelPublication"
       @start-symbol-drag="onStartSymbolDrag"
       @upload-svg="onUploadSvg"
       @update-symbol-size="onUpdateSymbolSize"
@@ -200,7 +201,7 @@ import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
 import { useAuth } from './lib/useAuth'
-import { loadUserProject, saveUserProject, submitProject, requestPublication, getSpotStatus } from './lib/projectsStore'
+import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus } from './lib/projectsStore'
 import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
@@ -337,6 +338,8 @@ function trackToGeometry(track: GpxTrack): GeoJSON.MultiLineString | null {
 // l'espace privé de l'utilisateur dès qu'il travaille sur un spot.
 async function syncPistaDraft() {
   if (pistaSyncing || !currentProjectId.value) return
+  // Un spot soumis (en revue) ou publié est gelé : on ne le modifie pas en arrière-plan.
+  if (currentSpotStatus.value === 'submitted' || currentSpotStatus.value === 'published') return
   const trails = tracks.value
     .map((t) => {
       const geometry = trackToGeometry(t)
@@ -382,6 +385,18 @@ async function onRequestPublication() {
   }
   currentSpotStatus.value = 'submitted'
   showToast('Demande de publication envoyée — en attente de validation.')
+}
+
+async function onCancelPublication() {
+  if (!currentSpotId.value) return
+  const err = await cancelPublication(currentSpotId.value)
+  if (err) {
+    showToast('Impossible d’annuler la demande.')
+    return
+  }
+  currentSpotStatus.value = 'draft'
+  showToast('Demande annulée — tu peux modifier puis re-demander la publication.')
+  queuePistaSync() // pousse les éventuelles modifs faites pendant l’attente
 }
 
 const projectLoadSessionId = ref(0)

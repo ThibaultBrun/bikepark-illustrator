@@ -51,6 +51,25 @@ export async function requestPublication(spotId: string): Promise<string | null>
   return null
 }
 
+// Annule une demande de publication : repasse le spot (et ses trails) submitted -> draft.
+export async function cancelPublication(spotId: string): Promise<string | null> {
+  const { error: e1 } = await supabase
+    .from('trails')
+    .update({ status: 'draft' })
+    .eq('spot_id', spotId)
+    .eq('status', 'submitted')
+  const { error: e2 } = await supabase
+    .from('spots')
+    .update({ status: 'draft' })
+    .eq('id', spotId)
+    .eq('status', 'submitted')
+  if (e1 || e2) {
+    console.error('[publication] cancel', e1 || e2)
+    return (e1 || e2)?.message ?? 'error'
+  }
+  return null
+}
+
 export async function saveUserProject(
   projectId: string | null,
   snapshot: BikeparkProject,

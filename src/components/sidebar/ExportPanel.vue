@@ -29,9 +29,15 @@
         </p>
       </template>
 
-      <p v-else-if="spotStatus === 'submitted'" class="status status--pending">
-        ⏳ Publication demandée — en attente de validation par un admin.
-      </p>
+      <template v-else-if="spotStatus === 'submitted'">
+        <p class="status status--pending">
+          ⏳ Publication demandée — en attente de validation par un admin.
+        </p>
+        <button type="button" class="action-button" @click="$emit('cancel-publication')">
+          Annuler la demande (pour modifier)
+        </button>
+        <p class="hint">Ta soumission est gelée le temps de la revue. Annule pour la modifier puis re-demander.</p>
+      </template>
       <p v-else-if="spotStatus === 'published'" class="status status--ok">
         ✅ Publié sur Pista.
       </p>
@@ -63,6 +69,7 @@ const emit = defineEmits<{
   (e: 'export-zip'): void
   (e: 'import-zip', file: File): void
   (e: 'request-publication'): void
+  (e: 'cancel-publication'): void
 }>()
 
 function onZipSelected(event: Event) {
