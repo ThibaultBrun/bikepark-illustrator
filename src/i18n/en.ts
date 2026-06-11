@@ -115,7 +115,7 @@ export default {
   },
 
   editor: {
-    drawHint: '✏️ Tap the map to add points, double-tap to finish the trail.',
+    drawHint: '✏️ Tap to add points · drag a point to move it · right-click to delete · double-tap to finish.',
     editHint:
       '🔧 Drag a point to move it · tap a light midpoint of a segment to add one · right-click a point to delete it.',
     finish: 'Done',

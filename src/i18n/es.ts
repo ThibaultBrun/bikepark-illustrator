@@ -115,7 +115,7 @@ export default {
   },
 
   editor: {
-    drawHint: '✏️ Toca el mapa para añadir puntos, doble toque para terminar la pista.',
+    drawHint: '✏️ Toca para añadir puntos · arrastra un punto para moverlo · clic derecho para eliminar · doble toque para terminar.',
     editHint:
       '🔧 Arrastra un punto para moverlo · toca un punto claro en medio de un segmento para añadir uno · clic derecho en un punto para eliminarlo.',
     finish: 'Terminar',

@@ -115,7 +115,7 @@ export default {
   },
 
   editor: {
-    drawHint: '✏️ Clique sur la carte pour ajouter des points, double-clic pour terminer la piste.',
+    drawHint: '✏️ Clique pour ajouter des points · glisse un point pour le déplacer · clic droit pour le supprimer · double-clic pour terminer.',
     editHint:
       "🔧 Glisse un point pour le déplacer · clique un point clair au milieu d'un segment pour en ajouter · clic droit sur un point pour le supprimer.",
     finish: 'Terminer',

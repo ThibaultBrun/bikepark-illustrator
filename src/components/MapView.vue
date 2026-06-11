@@ -1417,7 +1417,7 @@ function ensureDrawInstance() {
   draw = new TerraDraw({
     adapter: new TerraDrawMapLibreGLAdapter({ map }),
     modes: [
-      new TerraDrawLineStringMode(),
+      new TerraDrawLineStringMode({ editable: true }),
       new TerraDrawSelectMode({
         flags: {
           linestring: {

@@ -116,7 +116,7 @@ export default {
   },
 
   editor: {
-    drawHint: '✏️ Sakatu mapan puntuak gehitzeko, sakatu bi aldiz pista amaitzeko.',
+    drawHint: '✏️ Sakatu puntuak gehitzeko · arrastatu puntu bat mugitzeko · eskuin-klika ezabatzeko · sakatu bi aldiz amaitzeko.',
     editHint:
       '🔧 Arrastatu puntu bat mugitzeko · sakatu segmentu baten erdiko puntu argi bat gehitzeko · eskuin-klika puntu batean ezabatzeko.',
     finish: 'Amaitu',
