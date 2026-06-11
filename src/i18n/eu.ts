@@ -106,6 +106,7 @@ export default {
     cancelRequest: 'Eskaera bertan behera utzi (editatzeko)',
     cancelHint: 'Zure bidalketa izoztuta dago berrikuspenean. Utzi editatzeko, gero berriro eskatu.',
     published: '✅ Pistan argitaratuta.',
+    previewPista: '👁 Aurreikusi Pistan',
     localTitle: 'Esportazio lokala',
     exportZip: 'Esportatu ZIP gisa',
     importZip: 'Inportatu ZIP bat',
@@ -140,6 +141,7 @@ export default {
     cancelFail: 'Ezin izan da eskaera bertan behera utzi.',
     contribSent: '{n} pista proposatuta «{spot}»-(e)ra — berrikuspenaren zain.',
     contribFail: 'Ezin izan dira pistak bidali.',
+    previewUnavailable: 'Aurrebista ez dago erabilgarri (spot-a oraindik ez da sinkronizatu).',
   },
 
   help: {

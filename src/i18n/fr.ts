@@ -105,6 +105,7 @@ export default {
     cancelRequest: 'Annuler la demande (pour modifier)',
     cancelHint: 'Ta soumission est gelée le temps de la revue. Annule pour la modifier puis re-demander.',
     published: '✅ Publié sur Pista.',
+    previewPista: '👁 Prévisualiser dans Pista',
     localTitle: 'Export local',
     exportZip: 'Exporter en ZIP',
     importZip: 'Importer un ZIP',
@@ -139,6 +140,7 @@ export default {
     cancelFail: 'Impossible d’annuler la demande.',
     contribSent: '{n} piste(s) proposée(s) à « {spot} » — en attente de validation.',
     contribFail: 'Échec de l’envoi des pistes.',
+    previewUnavailable: 'Prévisualisation indisponible (spot pas encore synchronisé).',
   },
 
   help: {

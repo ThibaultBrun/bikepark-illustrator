@@ -16,6 +16,7 @@
       :map-settings="mapSettings"
       :project-name="projectName"
       :spot-status="currentSpotStatus"
+      :can-preview="!!(previewSpotId || currentSpotId)"
       :projects="projects"
       :current-project-id="currentProjectId"
       :is-admin="authIsAdmin"
@@ -35,6 +36,7 @@
       @request-publication="onRequestPublication"
       @cancel-publication="onCancelPublication"
       @propose-to-spot="onProposeToSpot"
+      @preview-in-pista="onPreviewInPista"
       @locate="onLocate"
       @start-symbol-drag="onStartSymbolDrag"
       @remove-symbol="onRemoveSymbol"
@@ -254,7 +256,7 @@ import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
 import { useAuth } from './lib/useAuth'
-import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, listUserProjects, loadProjectById, createProject, deleteUserProject, proposeTrailsToSpot, type ProjectListItem, type SubmitTrail } from './lib/projectsStore'
+import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, getSpotSlug, listUserProjects, loadProjectById, createProject, deleteUserProject, proposeTrailsToSpot, type ProjectListItem, type SubmitTrail } from './lib/projectsStore'
 import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
@@ -277,7 +279,7 @@ import {
   type UploadedSymbolPayload,
 } from './types/symbol'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { session: authSession, ready: authReady, user: authUser, isAdmin: authIsAdmin, signOut } = useAuth()
 
 async function onSignOut() {
@@ -365,6 +367,9 @@ const hasHydratedProject = ref(false)
 const currentProjectId = ref<string | null>(null)
 const currentSpotId = ref<string | null>(null)
 const currentSpotStatus = ref<import('./lib/projectsStore').SpotStatus | null>(null)
+// Spot à prévisualiser dans Pista : le spot du projet par défaut, ou le spot
+// existant ciblé après une proposition « Proposer à un spot existant ».
+const previewSpotId = ref<string | null>(null)
 const projects = ref<ProjectListItem[]>([])
 const submitToast = ref('')
 let pistaSyncTimer: number | null = null
@@ -413,7 +418,23 @@ async function onProposeToSpot(payload: { id: string; name: string }) {
     showToast(t('toast.contribFail'))
     return
   }
+  // Cible la prévisualisation Pista sur le spot où l'on vient de proposer.
+  previewSpotId.value = payload.id
   showToast(t('toast.contribSent', { n, spot: payload.name }))
+}
+
+// Ouvre la page Pista du spot pour prévisualiser le rendu (nouvel onglet).
+const PISTA_LOCALES = new Set(['fr', 'en', 'es', 'eu'])
+async function onPreviewInPista() {
+  const spotId = previewSpotId.value ?? currentSpotId.value
+  if (!spotId) return
+  const slug = await getSpotSlug(spotId)
+  if (!slug) {
+    showToast(t('toast.previewUnavailable'))
+    return
+  }
+  const loc = PISTA_LOCALES.has(String(locale.value)) ? String(locale.value) : 'fr'
+  window.open(`https://pista.bike/${loc}/spot/${slug}`, '_blank', 'noopener')
 }
 
 async function syncPistaDraft() {
@@ -434,6 +455,7 @@ async function syncPistaDraft() {
     })
     if (spotId) {
       currentSpotId.value = spotId
+      if (!previewSpotId.value) previewSpotId.value = spotId
       if (!currentSpotStatus.value) currentSpotStatus.value = 'draft'
     }
   } finally {
@@ -808,6 +830,7 @@ async function applyStoredProject(stored: import('./lib/projectsStore').StoredPr
   hasHydratedProject.value = false
   currentProjectId.value = stored.id
   currentSpotId.value = stored.spotId
+  previewSpotId.value = stored.spotId
   currentSpotStatus.value = stored.spotId ? await getSpotStatus(stored.spotId) : null
   const project = normalizeProject(stored.data)
   beginProjectLoad(overlayTitle, project)
@@ -848,6 +871,7 @@ function resetToEmpty() {
   hasHydratedProject.value = false
   currentProjectId.value = null
   currentSpotId.value = null
+  previewSpotId.value = null
   currentSpotStatus.value = null
   tracks.value = []
   symbols.value = []

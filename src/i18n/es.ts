@@ -105,6 +105,7 @@ export default {
     cancelRequest: 'Cancelar la solicitud (para editar)',
     cancelHint: 'Tu envío está congelado durante la revisión. Cancélalo para editarlo y vuelve a pedirlo.',
     published: '✅ Publicado en Pista.',
+    previewPista: '👁 Previsualizar en Pista',
     localTitle: 'Exportación local',
     exportZip: 'Exportar en ZIP',
     importZip: 'Importar un ZIP',
@@ -139,6 +140,7 @@ export default {
     cancelFail: 'No se pudo cancelar la solicitud.',
     contribSent: '{n} pista(s) propuesta(s) a «{spot}» — pendiente de revisión.',
     contribFail: 'Error al enviar las pistas.',
+    previewUnavailable: 'Previsualización no disponible (spot aún no sincronizado).',
   },
 
   help: {

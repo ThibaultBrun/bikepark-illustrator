@@ -105,6 +105,7 @@ export default {
     cancelRequest: 'Cancel request (to edit)',
     cancelHint: 'Your submission is frozen during review. Cancel to edit it, then request again.',
     published: '✅ Published on Pista.',
+    previewPista: '👁 Preview in Pista',
     localTitle: 'Local export',
     exportZip: 'Export as ZIP',
     importZip: 'Import a ZIP',
@@ -139,6 +140,7 @@ export default {
     cancelFail: 'Could not cancel the request.',
     contribSent: '{n} trail(s) proposed to “{spot}” — awaiting review.',
     contribFail: 'Failed to send the trails.',
+    previewUnavailable: 'Preview unavailable (spot not synced yet).',
   },
 
   help: {

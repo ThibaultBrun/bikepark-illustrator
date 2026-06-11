@@ -33,6 +33,15 @@
       <p v-else-if="spotStatus === 'published'" class="status status--ok">
         {{ t('exportPanel.published') }}
       </p>
+
+      <button
+        v-if="canPreview"
+        type="button"
+        class="action-button"
+        @click="$emit('preview-in-pista')"
+      >
+        {{ t('exportPanel.previewPista') }}
+      </button>
     </div>
 
     <div class="block">
@@ -93,6 +102,7 @@ const { t } = useI18n()
 
 defineProps<{
   spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
+  canPreview?: boolean
   trackCount: number
 }>()
 
@@ -102,6 +112,7 @@ const emit = defineEmits<{
   (e: 'request-publication'): void
   (e: 'cancel-publication'): void
   (e: 'propose-to-spot', payload: { id: string; name: string }): void
+  (e: 'preview-in-pista'): void
 }>()
 
 const spotQuery = ref('')

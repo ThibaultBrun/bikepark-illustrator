@@ -91,6 +91,16 @@ export async function getSpotStatus(spotId: string): Promise<SpotStatus | null> 
   return (data?.status as SpotStatus) ?? null
 }
 
+// Slug du spot pour construire l'URL de prévisualisation Pista (/spot/<slug>).
+export async function getSpotSlug(spotId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('spots').select('slug').eq('id', spotId).maybeSingle()
+  if (error) {
+    console.error('[projects] spot slug', error)
+    return null
+  }
+  return (data?.slug as string) ?? null
+}
+
 export async function requestPublication(spotId: string): Promise<string | null> {
   const { error } = await supabase.rpc('request_spot_publication', { p_spot_id: spotId })
   if (error) {
