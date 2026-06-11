@@ -130,6 +130,23 @@
       <span>{{ t('map.showPista') }}</span>
     </label>
   </section>
+
+  <section v-if="isAdmin" class="panel">
+    <div class="panel-header">
+      <div class="placeholder-icon" aria-hidden="true">
+        <SidebarIcon name="blend" />
+      </div>
+      <div class="panel-header-copy">
+        <h2>{{ t('map.heatmapTitle') }}</h2>
+        <p>{{ t('map.heatmapDesc') }}</p>
+      </div>
+    </div>
+
+    <label class="toggle-row">
+      <input type="checkbox" :checked="settings.showHeatmap" @change="updateShowHeatmap" />
+      <span>{{ t('map.showHeatmap') }}</span>
+    </label>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -142,6 +159,7 @@ const { t } = useI18n()
 
 const props = defineProps<{
   settings: MapSettings
+  isAdmin: boolean
 }>()
 
 const emit = defineEmits<{
@@ -175,6 +193,13 @@ function updateShowPistaTrails(event: Event) {
   emit('update:settings', {
     ...props.settings,
     showPistaTrails: (event.target as HTMLInputElement).checked,
+  })
+}
+
+function updateShowHeatmap(event: Event) {
+  emit('update:settings', {
+    ...props.settings,
+    showHeatmap: (event.target as HTMLInputElement).checked,
   })
 }
 

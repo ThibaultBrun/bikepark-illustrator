@@ -15,6 +15,7 @@ export type MapSettings = {
   hillshade: number
   labelFont: MapLabelFont
   showPistaTrails: boolean
+  showHeatmap: boolean
 }
 
 export const mapLabelFontOptions: {

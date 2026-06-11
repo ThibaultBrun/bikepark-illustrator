@@ -62,6 +62,7 @@ const props = withDefaults(
     hillshadeStrength?: number
     labelFont?: MapLabelFont
     showPistaTrails?: boolean
+    showHeatmap?: boolean
     repositionSymbolId?: string | null
     pendingAddSymbolType?: SymbolId | null
     savedCamera?: MapCameraState | null
@@ -79,6 +80,7 @@ const props = withDefaults(
     hillshadeStrength: 100,
     labelFont: 'segoe',
     showPistaTrails: true,
+    showHeatmap: false,
     repositionSymbolId: null,
     pendingAddSymbolType: null,
     savedCamera: null,
@@ -1593,6 +1595,36 @@ function setPistaTrailsVisible(visible: boolean) {
   }
 }
 
+// --- Heatmap Strava (admin) : raster servi depuis Supabase Storage ------------
+function ensureHeatmap() {
+  if (!map || map.getSource('strava-heatmap')) return
+  const base = import.meta.env.VITE_SUPABASE_URL as string
+  const firstTrackLayer = map.getStyle().layers?.find((l) => l.id.startsWith('track-line-'))?.id
+  map.addSource('strava-heatmap', {
+    type: 'raster',
+    tiles: [`${base}/storage/v1/object/public/strava-heatmap/sport_MountainBikeRide/15/{x}/{y}.png`],
+    tileSize: 256,
+    minzoom: 11,
+    maxzoom: 15,
+  } as maplibregl.RasterSourceSpecification)
+  map.addLayer(
+    {
+      id: 'strava-heatmap-layer',
+      type: 'raster',
+      source: 'strava-heatmap',
+      layout: { visibility: props.showHeatmap ? 'visible' : 'none' },
+      paint: { 'raster-opacity': 0.75 },
+    },
+    firstTrackLayer,
+  )
+}
+
+function setHeatmapVisible(visible: boolean) {
+  if (map?.getLayer('strava-heatmap-layer')) {
+    map.setLayoutProperty('strava-heatmap-layer', 'visibility', visible ? 'visible' : 'none')
+  }
+}
+
 function flyTo(lng: number, lat: number, zoom = 14) {
   if (!map) return
   map.flyTo({ center: [lng, lat], zoom, essential: true })
@@ -1678,6 +1710,7 @@ onMounted(() => {
     setupLabelDragging()
     setupCameraTracking()
     if (props.showPistaTrails) void ensurePistaTrails()
+    if (props.showHeatmap) ensureHeatmap()
 
     if (!props.savedCamera) {
       map.easeTo({
@@ -1849,6 +1882,18 @@ watch(
       setPistaTrailsVisible(true)
     } else {
       setPistaTrailsVisible(false)
+    }
+  },
+)
+
+watch(
+  () => props.showHeatmap,
+  (visible) => {
+    if (visible) {
+      ensureHeatmap()
+      setHeatmapVisible(true)
+    } else {
+      setHeatmapVisible(false)
     }
   },
 )

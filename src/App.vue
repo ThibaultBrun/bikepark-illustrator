@@ -18,6 +18,7 @@
       :spot-status="currentSpotStatus"
       :projects="projects"
       :current-project-id="currentProjectId"
+      :is-admin="authIsAdmin"
       @toggle="toggleSidebar"
       @select-project="onSelectProject"
       @new-project="onNewProject"
@@ -61,6 +62,7 @@
         :hillshade-strength="mapSettings.hillshade"
         :label-font="mapSettings.labelFont"
         :show-pista-trails="mapSettings.showPistaTrails"
+        :show-heatmap="mapSettings.showHeatmap"
         :reposition-symbol-id="repositionSymbolId"
         :pending-add-symbol-type="pendingAddSymbolType"
         :saved-camera="mapCamera"
@@ -249,7 +251,7 @@ import {
 } from './types/symbol'
 
 const { t } = useI18n()
-const { session: authSession, ready: authReady, user: authUser, signOut } = useAuth()
+const { session: authSession, ready: authReady, user: authUser, isAdmin: authIsAdmin, signOut } = useAuth()
 
 async function onSignOut() {
   await signOut()
@@ -308,6 +310,7 @@ const mapSettings = ref<MapSettings>({
   hillshade: 100,
   labelFont: 'segoe',
   showPistaTrails: true,
+  showHeatmap: false,
 })
 const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 const saveStatusMessage = ref('')
@@ -653,6 +656,7 @@ function normalizeProject(raw: Partial<BikeparkProject> | null | undefined): Bik
       hillshade: Number(raw?.mapSettings?.hillshade ?? 100),
       labelFont: raw?.mapSettings?.labelFont ?? 'segoe',
       showPistaTrails: raw?.mapSettings?.showPistaTrails ?? true,
+      showHeatmap: raw?.mapSettings?.showHeatmap ?? false,
     },
     mapCamera:
       raw?.mapCamera &&

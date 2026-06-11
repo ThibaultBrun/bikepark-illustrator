@@ -88,6 +88,9 @@ export default {
     pistaTitle: 'Pista pistak',
     pistaDesc: 'Erakutsi Pistan jada argitaratutako pistak erreferentzia gisa.',
     showPista: 'Erakutsi lehendik dauden Pista pistak',
+    heatmapTitle: 'Strava heatmap',
+    heatmapDesc: 'Stravako bero-geruza (administrarientzat soilik).',
+    showHeatmap: 'Erakutsi Stravako heatmap-a',
   },
 
   exportPanel: {

@@ -103,6 +103,7 @@
       <MapPanel
         v-else-if="activeSection === 'map'"
         :settings="mapSettings"
+        :is-admin="isAdmin"
         @update:settings="$emit('update:map-settings', $event)"
       />
       <ExportPanel
@@ -165,6 +166,7 @@ const props = defineProps<{
   spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
   projects: { id: string; title: string | null; spotId: string | null }[]
   currentProjectId: string | null
+  isAdmin: boolean
 }>()
 
 defineEmits<{

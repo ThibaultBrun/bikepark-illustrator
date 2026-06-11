@@ -87,6 +87,9 @@ export default {
     pistaTitle: 'Pista trails',
     pistaDesc: 'Show trails already published on Pista as a reference.',
     showPista: 'Show existing Pista trails',
+    heatmapTitle: 'Strava heatmap',
+    heatmapDesc: 'Strava heat overlay (admins only).',
+    showHeatmap: 'Show the Strava heatmap',
   },
 
   exportPanel: {

@@ -6,7 +6,18 @@ import { supabase } from './supabase'
 const session = ref<Session | null>(null)
 const user = ref<User | null>(null)
 const ready = ref(false)
+const isAdmin = ref(false)
 let initialized = false
+
+async function refreshAdmin() {
+  const uid = user.value?.id
+  if (!uid) {
+    isAdmin.value = false
+    return
+  }
+  const { data } = await supabase.from('profiles').select('is_admin').eq('id', uid).maybeSingle()
+  isAdmin.value = !!(data as { is_admin?: boolean } | null)?.is_admin
+}
 
 function init() {
   if (initialized) return
@@ -16,12 +27,14 @@ function init() {
     session.value = data.session
     user.value = data.session?.user ?? null
     ready.value = true
+    void refreshAdmin()
   })
 
   supabase.auth.onAuthStateChange((_event, s) => {
     session.value = s
     user.value = s?.user ?? null
     ready.value = true
+    void refreshAdmin()
   })
 }
 
@@ -32,6 +45,7 @@ export function useAuth() {
     session,
     user,
     ready,
+    isAdmin,
     signInWithPassword: (email: string, password: string) =>
       supabase.auth.signInWithPassword({ email, password }),
     signUp: (email: string, password: string) =>

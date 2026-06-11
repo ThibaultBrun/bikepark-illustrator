@@ -87,6 +87,9 @@ export default {
     pistaTitle: 'Pistes Pista',
     pistaDesc: 'Afficher en référence les pistes déjà publiées sur Pista.',
     showPista: 'Afficher les pistes Pista existantes',
+    heatmapTitle: 'Heatmap Strava',
+    heatmapDesc: 'Calque de chaleur Strava (réservé aux admins).',
+    showHeatmap: 'Afficher la heatmap Strava',
   },
 
   exportPanel: {
