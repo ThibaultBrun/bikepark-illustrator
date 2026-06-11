@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sharedAuthStorage } from './cookieAuthStorage'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
@@ -34,5 +35,7 @@ export const supabase = createClient(url, anonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     lock: resilientLock,
+    // Session partagée entre pista.bike et illustrator.pista.bike (cookie .pista.bike)
+    storage: sharedAuthStorage,
   },
 })
