@@ -183,6 +183,20 @@
 
     <div v-if="submitToast" class="submit-toast">{{ submitToast }}</div>
 
+    <div v-if="selectedSymbolId && editorMode === 'idle'" class="symbol-action-bar">
+      <span class="symbol-action-bar__label">Symbole sélectionné</span>
+      <button type="button" class="symbol-action-bar__btn danger" @click="deleteSelectedSymbol">
+        🗑 Supprimer
+      </button>
+      <button
+        type="button"
+        class="symbol-action-bar__btn"
+        @click="onSelectSymbol({ symbolId: null })"
+      >
+        Fermer
+      </button>
+    </div>
+
     <div
       v-if="draggingSymbolId && dragPreview"
       class="symbol-drag-preview"
@@ -1071,6 +1085,10 @@ function onRemoveSymbol(payload: { symbolId: string }) {
   }
 }
 
+function deleteSelectedSymbol() {
+  if (selectedSymbolId.value) onRemoveSymbol({ symbolId: selectedSymbolId.value })
+}
+
 function onSelectSymbol(payload: { symbolId: string | null }) {
   selectedSymbolId.value = payload.symbolId
 
@@ -1785,7 +1803,51 @@ watch(projectName, (name) => {
   box-shadow: 0 18px 40px rgba(2, 6, 23, 0.5);
 }
 
+.symbol-action-bar {
+  position: absolute;
+  z-index: 9;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  border-radius: 14px;
+  background: rgba(11, 18, 32, 0.92);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  box-shadow: 0 14px 32px rgba(2, 6, 23, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.symbol-action-bar__label {
+  font-size: 13px;
+  color: #d8ccb6;
+}
+
+.symbol-action-bar__btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: transparent;
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.symbol-action-bar__btn.danger {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
 @media (max-width: 960px) {
+  .symbol-action-bar {
+    bottom: 16px;
+  }
+
   .submit-fab {
     bottom: 16px;
     left: 16px;
