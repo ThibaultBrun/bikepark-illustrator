@@ -127,6 +127,8 @@ let draggedTrackId: string | null = null
 let draggedPlacedSymbolId: string | null = null
 let isDraggingLabel = false
 let suppressNextCameraEmit = false
+// Évite l'écho moveend -> maj mapCamera -> prop savedCamera -> jumpTo (sautillement).
+let suppressNextSavedCameraApply = false
 let restoredSavedCameraOnLoad = false
 let skipNextTrackAutoFit = false
 let lastCompletedRenderSessionId = 0
@@ -1106,6 +1108,9 @@ function setupCameraTracking() {
       return
     }
 
+    // La caméra qu'on remonte vient de la carte elle-même : il ne faut pas que
+    // le watch savedCamera la ré-applique (sinon jumpTo = sautillement).
+    suppressNextSavedCameraApply = true
     emit('update-camera', camera)
   })
 }
@@ -1902,6 +1907,12 @@ watch(
   () => [props.savedCamera, props.cameraRestoreKey] as const,
   ([savedCamera], [previousCamera]) => {
     if (!map) return
+
+    // Écho de notre propre moveend : ne pas ré-appliquer (évite le sautillement).
+    if (suppressNextSavedCameraApply) {
+      suppressNextSavedCameraApply = false
+      return
+    }
 
     if (!savedCamera) {
       if (props.cameraRestoreKey === 0) return
