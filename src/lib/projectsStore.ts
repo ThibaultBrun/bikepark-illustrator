@@ -177,6 +177,37 @@ export async function submitProject(params: {
   return { spotId: (data as string) ?? null, error: null }
 }
 
+export type PublicSpot = { id: string; name: string; region: string | null }
+
+export async function searchPublishedSpots(query: string): Promise<PublicSpot[]> {
+  const q = query.trim()
+  if (q.length < 2) return []
+  const { data, error } = await supabase
+    .from('spots')
+    .select('id, name, region')
+    .eq('status', 'published')
+    .ilike('name', `%${q}%`)
+    .order('name')
+    .limit(8)
+  if (error) {
+    console.error('[spots] search', error)
+    return []
+  }
+  return (data ?? []) as PublicSpot[]
+}
+
+export async function proposeTrailsToSpot(spotId: string, trails: SubmitTrail[]): Promise<number | null> {
+  const { data, error } = await supabase.rpc('propose_trails_to_spot', {
+    p_spot_id: spotId,
+    p_trails: trails,
+  })
+  if (error) {
+    console.error('[propose]', error)
+    return null
+  }
+  return (data as number) ?? 0
+}
+
 export async function deleteUserProject(projectId: string): Promise<boolean> {
   const { error } = await supabase.from('illustrator_projects').delete().eq('id', projectId)
   if (error) {

@@ -106,6 +106,10 @@ export default {
     localTitle: 'Esportazio lokala',
     exportZip: 'Esportatu ZIP gisa',
     importZip: 'Inportatu ZIP bat',
+    contribTitle: 'Proposatu lehendik dagoen spot bati',
+    contribHint: 'Zure pistak Pistan jada argitaratutako spot bati proposatuko zaizkio (administrariaren berrikuspena).',
+    contribSearch: 'Bilatu spot bat…',
+    contribSend: 'Bidali {n} pista «{spot}»-(e)ra',
   },
 
   editor: {
@@ -127,6 +131,8 @@ export default {
     pubFail: 'Argitalpen eskaerak huts egin du.',
     cancelled: 'Eskaera bertan behera utzita — editatu eta berriro eskatu dezakezu.',
     cancelFail: 'Ezin izan da eskaera bertan behera utzi.',
+    contribSent: '{n} pista proposatuta «{spot}»-(e)ra — berrikuspenaren zain.',
+    contribFail: 'Ezin izan dira pistak bidali.',
   },
 
   help: {

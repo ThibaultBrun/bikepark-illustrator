@@ -105,6 +105,10 @@ export default {
     localTitle: 'Local export',
     exportZip: 'Export as ZIP',
     importZip: 'Import a ZIP',
+    contribTitle: 'Propose to an existing spot',
+    contribHint: 'Your trails will be proposed to a spot already published on Pista (admin review).',
+    contribSearch: 'Search a spot…',
+    contribSend: 'Send {n} trail(s) to “{spot}”',
   },
 
   editor: {
@@ -126,6 +130,8 @@ export default {
     pubFail: 'Publication request failed.',
     cancelled: 'Request cancelled — you can edit then request publication again.',
     cancelFail: 'Could not cancel the request.',
+    contribSent: '{n} trail(s) proposed to “{spot}” — awaiting review.',
+    contribFail: 'Failed to send the trails.',
   },
 
   help: {

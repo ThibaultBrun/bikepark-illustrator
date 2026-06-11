@@ -105,6 +105,10 @@ export default {
     localTitle: 'Export local',
     exportZip: 'Exporter en ZIP',
     importZip: 'Importer un ZIP',
+    contribTitle: 'Proposer à un spot existant',
+    contribHint: 'Tes pistes seront proposées à un spot déjà publié sur Pista (validation admin).',
+    contribSearch: 'Rechercher un spot…',
+    contribSend: 'Envoyer {n} piste(s) à « {spot} »',
   },
 
   editor: {
@@ -126,6 +130,8 @@ export default {
     pubFail: 'Échec de la demande de publication.',
     cancelled: 'Demande annulée — tu peux modifier puis re-demander la publication.',
     cancelFail: 'Impossible d’annuler la demande.',
+    contribSent: '{n} piste(s) proposée(s) à « {spot} » — en attente de validation.',
+    contribFail: 'Échec de l’envoi des pistes.',
   },
 
   help: {

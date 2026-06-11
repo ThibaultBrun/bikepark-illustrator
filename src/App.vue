@@ -33,6 +33,7 @@
       @edit-track="beginEditTrack"
       @request-publication="onRequestPublication"
       @cancel-publication="onCancelPublication"
+      @propose-to-spot="onProposeToSpot"
       @locate="onLocate"
       @start-symbol-drag="onStartSymbolDrag"
       @remove-symbol="onRemoveSymbol"
@@ -224,7 +225,7 @@ import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
 import { useAuth } from './lib/useAuth'
-import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, listUserProjects, loadProjectById, createProject, deleteUserProject, type ProjectListItem } from './lib/projectsStore'
+import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, listUserProjects, loadProjectById, createProject, deleteUserProject, proposeTrailsToSpot, type ProjectListItem, type SubmitTrail } from './lib/projectsStore'
 import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
@@ -341,11 +342,8 @@ function trackToGeometry(track: GpxTrack): GeoJSON.MultiLineString | null {
 
 // Synchronise le brouillon (spot + trails 'draft') dans Pista : visible dans
 // l'espace privé de l'utilisateur dès qu'il travaille sur un spot.
-async function syncPistaDraft() {
-  if (pistaSyncing || !currentProjectId.value) return
-  // Un spot soumis (en revue) ou publié est gelé : on ne le modifie pas en arrière-plan.
-  if (currentSpotStatus.value === 'submitted' || currentSpotStatus.value === 'published') return
-  const trails = tracks.value
+function buildTrailsPayload(): SubmitTrail[] {
+  return tracks.value
     .map((t) => {
       const geometry = trackToGeometry(t)
       if (!geometry) return null
@@ -354,9 +352,27 @@ async function syncPistaDraft() {
         trail_type: t.trailType ?? 'enduro',
         difficulty: t.difficulty ?? 'blue',
         geometry,
-      }
+      } as SubmitTrail
     })
-    .filter((t): t is NonNullable<typeof t> => t !== null)
+    .filter((t): t is SubmitTrail => t !== null)
+}
+
+async function onProposeToSpot(payload: { id: string; name: string }) {
+  const trails = buildTrailsPayload()
+  if (trails.length === 0) return
+  const n = await proposeTrailsToSpot(payload.id, trails)
+  if (n === null) {
+    showToast(t('toast.contribFail'))
+    return
+  }
+  showToast(t('toast.contribSent', { n, spot: payload.name }))
+}
+
+async function syncPistaDraft() {
+  if (pistaSyncing || !currentProjectId.value) return
+  // Un spot soumis (en revue) ou publié est gelé : on ne le modifie pas en arrière-plan.
+  if (currentSpotStatus.value === 'submitted' || currentSpotStatus.value === 'published') return
+  const trails = buildTrailsPayload()
   if (trails.length === 0) return
 
   pistaSyncing = true

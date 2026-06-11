@@ -108,10 +108,12 @@
       <ExportPanel
         v-else-if="activeSection === 'export'"
         :spot-status="spotStatus"
+        :track-count="tracks.length"
         @export-zip="$emit('export-zip')"
         @import-zip="$emit('import-zip', $event)"
         @request-publication="$emit('request-publication')"
         @cancel-publication="$emit('cancel-publication')"
+        @propose-to-spot="$emit('propose-to-spot', $event)"
       />
       <LocatePanel
         v-else-if="activeSection === 'locate'"
@@ -178,6 +180,7 @@ defineEmits<{
   (e: 'submit-project'): void
   (e: 'request-publication'): void
   (e: 'cancel-publication'): void
+  (e: 'propose-to-spot', payload: { id: string; name: string }): void
   (e: 'locate', payload: { lng: number; lat: number; label: string }): void
   (e: 'select-project', id: string): void
   (e: 'new-project'): void

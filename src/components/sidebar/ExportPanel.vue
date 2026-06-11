@@ -36,6 +36,39 @@
     </div>
 
     <div class="block">
+      <div class="block-title">{{ t('exportPanel.contribTitle') }}</div>
+      <p class="hint">{{ t('exportPanel.contribHint') }}</p>
+      <input
+        v-model="spotQuery"
+        type="text"
+        class="contrib-input"
+        :placeholder="t('exportPanel.contribSearch')"
+        @input="onSearch"
+      />
+      <ul v-if="spotResults.length" class="spot-results">
+        <li v-for="sp in spotResults" :key="sp.id">
+          <button
+            type="button"
+            class="spot-result"
+            :class="{ active: selectedSpot?.id === sp.id }"
+            @click="selectSpot(sp)"
+          >
+            {{ sp.name }}<small v-if="sp.region"> · {{ sp.region }}</small>
+          </button>
+        </li>
+      </ul>
+      <button
+        v-if="selectedSpot"
+        type="button"
+        class="action-button primary"
+        :disabled="trackCount === 0"
+        @click="onPropose"
+      >
+        {{ t('exportPanel.contribSend', { n: trackCount, spot: selectedSpot.name }) }}
+      </button>
+    </div>
+
+    <div class="block">
       <div class="block-title">{{ t('exportPanel.localTitle') }}</div>
       <div class="action-grid">
         <button type="button" class="action-button" @click="$emit('export-zip')">
@@ -51,13 +84,16 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SidebarIcon from './SidebarIcon.vue'
+import { searchPublishedSpots, type PublicSpot } from '../../lib/projectsStore'
 
 const { t } = useI18n()
 
 defineProps<{
   spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
+  trackCount: number
 }>()
 
 const emit = defineEmits<{
@@ -65,7 +101,34 @@ const emit = defineEmits<{
   (e: 'import-zip', file: File): void
   (e: 'request-publication'): void
   (e: 'cancel-publication'): void
+  (e: 'propose-to-spot', payload: { id: string; name: string }): void
 }>()
+
+const spotQuery = ref('')
+const spotResults = ref<PublicSpot[]>([])
+const selectedSpot = ref<PublicSpot | null>(null)
+let searchTimer: number | null = null
+
+function onSearch() {
+  selectedSpot.value = null
+  if (searchTimer !== null) window.clearTimeout(searchTimer)
+  searchTimer = window.setTimeout(async () => {
+    spotResults.value = await searchPublishedSpots(spotQuery.value)
+  }, 300)
+}
+
+function selectSpot(sp: PublicSpot) {
+  selectedSpot.value = sp
+  spotResults.value = []
+  spotQuery.value = sp.name
+}
+
+function onPropose() {
+  if (!selectedSpot.value) return
+  emit('propose-to-spot', { id: selectedSpot.value.id, name: selectedSpot.value.name })
+  selectedSpot.value = null
+  spotQuery.value = ''
+}
 
 function onZipSelected(event: Event) {
   const input = event.target as HTMLInputElement
@@ -222,5 +285,53 @@ function onZipSelected(event: Event) {
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.contrib-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #4a4234;
+  background: #1c1813;
+  color: #ece2cf;
+  font: inherit;
+  font-size: 13px;
+}
+
+.contrib-input:focus {
+  outline: none;
+  border-color: #dcb469;
+}
+
+.spot-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spot-result {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(28, 24, 19, 0.6);
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.spot-result:hover,
+.spot-result.active {
+  border-color: rgba(220, 180, 105, 0.4);
+}
+
+.spot-result small {
+  color: #b3a890;
 }
 </style>
