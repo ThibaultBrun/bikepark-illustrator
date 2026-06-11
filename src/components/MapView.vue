@@ -63,6 +63,7 @@ const props = withDefaults(
     labelFont?: MapLabelFont
     showPistaTrails?: boolean
     repositionSymbolId?: string | null
+    pendingAddSymbolType?: SymbolId | null
     savedCamera?: MapCameraState | null
     cameraRestoreKey?: number
     fitRequest?: { type: 'project' | 'track'; trackId?: string; nonce: number } | null
@@ -79,6 +80,7 @@ const props = withDefaults(
     labelFont: 'segoe',
     showPistaTrails: true,
     repositionSymbolId: null,
+    pendingAddSymbolType: null,
     savedCamera: null,
     cameraRestoreKey: 0,
     fitRequest: null,
@@ -1160,6 +1162,15 @@ function setupPlacedSymbolInteractions() {
   map.on('click', (e) => {
     if (editorActive) return
     if (isDraggingPlacedSymbol.value) return
+
+    // Mode ajout : le prochain clic place le nouveau symbole ici.
+    if (props.pendingAddSymbolType) {
+      emit('add-symbol', {
+        symbolId: props.pendingAddSymbolType,
+        position: [e.lngLat.lng, e.lngLat.lat],
+      })
+      return
+    }
 
     // Mode repositionnement : le prochain clic place le symbole ici.
     if (props.repositionSymbolId) {

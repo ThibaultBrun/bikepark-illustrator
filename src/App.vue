@@ -37,6 +37,7 @@
       @start-symbol-drag="onStartSymbolDrag"
       @remove-symbol="onRemoveSymbol"
       @start-move-symbol="onStartMoveSymbol"
+      @pick-symbol="onPickSymbol"
       @upload-svg="onUploadSvg"
       @update-symbol-size="onUpdateSymbolSize"
       @update-symbol-transform="onUpdateSymbolTransform"
@@ -60,6 +61,7 @@
         :label-font="mapSettings.labelFont"
         :show-pista-trails="mapSettings.showPistaTrails"
         :reposition-symbol-id="repositionSymbolId"
+        :pending-add-symbol-type="pendingAddSymbolType"
         :saved-camera="mapCamera"
         :camera-restore-key="cameraRestoreKey"
         :fit-request="fitRequest"
@@ -188,9 +190,15 @@
 
     <div v-if="submitToast" class="submit-toast">{{ submitToast }}</div>
 
-    <div v-if="repositionSymbolId" class="symbol-action-bar">
-      <span class="symbol-action-bar__label">📍 Touche la carte pour déplacer le symbole</span>
-      <button type="button" class="symbol-action-bar__btn" @click="repositionSymbolId = null">
+    <div v-if="repositionSymbolId || pendingAddSymbolType" class="symbol-action-bar">
+      <span class="symbol-action-bar__label">
+        {{ pendingAddSymbolType ? '📍 Touche la carte pour ajouter le symbole' : '📍 Touche la carte pour déplacer le symbole' }}
+      </span>
+      <button
+        type="button"
+        class="symbol-action-bar__btn"
+        @click="repositionSymbolId = null; pendingAddSymbolType = null"
+      >
         Annuler
       </button>
     </div>
@@ -326,6 +334,7 @@ const cameraRestoreKey = ref(0)
 const draggingSymbolId = ref<SymbolId | null>(null)
 const selectedSymbolId = ref<string | null>(null)
 const repositionSymbolId = ref<string | null>(null)
+const pendingAddSymbolType = ref<SymbolId | null>(null)
 const dragPointer = ref({ x: 0, y: 0 })
 const fitRequest = ref<{ type: 'project' | 'track'; trackId?: string; nonce: number } | null>(null)
 const isSidebarOpen = ref(false)
@@ -1065,6 +1074,7 @@ function onAddSymbol(payload: {
 
   symbols.value.push(newSymbol)
   selectedSymbolId.value = newSymbol.id
+  pendingAddSymbolType.value = null
 }
 
 function onUpdateSymbolPosition(payload: {
@@ -1086,7 +1096,14 @@ function onRemoveSymbol(payload: { symbolId: string }) {
 
 function onStartMoveSymbol(symbolId: string) {
   repositionSymbolId.value = symbolId
+  pendingAddSymbolType.value = null
   // Sur mobile on referme le panneau pour voir la carte.
+  if (isMobileViewport()) isSidebarOpen.value = false
+}
+
+function onPickSymbol(symbolId: SymbolId) {
+  pendingAddSymbolType.value = symbolId
+  repositionSymbolId.value = null
   if (isMobileViewport()) isSidebarOpen.value = false
 }
 

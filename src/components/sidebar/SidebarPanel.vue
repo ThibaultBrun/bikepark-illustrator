@@ -98,6 +98,7 @@
         @update-symbol-transform="$emit('update-symbol-transform', $event)"
         @remove-symbol="$emit('remove-symbol', $event)"
         @start-move-symbol="$emit('start-move-symbol', $event)"
+        @pick-symbol="$emit('pick-symbol', $event)"
       />
       <MapPanel
         v-else-if="activeSection === 'map'"
@@ -197,6 +198,7 @@ defineEmits<{
   }): void
   (e: 'remove-symbol', payload: { symbolId: string }): void
   (e: 'start-move-symbol', symbolId: string): void
+  (e: 'pick-symbol', symbolId: import('../../types/symbol').SymbolId): void
   (e: 'track-width-change', track: GpxTrack): void
   (e: 'update:map-settings', value: MapSettings): void
   (e: 'export-zip'): void

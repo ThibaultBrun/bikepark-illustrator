@@ -152,7 +152,7 @@
         role="button"
         tabindex="0"
         :title="symbol.description"
-        @pointerdown="onPointerDown($event, symbol.id)"
+        @click="$emit('pick-symbol', symbol.id)"
       >
         <span class="symbol-preview" :style="{ '--symbol-color': symbol.color }">
           <span class="symbol-preview-core">
@@ -186,7 +186,7 @@
         role="button"
         tabindex="0"
         :title="symbol.label"
-        @pointerdown="onPointerDown($event, symbol.id)"
+        @click="$emit('pick-symbol', symbol.id)"
       >
         <span class="symbol-preview custom-preview" :style="{ '--symbol-color': symbol.color }">
           <span class="symbol-preview-core custom-core">
@@ -230,6 +230,7 @@ const emit = defineEmits<{
   }): void
   (e: 'remove-symbol', payload: { symbolId: string }): void
   (e: 'start-move-symbol', symbolId: string): void
+  (e: 'pick-symbol', symbolId: SymbolId): void
 }>()
 
 const selectedPlacedSymbol = computed(() => {
@@ -253,6 +254,9 @@ const selectedPreviewTransform = computed(() => {
 
 function onPointerDown(event: PointerEvent, symbolId: SymbolId) {
   if (event.button !== 0) return
+  // Le glisser n'est proposé qu'à la souris (desktop). Au doigt, on passe par
+  // le tap (@click -> pick-symbol -> placement par tap sur la carte).
+  if (event.pointerType !== 'mouse') return
 
   emit('start-symbol-drag', {
     symbolId,
