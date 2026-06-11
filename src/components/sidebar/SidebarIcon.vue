@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Blend, CircleHelp, Download, Map, Route, Shapes, Mountain } from 'lucide-vue-next'
+import { Blend, CircleHelp, Download, Map, Route, Shapes, Mountain, MapPin } from 'lucide-vue-next'
 import type { SidebarSectionId } from './types'
 
 type SidebarIconName = SidebarSectionId | 'blend' | 'mountain'
@@ -19,6 +19,7 @@ const iconMap = {
   map: Map,
   export: Download,
   help: CircleHelp,
+  locate: MapPin,
   blend: Blend,
   mountain: Mountain,
 } satisfies Record<SidebarIconName, object>

@@ -45,6 +45,7 @@ import maplibregl from 'maplibre-gl'
 import { Trash2 } from 'lucide-vue-next'
 import { TerraDraw, TerraDrawLineStringMode, TerraDrawSelectMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
+import { fetchPublishedTrails } from '../lib/pistaTrails'
 import type { GpxTrack } from '../types/gpx'
 import type { MapCameraState } from '../types/project'
 import type { MapLabelFont } from './sidebar/map-settings'
@@ -60,6 +61,7 @@ const props = withDefaults(
     terrainExaggeration?: number
     hillshadeStrength?: number
     labelFont?: MapLabelFont
+    showPistaTrails?: boolean
     savedCamera?: MapCameraState | null
     cameraRestoreKey?: number
     fitRequest?: { type: 'project' | 'track'; trackId?: string; nonce: number } | null
@@ -74,6 +76,7 @@ const props = withDefaults(
     terrainExaggeration: 1.4,
     hillshadeStrength: 100,
     labelFont: 'segoe',
+    showPistaTrails: true,
     savedCamera: null,
     cameraRestoreKey: 0,
     fitRequest: null,
@@ -1486,7 +1489,53 @@ function exitEditor() {
   emit('editor-closed')
 }
 
-defineExpose({ beginDrawTrack, beginEditTrack, commitEditor, cancelEditor })
+// --- Pistes Pista existantes (calque de référence, lecture seule) -------------
+let pistaTrailsRequested = false
+
+async function ensurePistaTrails() {
+  if (!map || map.getSource('pista-trails') || pistaTrailsRequested) return
+  pistaTrailsRequested = true
+  const fc = await fetchPublishedTrails()
+  if (!map) return
+  map.addSource('pista-trails', {
+    type: 'geojson',
+    data: (fc ?? { type: 'FeatureCollection', features: [] }) as GeoJSON.GeoJSON,
+  })
+  // Calque inséré sous les pistes de l'utilisateur si possible.
+  const firstTrackLayer = map.getStyle().layers?.find((l) => l.id.startsWith('track-line-'))?.id
+  map.addLayer(
+    {
+      id: 'pista-trails-line',
+      type: 'line',
+      source: 'pista-trails',
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+        visibility: props.showPistaTrails ? 'visible' : 'none',
+      },
+      paint: {
+        'line-color': '#b3a890',
+        'line-width': 2,
+        'line-opacity': 0.7,
+        'line-dasharray': [2, 2],
+      },
+    },
+    firstTrackLayer,
+  )
+}
+
+function setPistaTrailsVisible(visible: boolean) {
+  if (map?.getLayer('pista-trails-line')) {
+    map.setLayoutProperty('pista-trails-line', 'visibility', visible ? 'visible' : 'none')
+  }
+}
+
+function flyTo(lng: number, lat: number, zoom = 14) {
+  if (!map) return
+  map.flyTo({ center: [lng, lat], zoom, essential: true })
+}
+
+defineExpose({ beginDrawTrack, beginEditTrack, commitEditor, cancelEditor, flyTo })
 
 onMounted(() => {
   if (!mapContainer.value) return
@@ -1565,6 +1614,7 @@ onMounted(() => {
     setupPlacedSymbolInteractions()
     setupLabelDragging()
     setupCameraTracking()
+    if (props.showPistaTrails) void ensurePistaTrails()
 
     if (!props.savedCamera) {
       map.easeTo({
@@ -1710,6 +1760,18 @@ watch(
   () => props.labelFont,
   () => {
     refreshTracks()
+  },
+)
+
+watch(
+  () => props.showPistaTrails,
+  async (visible) => {
+    if (visible) {
+      await ensurePistaTrails()
+      setPistaTrailsVisible(true)
+    } else {
+      setPistaTrailsVisible(false)
+    }
   },
 )
 

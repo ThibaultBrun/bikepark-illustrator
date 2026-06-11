@@ -109,6 +109,27 @@
       </div>
     </div>
   </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div class="placeholder-icon" aria-hidden="true">
+        <SidebarIcon name="track" />
+      </div>
+      <div class="panel-header-copy">
+        <h2>Pistes Pista</h2>
+        <p>Afficher en référence les pistes déjà publiées sur Pista.</p>
+      </div>
+    </div>
+
+    <label class="toggle-row">
+      <input
+        type="checkbox"
+        :checked="settings.showPistaTrails"
+        @change="updateShowPistaTrails"
+      />
+      <span>Afficher les pistes Pista existantes</span>
+    </label>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -144,6 +165,13 @@ function updateHillshade(event: Event) {
   emit('update:settings', {
     ...props.settings,
     hillshade: Number((event.target as HTMLInputElement).value),
+  })
+}
+
+function updateShowPistaTrails(event: Event) {
+  emit('update:settings', {
+    ...props.settings,
+    showPistaTrails: (event.target as HTMLInputElement).checked,
   })
 }
 
@@ -423,5 +451,21 @@ function selectFont(labelFont: MapLabelFont) {
   font-weight: 700;
   flex: 0 0 auto;
   align-self: center;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #d8ccb6;
+  cursor: pointer;
+}
+
+.toggle-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: #cda35a;
+  cursor: pointer;
 }
 </style>

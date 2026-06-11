@@ -105,6 +105,10 @@
         @request-publication="$emit('request-publication')"
         @cancel-publication="$emit('cancel-publication')"
       />
+      <LocatePanel
+        v-else-if="activeSection === 'locate'"
+        @locate="$emit('locate', $event)"
+      />
       <HelpPanel
         v-else
         @start-tour="$emit('start-tour')"
@@ -128,6 +132,7 @@ import { computed } from 'vue'
 import type { GpxTrack } from '../../types/gpx'
 import type { MapSymbol, SymbolDefinition } from '../../types/symbol'
 import ExportPanel from './ExportPanel.vue'
+import LocatePanel from './LocatePanel.vue'
 import HelpPanel from './HelpPanel.vue'
 import MapPanel from './MapPanel.vue'
 import type { MapSettings } from './map-settings'
@@ -163,6 +168,7 @@ defineEmits<{
   (e: 'submit-project'): void
   (e: 'request-publication'): void
   (e: 'cancel-publication'): void
+  (e: 'locate', payload: { lng: number; lat: number; label: string }): void
   (e: 'update:project-name', value: string): void
   (e: 'start-symbol-drag', payload: {
     symbolId: import('../../types/symbol').SymbolId

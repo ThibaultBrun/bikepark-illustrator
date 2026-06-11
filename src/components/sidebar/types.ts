@@ -1,4 +1,4 @@
-export type SidebarSectionId = 'track' | 'symbol' | 'map' | 'export' | 'help'
+export type SidebarSectionId = 'track' | 'symbol' | 'map' | 'export' | 'help' | 'locate'
 
 export type SidebarSection = {
   id: SidebarSectionId

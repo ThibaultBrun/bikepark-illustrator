@@ -28,6 +28,7 @@
       @edit-track="beginEditTrack"
       @request-publication="onRequestPublication"
       @cancel-publication="onCancelPublication"
+      @locate="onLocate"
       @start-symbol-drag="onStartSymbolDrag"
       @upload-svg="onUploadSvg"
       @update-symbol-size="onUpdateSymbolSize"
@@ -50,6 +51,7 @@
         :terrain-exaggeration="mapSettings.terrain"
         :hillshade-strength="mapSettings.hillshade"
         :label-font="mapSettings.labelFont"
+        :show-pista-trails="mapSettings.showPistaTrails"
         :saved-camera="mapCamera"
         :camera-restore-key="cameraRestoreKey"
         :fit-request="fitRequest"
@@ -264,6 +266,13 @@ const sidebarSections: SidebarSection[] = [
     placeholder: 'Section reservee aux reglages de carte, relief et ombrage.',
   },
   {
+    id: 'locate',
+    icon: 'L',
+    title: 'Localiser',
+    description: 'Rechercher une adresse ou un lieu.',
+    placeholder: '',
+  },
+  {
     id: 'export',
     icon: 'E',
     title: 'Export',
@@ -285,7 +294,12 @@ const mapViewRef = ref<{
   beginEditTrack: (track: GpxTrack) => void
   commitEditor: () => void
   cancelEditor: () => void
+  flyTo: (lng: number, lat: number, zoom?: number) => void
 } | null>(null)
+
+function onLocate(payload: { lng: number; lat: number; label: string }) {
+  mapViewRef.value?.flyTo(payload.lng, payload.lat, 14)
+}
 const editorMode = ref<'idle' | 'draw' | 'edit'>('idle')
 const symbols = ref<MapSymbol[]>([])
 const customSymbols = ref<SymbolDefinition[]>([])
@@ -303,6 +317,7 @@ const mapSettings = ref<MapSettings>({
   terrain: 1.4,
   hillshade: 100,
   labelFont: 'segoe',
+  showPistaTrails: true,
 })
 const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 const saveStatusMessage = ref('')
@@ -624,6 +639,7 @@ function normalizeProject(raw: Partial<BikeparkProject> | null | undefined): Bik
       terrain: Number(raw?.mapSettings?.terrain ?? 1.4),
       hillshade: Number(raw?.mapSettings?.hillshade ?? 100),
       labelFont: raw?.mapSettings?.labelFont ?? 'segoe',
+      showPistaTrails: raw?.mapSettings?.showPistaTrails ?? true,
     },
     mapCamera:
       raw?.mapCamera &&
