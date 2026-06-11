@@ -241,21 +241,12 @@
       </div>
     </div>
 
-    <button
-      v-if="tracks.length > 0"
-      type="button"
-      class="submit-btn"
-      @click="$emit('submit-project')"
-    >
-      <Send class="submit-btn__icon" aria-hidden="true" />
-      <span>Soumettre à Pista</span>
-    </button>
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { ChevronUp, Eye, EyeOff, Pencil, PencilLine, Repeat2, Send, Spline, Trash2 } from 'lucide-vue-next'
+import { ChevronUp, Eye, EyeOff, Pencil, PencilLine, Repeat2, Spline, Trash2 } from 'lucide-vue-next'
 import type { GpxTrack, TrackLabelStyle, TrackStyle } from '../../types/gpx'
 
 const props = defineProps<{
@@ -270,7 +261,6 @@ const emit = defineEmits<{
   (e: 'remove-track', trackId: string): void
   (e: 'new-track'): void
   (e: 'edit-track', trackId: string): void
-  (e: 'submit-project'): void
   (e: 'fit-project'): void
   (e: 'fit-track', trackId: string): void
   (e: 'update:project-name', value: string): void

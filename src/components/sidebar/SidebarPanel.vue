@@ -78,7 +78,6 @@
         @remove-track="$emit('remove-track', $event)"
         @new-track="$emit('new-track')"
         @edit-track="$emit('edit-track', $event)"
-        @submit-project="$emit('submit-project')"
         @track-width-change="$emit('track-width-change', $event)"
         @update:project-name="$emit('update:project-name', $event)"
       />
@@ -100,8 +99,12 @@
       />
       <ExportPanel
         v-else-if="activeSection === 'export'"
+        :can-submit="tracks.length > 0"
+        :spot-status="spotStatus"
         @export-zip="$emit('export-zip')"
         @import-zip="$emit('import-zip', $event)"
+        @submit-project="$emit('submit-project')"
+        @request-publication="$emit('request-publication')"
       />
       <HelpPanel
         v-else
@@ -145,6 +148,7 @@ const props = defineProps<{
   predefinedColors: string[]
   mapSettings: MapSettings
   projectName: string
+  spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
 }>()
 
 defineEmits<{
@@ -158,6 +162,7 @@ defineEmits<{
   (e: 'new-track'): void
   (e: 'edit-track', trackId: string): void
   (e: 'submit-project'): void
+  (e: 'request-publication'): void
   (e: 'update:project-name', value: string): void
   (e: 'start-symbol-drag', payload: {
     symbolId: import('../../types/symbol').SymbolId

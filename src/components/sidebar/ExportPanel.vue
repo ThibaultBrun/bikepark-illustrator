@@ -7,19 +7,51 @@
 
       <div class="panel-header-copy">
         <h2>Projet</h2>
-        <p>Le projet se sauvegarde tout seul dans le navigateur. Ici on garde juste l import et l export.</p>
+        <p>Ton projet se sauvegarde tout seul dans ton compte. Ici : soumettre à Pista ou exporter.</p>
       </div>
     </div>
 
-    <div class="action-grid">
-      <button type="button" class="action-button primary" @click="$emit('export-zip')">
-        Exporter en ZIP
-      </button>
+    <div class="block">
+      <div class="block-title">Soumettre à Pista</div>
 
-      <label class="action-button import-button">
-        <span>Importer un ZIP</span>
-        <input type="file" accept=".zip" @change="onZipSelected" />
-      </label>
+      <button
+        type="button"
+        class="action-button primary"
+        :disabled="!canSubmit"
+        @click="$emit('submit-project')"
+      >
+        {{ spotStatus ? 'Mettre à jour ma soumission' : 'Soumettre à Pista' }}
+      </button>
+      <p class="hint">
+        Enregistre ton spot et tes pistes <strong>en privé</strong> : visibles seulement par toi
+        (et les admins Pista). Pour les rendre publics, fais une demande de publication.
+      </p>
+
+      <template v-if="spotStatus === 'draft'">
+        <button type="button" class="action-button" @click="$emit('request-publication')">
+          Demander la publication
+        </button>
+        <p class="hint">Un admin Pista validera avant la mise en ligne publique.</p>
+      </template>
+      <p v-else-if="spotStatus === 'submitted'" class="status status--pending">
+        ⏳ En attente de validation par un admin Pista.
+      </p>
+      <p v-else-if="spotStatus === 'published'" class="status status--ok">
+        ✅ Publié sur Pista.
+      </p>
+    </div>
+
+    <div class="block">
+      <div class="block-title">Export local</div>
+      <div class="action-grid">
+        <button type="button" class="action-button" @click="$emit('export-zip')">
+          Exporter en ZIP
+        </button>
+        <label class="action-button import-button">
+          <span>Importer un ZIP</span>
+          <input type="file" accept=".zip" @change="onZipSelected" />
+        </label>
+      </div>
     </div>
   </section>
 </template>
@@ -27,9 +59,16 @@
 <script setup lang="ts">
 import SidebarIcon from './SidebarIcon.vue'
 
+defineProps<{
+  canSubmit: boolean
+  spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
+}>()
+
 const emit = defineEmits<{
   (e: 'export-zip'): void
   (e: 'import-zip', file: File): void
+  (e: 'submit-project'): void
+  (e: 'request-publication'): void
 }>()
 
 function onZipSelected(event: Event) {
@@ -89,6 +128,53 @@ function onZipSelected(event: Event) {
   background: rgba(205, 163, 90, 0.18);
   border: 1px solid rgba(220, 180, 105, 0.28);
   color: #f0cd8a;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.block-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #d8ccb6;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #b3a890;
+}
+
+.hint strong {
+  color: #f0cd8a;
+}
+
+.status {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12.5px;
+}
+
+.status--pending {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+}
+
+.status--ok {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .action-grid {

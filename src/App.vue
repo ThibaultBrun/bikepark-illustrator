@@ -15,6 +15,7 @@
       :predefined-colors="predefinedColors"
       :map-settings="mapSettings"
       :project-name="projectName"
+      :spot-status="currentSpotStatus"
       @toggle="toggleSidebar"
       @close="closeSidebar"
       @open-section="openSection"
@@ -26,6 +27,7 @@
       @new-track="beginNewTrack"
       @edit-track="beginEditTrack"
       @submit-project="showSubmit = true"
+      @request-publication="onRequestPublication"
       @start-symbol-drag="onStartSymbolDrag"
       @upload-svg="onUploadSvg"
       @update-symbol-size="onUpdateSymbolSize"
@@ -209,7 +211,7 @@ import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
 import { useAuth } from './lib/useAuth'
-import { loadUserProject, saveUserProject, submitProject } from './lib/projectsStore'
+import { loadUserProject, saveUserProject, submitProject, requestPublication, getSpotStatus } from './lib/projectsStore'
 import SubmitDialog from './components/SubmitDialog.vue'
 import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
@@ -319,10 +321,28 @@ const lastSavedAt = ref<string | null>(null)
 const hasSavedProject = ref(false)
 const hasHydratedProject = ref(false)
 const currentProjectId = ref<string | null>(null)
+const currentSpotId = ref<string | null>(null)
+const currentSpotStatus = ref<import('./lib/projectsStore').SpotStatus | null>(null)
 const showSubmit = ref(false)
 const submitBusy = ref(false)
 const submitError = ref('')
 const submitToast = ref('')
+
+function showToast(msg: string) {
+  submitToast.value = msg
+  window.setTimeout(() => (submitToast.value = ''), 6000)
+}
+
+async function onRequestPublication() {
+  if (!currentSpotId.value) return
+  const err = await requestPublication(currentSpotId.value)
+  if (err) {
+    showToast('Échec de la demande de publication.')
+    return
+  }
+  currentSpotStatus.value = 'submitted'
+  showToast('Demande de publication envoyée — en attente de validation admin.')
+}
 
 async function onSubmitProject(payload: {
   name: string
@@ -344,9 +364,14 @@ async function onSubmitProject(payload: {
       submitError.value = error || 'Échec de la soumission.'
       return
     }
+    currentSpotId.value = spotId
+    currentSpotStatus.value = (await getSpotStatus(spotId)) ?? 'draft'
     showSubmit.value = false
-    submitToast.value = 'Spot soumis ! En attente de validation par un admin Pista.'
-    window.setTimeout(() => (submitToast.value = ''), 6000)
+    showToast(
+      currentSpotStatus.value === 'submitted'
+        ? 'Soumission mise à jour. Toujours en attente de validation.'
+        : 'Enregistré sur Pista en privé. Demande la publication quand tu es prêt.',
+    )
   } finally {
     submitBusy.value = false
   }
@@ -691,6 +716,8 @@ async function hydrateFromDb() {
     }
 
     currentProjectId.value = stored.id
+    currentSpotId.value = stored.spotId
+    currentSpotStatus.value = stored.spotId ? await getSpotStatus(stored.spotId) : null
     const project = normalizeProject(stored.data)
     beginProjectLoad('Reprise de ta sauvegarde', project)
     applyProject(project)
@@ -709,6 +736,8 @@ async function hydrateFromDb() {
 function resetToEmpty() {
   hasHydratedProject.value = false
   currentProjectId.value = null
+  currentSpotId.value = null
+  currentSpotStatus.value = null
   tracks.value = []
   symbols.value = []
   customSymbols.value = []

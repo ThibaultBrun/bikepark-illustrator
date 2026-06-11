@@ -7,7 +7,8 @@
       </header>
 
       <p class="submit-intro">
-        Ton spot et tes pistes partent en validation. Un admin Pista les publiera après revue.
+        Ton spot et tes pistes seront enregistrés sur Pista <strong>en privé</strong> : visibles
+        seulement par toi (et les admins). Tu pourras ensuite <strong>demander leur publication</strong>.
         Le style visuel reste côté illustrator ; Pista applique son propre rendu.
       </p>
 
