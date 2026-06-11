@@ -64,15 +64,31 @@ function clearChunked(key: string) {
   }
 }
 
+function writeChunked(key: string, value: string) {
+  clearChunked(key)
+  if (value.length <= CHUNK) {
+    setCookie(key, value)
+    return
+  }
+  for (let i = 0, p = 0; p < value.length; p += CHUNK, i++) {
+    setCookie(`${key}.${i}`, value.slice(p, p + CHUNK))
+  }
+}
+
 export const sharedAuthStorage = {
   getItem(key: string): string | null {
     const fromCookie = readChunked(key)
     if (fromCookie !== null) return fromCookie
+    // Migration paresseuse : une session existe en localStorage mais pas encore
+    // dans le cookie partagé → on sème le cookie pour activer le SSO de suite.
+    let local: string | null = null
     try {
-      return window.localStorage.getItem(key)
+      local = window.localStorage.getItem(key)
     } catch {
-      return null
+      local = null
     }
+    if (local !== null) writeChunked(key, local)
+    return local
   },
   setItem(key: string, value: string): void {
     try {
@@ -80,14 +96,7 @@ export const sharedAuthStorage = {
     } catch {
       /* ignore */
     }
-    clearChunked(key)
-    if (value.length <= CHUNK) {
-      setCookie(key, value)
-      return
-    }
-    for (let i = 0, p = 0; p < value.length; p += CHUNK, i++) {
-      setCookie(`${key}.${i}`, value.slice(p, p + CHUNK))
-    }
+    writeChunked(key, value)
   },
   removeItem(key: string): void {
     try {
