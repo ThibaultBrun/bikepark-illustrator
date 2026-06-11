@@ -110,6 +110,7 @@
         v-else-if="activeSection === 'export'"
         :spot-status="spotStatus"
         :can-preview="canPreview"
+        :preselected-spot="preselectedSpot"
         :track-count="tracks.length"
         @export-zip="$emit('export-zip')"
         @import-zip="$emit('import-zip', $event)"
@@ -167,6 +168,7 @@ const props = defineProps<{
   projectName: string
   spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
   canPreview?: boolean
+  preselectedSpot?: { id: string; name: string } | null
   projects: { id: string; title: string | null; spotId: string | null }[]
   currentProjectId: string | null
   isAdmin: boolean

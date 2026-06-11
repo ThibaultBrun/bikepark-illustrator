@@ -114,6 +114,7 @@ export default {
     contribHint: 'Zure pistak Pistan jada argitaratutako spot bati proposatuko zaizkio (administrariaren berrikuspena).',
     contribSearch: 'Bilatu spot bat…',
     contribSend: 'Bidali {n} pista «{spot}»-(e)ra',
+    contribTarget: '«{spot}» spot-era ekarpena egiten ari zara. Marraztu zure pista eta sakatu Bidali behean.',
   },
 
   editor: {

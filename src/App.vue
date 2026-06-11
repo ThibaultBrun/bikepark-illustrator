@@ -17,6 +17,7 @@
       :project-name="projectName"
       :spot-status="currentSpotStatus"
       :can-preview="!!(previewSpotId || currentSpotId)"
+      :preselected-spot="proposeTargetSpot"
       :projects="projects"
       :current-project-id="currentProjectId"
       :is-admin="authIsAdmin"
@@ -351,7 +352,22 @@ const dragPointer = ref({ x: 0, y: 0 })
 const fitRequest = ref<{ type: 'project' | 'track'; trackId?: string; nonce: number } | null>(null)
 const isSidebarOpen = ref(false)
 const hasStartedWelcome = ref(false)
-const activeSection = ref<SidebarSectionId>('track')
+
+// Deep-link « Créer ma piste » depuis Pista : ?spot=<id>&name=<nom> → on
+// pré-cible ce spot pour la contribution (bloc « Proposer à un spot existant »).
+const incomingSpot = (() => {
+  try {
+    const p = new URLSearchParams(location.search)
+    const id = p.get('spot')
+    if (!id) return null
+    return { id, name: p.get('name') || '' }
+  } catch {
+    return null
+  }
+})()
+const proposeTargetSpot = ref<{ id: string; name: string } | null>(incomingSpot)
+
+const activeSection = ref<SidebarSectionId>(incomingSpot ? 'export' : 'track')
 const mapSettings = ref<MapSettings>({
   terrain: 1.4,
   hillshade: 100,
@@ -369,7 +385,7 @@ const currentSpotId = ref<string | null>(null)
 const currentSpotStatus = ref<import('./lib/projectsStore').SpotStatus | null>(null)
 // Spot à prévisualiser dans Pista : le spot du projet par défaut, ou le spot
 // existant ciblé après une proposition « Proposer à un spot existant ».
-const previewSpotId = ref<string | null>(null)
+const previewSpotId = ref<string | null>(incomingSpot?.id ?? null)
 const projects = ref<ProjectListItem[]>([])
 const submitToast = ref('')
 let pistaSyncTimer: number | null = null

@@ -113,6 +113,7 @@ export default {
     contribHint: 'Your trails will be proposed to a spot already published on Pista (admin review).',
     contribSearch: 'Search a spot…',
     contribSend: 'Send {n} trail(s) to “{spot}”',
+    contribTarget: 'You are contributing to the spot “{spot}”. Draw your trail then click Send below.',
   },
 
   editor: {

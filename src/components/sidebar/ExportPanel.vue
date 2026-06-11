@@ -46,6 +46,9 @@
 
     <div class="block">
       <div class="block-title">{{ t('exportPanel.contribTitle') }}</div>
+      <p v-if="preselectedSpot" class="contrib-target">
+        {{ t('exportPanel.contribTarget', { spot: preselectedSpot.name }) }}
+      </p>
       <p class="hint">{{ t('exportPanel.contribHint') }}</p>
       <input
         v-model="spotQuery"
@@ -93,16 +96,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SidebarIcon from './SidebarIcon.vue'
 import { searchPublishedSpots, type PublicSpot } from '../../lib/projectsStore'
 
 const { t } = useI18n()
 
-defineProps<{
+const props = defineProps<{
   spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
   canPreview?: boolean
+  preselectedSpot?: { id: string; name: string } | null
   trackCount: number
 }>()
 
@@ -119,6 +123,18 @@ const spotQuery = ref('')
 const spotResults = ref<PublicSpot[]>([])
 const selectedSpot = ref<PublicSpot | null>(null)
 let searchTimer: number | null = null
+
+// Pré-sélection via deep-link « Créer ma piste » depuis Pista (?spot=…).
+watch(
+  () => props.preselectedSpot,
+  (sp) => {
+    if (sp?.id) {
+      selectedSpot.value = { id: sp.id, name: sp.name, region: null }
+      spotQuery.value = sp.name
+    }
+  },
+  { immediate: true },
+)
 
 function onSearch() {
   selectedSpot.value = null
@@ -221,6 +237,18 @@ function onZipSelected(event: Event) {
 
 .hint strong {
   color: #f0cd8a;
+}
+
+.contrib-target {
+  margin: 0 0 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(220, 180, 105, 0.4);
+  background: rgba(220, 180, 105, 0.12);
+  color: #f0cd8a;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 600;
 }
 
 .status {

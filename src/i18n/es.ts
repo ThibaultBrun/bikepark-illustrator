@@ -113,6 +113,7 @@ export default {
     contribHint: 'Tus pistas se propondrán a un spot ya publicado en Pista (revisión del admin).',
     contribSearch: 'Buscar un spot…',
     contribSend: 'Enviar {n} pista(s) a «{spot}»',
+    contribTarget: 'Estás contribuyendo al spot «{spot}». Dibuja tu pista y pulsa Enviar abajo.',
   },
 
   editor: {
