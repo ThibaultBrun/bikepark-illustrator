@@ -1,7 +1,7 @@
 export default {
   app: { name: 'Bikepark Illustrator' },
   common: { cancel: 'Annuler', close: 'Fermer', delete: 'Supprimer', new: 'Nouveau' },
-  lang: { label: 'Langue', fr: 'Français', en: 'English', eu: 'Euskara' },
+  lang: { label: 'Langue', fr: 'Français', en: 'English', es: 'Español', eu: 'Euskara' },
 
   login: {
     tagline: 'Connecte-toi avec ton compte Pista pour créer et soumettre tes spots.',

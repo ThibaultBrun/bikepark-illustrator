@@ -2,8 +2,9 @@ import { createI18n } from 'vue-i18n'
 import fr from './fr'
 import en from './en'
 import eu from './eu'
+import es from './es'
 
-export const SUPPORTED_LOCALES = ['fr', 'en', 'eu'] as const
+export const SUPPORTED_LOCALES = ['fr', 'en', 'es', 'eu'] as const
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number]
 
 const STORAGE_KEY = 'bpi:locale'
@@ -23,7 +24,7 @@ export const i18n = createI18n({
   legacy: false,
   locale: detectLocale(),
   fallbackLocale: 'fr',
-  messages: { fr, en, eu },
+  messages: { fr, en, es, eu },
 })
 
 export function setLocale(locale: AppLocale) {

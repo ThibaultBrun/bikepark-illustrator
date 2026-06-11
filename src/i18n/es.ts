@@ -1,0 +1,154 @@
+export default {
+  app: { name: 'Bikepark Illustrator' },
+  common: { cancel: 'Cancelar', close: 'Cerrar', delete: 'Eliminar', new: 'Nuevo' },
+  lang: { label: 'Idioma', fr: 'Français', en: 'English', eu: 'Euskara', es: 'Español' },
+
+  login: {
+    tagline: 'Inicia sesión con tu cuenta Pista para crear y enviar tus spots.',
+    google: 'Continuar con Google',
+    or: 'o',
+    email: 'Correo',
+    password: 'Contraseña',
+    signin: 'Iniciar sesión',
+    signup: 'Crear cuenta',
+    toSignup: '¿No tienes cuenta? Regístrate',
+    toSignin: '¿Ya tienes cuenta? Inicia sesión',
+    accountCreated: 'Cuenta creada. Revisa tu correo si se pide una confirmación.',
+    errInvalid: 'Correo o contraseña incorrectos.',
+    errExists: 'Este correo ya tiene una cuenta.',
+  },
+
+  account: { logout: 'Cerrar sesión' },
+  loading: 'Cargando…',
+
+  sections: {
+    track: { title: 'Pistas', desc: 'Importar y estilizar las trazas GPX.' },
+    symbol: { title: 'Símbolos', desc: 'Preparar iconos y marcadores.' },
+    map: { title: 'Mapa', desc: 'Ajustar el mapa base y las opciones visuales.' },
+    locate: { title: 'Localizar', desc: 'Buscar una dirección o un lugar.' },
+    export: { title: 'Exportar', desc: 'Preparar las salidas y exportaciones finales.' },
+    help: { title: 'Ayuda', desc: 'Visita guiada y recordatorio de funciones.' },
+  },
+
+  track: {
+    project: 'Proyecto',
+    projectName: 'Nombre del proyecto',
+    projectNamePh: 'Mi bikepark',
+    newProject: 'Nuevo proyecto',
+    deleteProject: 'Eliminar este proyecto',
+    deleteConfirm: '¿Eliminar «{name}»? Esta acción es definitiva.',
+    unnamed: 'Sin nombre',
+    importGpx: 'Importar GPX',
+    draw: 'Dibujar una pista',
+    tracks: 'Pistas',
+    fitProject: 'Ampliar a todo el proyecto',
+    empty: 'Ninguna traza cargada.',
+    labelPh: 'Etiqueta',
+    editTrack: 'Editar el trazado en el mapa',
+    fitTrack: 'Ampliar a esta pista',
+    hideTrack: 'Ocultar la traza',
+    showTrack: 'Mostrar la traza',
+    showSettings: 'Mostrar ajustes',
+    hideSettings: 'Ocultar ajustes',
+    deleteTrack: 'Eliminar la pista',
+    typePista: 'Tipo (Pista)',
+    difficulty: 'Dificultad',
+    color: 'Color',
+    width: 'Grosor',
+    style: 'Estilo',
+  },
+
+  trailType: {
+    enduro: 'Enduro',
+    dh: 'Descenso (DH)',
+    uplift_lift: 'Remonte (telesilla)',
+    uplift_bike: 'Lanzadera',
+  },
+  difficulty: { green: 'Verde', blue: 'Azul', red: 'Rojo', black: 'Negro' },
+
+  symbol: {
+    selected: 'Símbolo seleccionado',
+    size: 'Tamaño',
+    mirror: 'Espejo',
+    move: 'Mover',
+    delete: 'Eliminar',
+    defaultLib: 'Símbolos predeterminados',
+    customLib: 'Mis símbolos',
+  },
+
+  map: {
+    relief: 'Relieve',
+    reliefDesc: 'Ajusta la intensidad del terreno entre 0 y 5.',
+    intensity: 'Intensidad',
+    shade: 'Sombreado',
+    shadeDesc: 'Ajusta la fuerza del sombreado entre 0 y 100 %.',
+    font: 'Fuente de las etiquetas',
+    fontDesc: 'Una sola fuente para todos los nombres de pistas.',
+    pistaTitle: 'Pistas de Pista',
+    pistaDesc: 'Mostrar como referencia las pistas ya publicadas en Pista.',
+    showPista: 'Mostrar las pistas existentes de Pista',
+  },
+
+  exportPanel: {
+    title: 'Proyecto',
+    desc: 'Tu proyecto se guarda solo en tu cuenta. Aquí: enviar a Pista o exportar.',
+    pubTitle: 'Publicación',
+    pubHintNew:
+      'Dibuja pistas: tu spot se crea automáticamente y en privado en tu espacio Pista (solo visible para ti). Después pide la publicación para ponerlo en línea.',
+    requestPub: 'Pedir la publicación',
+    pubHintDraft:
+      'Tu spot es privado. La solicitud se envía a un administrador de Pista que la revisará antes de hacerla pública.',
+    pending: '⏳ Publicación solicitada — pendiente de validación por un administrador.',
+    cancelRequest: 'Cancelar la solicitud (para editar)',
+    cancelHint: 'Tu envío está congelado durante la revisión. Cancélalo para editarlo y vuelve a pedirlo.',
+    published: '✅ Publicado en Pista.',
+    localTitle: 'Exportación local',
+    exportZip: 'Exportar en ZIP',
+    importZip: 'Importar un ZIP',
+  },
+
+  editor: {
+    drawHint: '✏️ Toca el mapa para añadir puntos, doble toque para terminar la pista.',
+    editHint:
+      '🔧 Arrastra un punto para moverlo · toca un punto claro en medio de un segmento para añadir uno · clic derecho en un punto para eliminarlo.',
+    finish: 'Terminar',
+  },
+
+  reposition: {
+    add: '📍 Toca el mapa para añadir el símbolo',
+    move: '📍 Toca el mapa para mover el símbolo',
+  },
+
+  toast: {
+    private: 'Guardado en privado en Pista. Pide la publicación cuando estés listo.',
+    pendingUpdated: 'Envío actualizado. Sigue pendiente de revisión.',
+    pubRequested: 'Publicación solicitada — pendiente de revisión.',
+    pubFail: 'Error al solicitar la publicación.',
+    cancelled: 'Solicitud cancelada — puedes editar y volver a pedir la publicación.',
+    cancelFail: 'No se pudo cancelar la solicitud.',
+  },
+
+  help: {
+    title: 'Ayuda y tutorial',
+    desc: 'Una visita guiada y un recordatorio de funciones para empezar.',
+    startTour: 'Iniciar la visita guiada',
+    tip: '💡 Consejo: mantén el clic derecho en el mapa para inclinarlo y disfrutar del relieve 3D.',
+    tracksTitle: 'Pistas',
+    tracksDesc:
+      'Importa tus GPX o dibuja una pista a mano, edita los puntos (mover, añadir, clic derecho = eliminar), luego cambia color, grosor, estilo y etiquetas.',
+    symbolsTitle: 'Símbolos',
+    symbolsDesc: 'Arrastra y suelta símbolos en el mapa, o importa tus propios SVG.',
+    mapTitle: 'Mapa',
+    mapDesc: 'Mapa base satélite/OSM, relieve 3D y sombreado ajustables.',
+    exportTitle: 'Exportar',
+    exportDesc: 'Guardado automático en tu cuenta, exportar/importar en ZIP.',
+  },
+
+  locate: {
+    title: 'Localizar',
+    desc: 'Busca una dirección, una ciudad o un lugar (OpenStreetMap).',
+    placeholder: 'ej.: Hossegor, o una dirección…',
+    none: 'Sin resultados.',
+    unavailable: 'Búsqueda no disponible, inténtalo de nuevo.',
+  },
+}

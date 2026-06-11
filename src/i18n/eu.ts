@@ -2,7 +2,7 @@
 export default {
   app: { name: 'Bikepark Illustrator' },
   common: { cancel: 'Utzi', close: 'Itxi', delete: 'Ezabatu', new: 'Berria' },
-  lang: { label: 'Hizkuntza', fr: 'Français', en: 'English', eu: 'Euskara' },
+  lang: { label: 'Hizkuntza', fr: 'Français', en: 'English', es: 'Español', eu: 'Euskara' },
 
   login: {
     tagline: 'Hasi saioa zure Pista kontuarekin zure spot-ak sortu eta bidaltzeko.',
