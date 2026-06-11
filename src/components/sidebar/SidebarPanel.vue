@@ -99,11 +99,9 @@
       />
       <ExportPanel
         v-else-if="activeSection === 'export'"
-        :can-submit="tracks.length > 0"
         :spot-status="spotStatus"
         @export-zip="$emit('export-zip')"
         @import-zip="$emit('import-zip', $event)"
-        @submit-project="$emit('submit-project')"
         @request-publication="$emit('request-publication')"
       />
       <HelpPanel

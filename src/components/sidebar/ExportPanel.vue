@@ -12,29 +12,25 @@
     </div>
 
     <div class="block">
-      <div class="block-title">Soumettre à Pista</div>
+      <div class="block-title">Publication</div>
 
-      <button
-        type="button"
-        class="action-button primary"
-        :disabled="!canSubmit"
-        @click="$emit('submit-project')"
-      >
-        {{ spotStatus ? 'Mettre à jour ma soumission' : 'Soumettre à Pista' }}
-      </button>
-      <p class="hint">
-        Enregistre ton spot et tes pistes <strong>en privé</strong> : visibles seulement par toi
-        (et les admins Pista). Pour les rendre publics, fais une demande de publication.
+      <p v-if="!spotStatus" class="hint">
+        Dessine des pistes : ton spot est créé automatiquement <strong>en privé</strong> dans ton
+        espace Pista (visible seulement par toi). Demande ensuite la publication pour le mettre en ligne.
       </p>
 
-      <template v-if="spotStatus === 'draft'">
-        <button type="button" class="action-button" @click="$emit('request-publication')">
+      <template v-else-if="spotStatus === 'draft'">
+        <button type="button" class="action-button primary" @click="$emit('request-publication')">
           Demander la publication
         </button>
-        <p class="hint">Un admin Pista validera avant la mise en ligne publique.</p>
+        <p class="hint">
+          Ton spot est <strong>privé</strong>. La demande l'envoie à un admin Pista qui validera
+          avant la mise en ligne publique.
+        </p>
       </template>
+
       <p v-else-if="spotStatus === 'submitted'" class="status status--pending">
-        ⏳ En attente de validation par un admin Pista.
+        ⏳ Publication demandée — en attente de validation par un admin.
       </p>
       <p v-else-if="spotStatus === 'published'" class="status status--ok">
         ✅ Publié sur Pista.
@@ -60,14 +56,12 @@
 import SidebarIcon from './SidebarIcon.vue'
 
 defineProps<{
-  canSubmit: boolean
   spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
 }>()
 
 const emit = defineEmits<{
   (e: 'export-zip'): void
   (e: 'import-zip', file: File): void
-  (e: 'submit-project'): void
   (e: 'request-publication'): void
 }>()
 

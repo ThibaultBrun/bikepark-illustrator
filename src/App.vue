@@ -26,7 +26,6 @@
       @remove-track="onRemoveTrack"
       @new-track="beginNewTrack"
       @edit-track="beginEditTrack"
-      @submit-project="showSubmit = true"
       @request-publication="onRequestPublication"
       @start-symbol-drag="onStartSymbolDrag"
       @upload-svg="onUploadSvg"
@@ -176,16 +175,6 @@
 
     <div v-if="submitToast" class="submit-toast">{{ submitToast }}</div>
 
-    <SubmitDialog
-      v-if="showSubmit"
-      :tracks="tracks"
-      :default-name="projectName"
-      :busy="submitBusy"
-      :error="submitError"
-      @close="showSubmit = false"
-      @submit="onSubmitProject"
-    />
-
     <div
       v-if="draggingSymbolId && dragPreview"
       class="symbol-drag-preview"
@@ -212,7 +201,6 @@ import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
 import { useAuth } from './lib/useAuth'
 import { loadUserProject, saveUserProject, submitProject, requestPublication, getSpotStatus } from './lib/projectsStore'
-import SubmitDialog from './components/SubmitDialog.vue'
 import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
@@ -323,14 +311,66 @@ const hasHydratedProject = ref(false)
 const currentProjectId = ref<string | null>(null)
 const currentSpotId = ref<string | null>(null)
 const currentSpotStatus = ref<import('./lib/projectsStore').SpotStatus | null>(null)
-const showSubmit = ref(false)
-const submitBusy = ref(false)
-const submitError = ref('')
 const submitToast = ref('')
+let pistaSyncTimer: number | null = null
+let pistaSyncing = false
 
 function showToast(msg: string) {
   submitToast.value = msg
   window.setTimeout(() => (submitToast.value = ''), 6000)
+}
+
+// Construit une géométrie MultiLineString à partir d'une trace de l'éditeur.
+function trackToGeometry(track: GpxTrack): GeoJSON.MultiLineString | null {
+  const lines: number[][][] = []
+  for (const f of track.geojson?.features ?? []) {
+    const g = f.geometry
+    if (!g) continue
+    if (g.type === 'LineString') lines.push(g.coordinates as number[][])
+    else if (g.type === 'MultiLineString') for (const l of g.coordinates) lines.push(l as number[][])
+  }
+  if (!lines.length) return null
+  return { type: 'MultiLineString', coordinates: lines }
+}
+
+// Synchronise le brouillon (spot + trails 'draft') dans Pista : visible dans
+// l'espace privé de l'utilisateur dès qu'il travaille sur un spot.
+async function syncPistaDraft() {
+  if (pistaSyncing || !currentProjectId.value) return
+  const trails = tracks.value
+    .map((t) => {
+      const geometry = trackToGeometry(t)
+      if (!geometry) return null
+      return { name: t.label?.trim() || t.name?.trim() || 'Piste', trail_type: 'enduro', difficulty: 'blue', geometry }
+    })
+    .filter((t): t is NonNullable<typeof t> => t !== null)
+  if (trails.length === 0) return
+
+  pistaSyncing = true
+  try {
+    const { spotId } = await submitProject({
+      name: sanitizeProjectName(projectName.value),
+      region: '',
+      spotType: 'bikepark',
+      projectId: currentProjectId.value,
+      trails,
+    })
+    if (spotId) {
+      currentSpotId.value = spotId
+      if (!currentSpotStatus.value) currentSpotStatus.value = 'draft'
+    }
+  } finally {
+    pistaSyncing = false
+  }
+}
+
+function queuePistaSync() {
+  if (!hasHydratedProject.value) return
+  if (pistaSyncTimer !== null) window.clearTimeout(pistaSyncTimer)
+  pistaSyncTimer = window.setTimeout(() => {
+    pistaSyncTimer = null
+    void syncPistaDraft()
+  }, 2000)
 }
 
 async function onRequestPublication() {
@@ -341,41 +381,9 @@ async function onRequestPublication() {
     return
   }
   currentSpotStatus.value = 'submitted'
-  showToast('Demande de publication envoyée — en attente de validation admin.')
+  showToast('Demande de publication envoyée — en attente de validation.')
 }
 
-async function onSubmitProject(payload: {
-  name: string
-  region: string
-  spotType: string
-  trails: import('./lib/projectsStore').SubmitTrail[]
-}) {
-  submitBusy.value = true
-  submitError.value = ''
-  try {
-    const { spotId, error } = await submitProject({
-      name: payload.name,
-      region: payload.region,
-      spotType: payload.spotType,
-      projectId: currentProjectId.value,
-      trails: payload.trails,
-    })
-    if (error || !spotId) {
-      submitError.value = error || 'Échec de la soumission.'
-      return
-    }
-    currentSpotId.value = spotId
-    currentSpotStatus.value = (await getSpotStatus(spotId)) ?? 'draft'
-    showSubmit.value = false
-    showToast(
-      currentSpotStatus.value === 'submitted'
-        ? 'Soumission mise à jour. Toujours en attente de validation.'
-        : 'Enregistré sur Pista en privé. Demande la publication quand tu es prêt.',
-    )
-  } finally {
-    submitBusy.value = false
-  }
-}
 const projectLoadSessionId = ref(0)
 const dismissedProjectLoadSessionId = ref<number | null>(null)
 let projectLoadFinishTimer: number | null = null
@@ -1134,6 +1142,15 @@ watch(
   [tracks, symbols, customSymbols, mapSettings, hasStartedWelcome, projectName],
   () => {
     queueProjectSave()
+  },
+  { deep: true },
+)
+
+// Le brouillon Pista (spot + trails) se synchronise quand les pistes ou le nom changent.
+watch(
+  [tracks, projectName],
+  () => {
+    queuePistaSync()
   },
   { deep: true },
 )
