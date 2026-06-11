@@ -16,7 +16,12 @@
       :map-settings="mapSettings"
       :project-name="projectName"
       :spot-status="currentSpotStatus"
+      :projects="projects"
+      :current-project-id="currentProjectId"
       @toggle="toggleSidebar"
+      @select-project="onSelectProject"
+      @new-project="onNewProject"
+      @delete-project="onDeleteProject"
       @close="closeSidebar"
       @open-section="openSection"
       @gpx-files="onGpxFiles"
@@ -203,7 +208,7 @@ import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
 import { useAuth } from './lib/useAuth'
-import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus } from './lib/projectsStore'
+import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, listUserProjects, loadProjectById, createProject, deleteUserProject, type ProjectListItem } from './lib/projectsStore'
 import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
@@ -327,6 +332,7 @@ const hasHydratedProject = ref(false)
 const currentProjectId = ref<string | null>(null)
 const currentSpotId = ref<string | null>(null)
 const currentSpotStatus = ref<import('./lib/projectsStore').SpotStatus | null>(null)
+const projects = ref<ProjectListItem[]>([])
 const submitToast = ref('')
 let pistaSyncTimer: number | null = null
 let pistaSyncing = false
@@ -738,9 +744,27 @@ async function restoreProjectFromBrowser() {
   }
 }
 
+async function refreshProjectList() {
+  projects.value = await listUserProjects()
+}
+
+async function applyStoredProject(stored: import('./lib/projectsStore').StoredProject, overlayTitle = 'Reprise de ta sauvegarde') {
+  hasHydratedProject.value = false
+  currentProjectId.value = stored.id
+  currentSpotId.value = stored.spotId
+  currentSpotStatus.value = stored.spotId ? await getSpotStatus(stored.spotId) : null
+  const project = normalizeProject(stored.data)
+  beginProjectLoad(overlayTitle, project)
+  applyProject(project)
+  hasSavedProject.value = true
+  lastSavedAt.value = project.savedAt
+  hasHydratedProject.value = true
+}
+
 async function hydrateFromDb() {
   hasHydratedProject.value = false
   try {
+    await refreshProjectList()
     const stored = await loadUserProject()
     if (!stored) {
       currentProjectId.value = null
@@ -754,15 +778,7 @@ async function hydrateFromDb() {
       return
     }
 
-    currentProjectId.value = stored.id
-    currentSpotId.value = stored.spotId
-    currentSpotStatus.value = stored.spotId ? await getSpotStatus(stored.spotId) : null
-    const project = normalizeProject(stored.data)
-    beginProjectLoad('Reprise de ta sauvegarde', project)
-    applyProject(project)
-    hasSavedProject.value = true
-    lastSavedAt.value = project.savedAt
-    hasHydratedProject.value = true
+    await applyStoredProject(stored)
   } catch (error) {
     console.error(error)
     saveStatus.value = 'error'
@@ -786,6 +802,58 @@ function resetToEmpty() {
   lastSavedAt.value = null
   saveStatus.value = 'idle'
   saveStatusMessage.value = ''
+}
+
+async function flushCurrentSave() {
+  if (saveProjectTimer !== null) {
+    window.clearTimeout(saveProjectTimer)
+    saveProjectTimer = null
+  }
+  if (hasHydratedProject.value && currentProjectId.value) await saveProjectToBrowser()
+}
+
+async function onSelectProject(id: string) {
+  if (id === currentProjectId.value) return
+  await flushCurrentSave()
+  const stored = await loadProjectById(id)
+  if (stored) await applyStoredProject(stored, 'Chargement du projet')
+}
+
+async function onNewProject() {
+  await flushCurrentSave()
+  const id = await createProject('Mon bikepark')
+  if (!id) return
+  hasHydratedProject.value = false
+  currentProjectId.value = id
+  currentSpotId.value = null
+  currentSpotStatus.value = null
+  tracks.value = []
+  symbols.value = []
+  customSymbols.value = []
+  mapCamera.value = null
+  projectName.value = 'Mon bikepark'
+  hasStartedWelcome.value = true
+  selectedSymbolId.value = null
+  saveStatus.value = 'saved'
+  await refreshProjectList()
+  hasHydratedProject.value = true
+}
+
+async function onDeleteProject(id: string) {
+  const ok = await deleteUserProject(id)
+  if (!ok) return
+  const wasCurrent = id === currentProjectId.value
+  await refreshProjectList()
+  if (wasCurrent) {
+    currentProjectId.value = null
+    const next = projects.value[0]
+    if (next) {
+      const stored = await loadProjectById(next.id)
+      if (stored) await applyStoredProject(stored, 'Chargement du projet')
+    } else {
+      await onNewProject()
+    }
+  }
 }
 
 async function clearProjectFromBrowser() {
@@ -1185,6 +1253,12 @@ watch(
   },
   { deep: true },
 )
+
+// Garde le libellé du projet courant à jour dans le sélecteur quand on le renomme.
+watch(projectName, (name) => {
+  const p = projects.value.find((x) => x.id === currentProjectId.value)
+  if (p) p.title = name
+})
 </script>
 
 <style scoped>

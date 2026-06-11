@@ -13,6 +13,55 @@ export type StoredProject = {
   spotId: string | null
 }
 
+export type ProjectListItem = { id: string; title: string | null; spotId: string | null }
+
+export async function listUserProjects(): Promise<ProjectListItem[]> {
+  const { data, error } = await supabase
+    .from('illustrator_projects')
+    .select('id, title, spot_id')
+    .order('updated_at', { ascending: false })
+  if (error) {
+    console.error('[projects] list', error)
+    return []
+  }
+  return (data ?? []).map((r) => ({
+    id: r.id as string,
+    title: (r.title as string) ?? null,
+    spotId: (r.spot_id as string) ?? null,
+  }))
+}
+
+export async function loadProjectById(id: string): Promise<StoredProject | null> {
+  const { data, error } = await supabase
+    .from('illustrator_projects')
+    .select('id, data, title, spot_id')
+    .eq('id', id)
+    .maybeSingle()
+  if (error || !data) {
+    if (error) console.error('[projects] loadById', error)
+    return null
+  }
+  return {
+    id: data.id as string,
+    data: data.data as BikeparkProject,
+    title: (data.title as string) ?? null,
+    spotId: (data.spot_id as string) ?? null,
+  }
+}
+
+export async function createProject(title: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('illustrator_projects')
+    .insert({ title, data: {} })
+    .select('id')
+    .single()
+  if (error) {
+    console.error('[projects] create', error)
+    return null
+  }
+  return (data?.id as string) ?? null
+}
+
 export async function loadUserProject(): Promise<StoredProject | null> {
   const { data, error } = await supabase
     .from('illustrator_projects')

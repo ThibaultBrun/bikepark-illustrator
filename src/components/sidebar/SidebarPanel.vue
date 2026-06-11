@@ -72,6 +72,8 @@
         :tracks="tracks"
         :predefined-colors="predefinedColors"
         :project-name="projectName"
+        :projects="projects"
+        :current-project-id="currentProjectId"
         @gpx-files="$emit('gpx-files', $event)"
         @fit-project="$emit('fit-project')"
         @fit-track="$emit('fit-track', $event)"
@@ -80,6 +82,9 @@
         @edit-track="$emit('edit-track', $event)"
         @track-width-change="$emit('track-width-change', $event)"
         @update:project-name="$emit('update:project-name', $event)"
+        @select-project="$emit('select-project', $event)"
+        @new-project="$emit('new-project')"
+        @delete-project="$emit('delete-project', $event)"
       />
 
       <SymbolPanel
@@ -153,6 +158,8 @@ const props = defineProps<{
   mapSettings: MapSettings
   projectName: string
   spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
+  projects: { id: string; title: string | null; spotId: string | null }[]
+  currentProjectId: string | null
 }>()
 
 defineEmits<{
@@ -169,6 +176,9 @@ defineEmits<{
   (e: 'request-publication'): void
   (e: 'cancel-publication'): void
   (e: 'locate', payload: { lng: number; lat: number; label: string }): void
+  (e: 'select-project', id: string): void
+  (e: 'new-project'): void
+  (e: 'delete-project', id: string): void
   (e: 'update:project-name', value: string): void
   (e: 'start-symbol-drag', payload: {
     symbolId: import('../../types/symbol').SymbolId

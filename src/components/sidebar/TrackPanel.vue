@@ -1,5 +1,29 @@
 <template>
   <section class="panel">
+    <label class="field" v-if="projects.length > 1 || currentProjectId">
+      <span>Projet</span>
+      <div class="project-row">
+        <select
+          class="text-input grow"
+          :value="currentProjectId ?? ''"
+          @change="$emit('select-project', ($event.target as HTMLSelectElement).value)"
+        >
+          <option v-for="p in projects" :key="p.id" :value="p.id">
+            {{ p.title || 'Sans nom' }}
+          </option>
+        </select>
+        <button type="button" class="project-btn" title="Nouveau projet" @click="$emit('new-project')">+</button>
+        <button
+          type="button"
+          class="project-btn danger"
+          title="Supprimer ce projet"
+          @click="confirmDeleteProject"
+        >
+          <Trash2 class="project-btn__icon" />
+        </button>
+      </div>
+    </label>
+
     <label class="field">
       <span>Nom du projet</span>
       <input
@@ -253,6 +277,8 @@ const props = defineProps<{
   tracks: GpxTrack[]
   predefinedColors: string[]
   projectName: string
+  projects: { id: string; title: string | null; spotId: string | null }[]
+  currentProjectId: string | null
 }>()
 
 const emit = defineEmits<{
@@ -264,7 +290,18 @@ const emit = defineEmits<{
   (e: 'fit-project'): void
   (e: 'fit-track', trackId: string): void
   (e: 'update:project-name', value: string): void
+  (e: 'select-project', id: string): void
+  (e: 'new-project'): void
+  (e: 'delete-project', id: string): void
 }>()
+
+function confirmDeleteProject() {
+  if (!props.currentProjectId) return
+  const name = props.projects.find((p) => p.id === props.currentProjectId)?.title || 'ce projet'
+  if (window.confirm(`Supprimer « ${name} » ? Cette action est définitive.`)) {
+    emit('delete-project', props.currentProjectId)
+  }
+}
 
 const widthLevels = [2, 4, 6, 8, 10]
 const labelSizeLevels = [13, 15, 17, 19]
@@ -551,6 +588,48 @@ function removeTrack(trackId: string) {
   background: #25211a;
   color: #e5e7eb;
   font: inherit;
+}
+
+.project-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.project-row .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid #4a4234;
+  background: #25211a;
+  color: #d8ccb6;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.project-btn:hover {
+  border-color: rgba(220, 180, 105, 0.5);
+}
+
+.project-btn.danger:hover {
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+}
+
+.project-btn__icon {
+  width: 15px;
+  height: 15px;
 }
 
 .text-input:focus {
