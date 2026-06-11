@@ -171,6 +171,27 @@
       </button>
     </div>
 
+    <button
+      v-if="tracks.length > 0 && editorMode === 'idle'"
+      type="button"
+      class="submit-fab"
+      @click="showSubmit = true"
+    >
+      📤 Soumettre à Pista
+    </button>
+
+    <div v-if="submitToast" class="submit-toast">{{ submitToast }}</div>
+
+    <SubmitDialog
+      v-if="showSubmit"
+      :tracks="tracks"
+      :default-name="projectName"
+      :busy="submitBusy"
+      :error="submitError"
+      @close="showSubmit = false"
+      @submit="onSubmitProject"
+    />
+
     <div
       v-if="draggingSymbolId && dragPreview"
       class="symbol-drag-preview"
@@ -196,7 +217,8 @@ import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
 import { useAuth } from './lib/useAuth'
-import { loadUserProject, saveUserProject } from './lib/projectsStore'
+import { loadUserProject, saveUserProject, submitProject } from './lib/projectsStore'
+import SubmitDialog from './components/SubmitDialog.vue'
 import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
@@ -305,6 +327,38 @@ const lastSavedAt = ref<string | null>(null)
 const hasSavedProject = ref(false)
 const hasHydratedProject = ref(false)
 const currentProjectId = ref<string | null>(null)
+const showSubmit = ref(false)
+const submitBusy = ref(false)
+const submitError = ref('')
+const submitToast = ref('')
+
+async function onSubmitProject(payload: {
+  name: string
+  region: string
+  spotType: string
+  trails: import('./lib/projectsStore').SubmitTrail[]
+}) {
+  submitBusy.value = true
+  submitError.value = ''
+  try {
+    const { spotId, error } = await submitProject({
+      name: payload.name,
+      region: payload.region,
+      spotType: payload.spotType,
+      projectId: currentProjectId.value,
+      trails: payload.trails,
+    })
+    if (error || !spotId) {
+      submitError.value = error || 'Échec de la soumission.'
+      return
+    }
+    showSubmit.value = false
+    submitToast.value = 'Spot soumis ! En attente de validation par un admin Pista.'
+    window.setTimeout(() => (submitToast.value = ''), 6000)
+  } finally {
+    submitBusy.value = false
+  }
+}
 const projectLoadSessionId = ref(0)
 const dismissedProjectLoadSessionId = ref<number | null>(null)
 let projectLoadFinishTimer: number | null = null
@@ -1538,6 +1592,50 @@ watch(
   box-shadow: 0 8px 22px rgba(2, 6, 23, 0.1);
   backdrop-filter: blur(6px);
   pointer-events: none;
+}
+
+.submit-fab {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  z-index: 9;
+  padding: 11px 16px;
+  border-radius: 13px;
+  border: 1px solid rgba(96, 165, 250, 0.5);
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #eff6ff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(30, 64, 175, 0.35);
+}
+
+.submit-fab:hover {
+  transform: translateY(-1px);
+}
+
+.submit-toast {
+  position: absolute;
+  bottom: 78px;
+  left: 50%;
+  z-index: 31;
+  transform: translateX(-50%);
+  max-width: min(520px, calc(100% - 32px));
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(5, 46, 22, 0.95);
+  border: 1px solid rgba(134, 239, 172, 0.4);
+  color: #bbf7d0;
+  font-size: 13px;
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.5);
+}
+
+@media (max-width: 960px) {
+  .submit-fab {
+    bottom: 16px;
+    left: 16px;
+  }
 }
 
 .auth-loading {

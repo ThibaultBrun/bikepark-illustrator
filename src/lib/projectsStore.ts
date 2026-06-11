@@ -52,6 +52,34 @@ export async function saveUserProject(
   return (data?.id as string) ?? null
 }
 
+export type SubmitTrail = {
+  name: string
+  trail_type: string
+  difficulty: string
+  geometry: GeoJSON.Geometry
+}
+
+export async function submitProject(params: {
+  name: string
+  region: string
+  spotType: string
+  projectId: string | null
+  trails: SubmitTrail[]
+}): Promise<{ spotId: string | null; error: string | null }> {
+  const { data, error } = await supabase.rpc('submit_illustrator_project', {
+    p_name: params.name,
+    p_region: params.region,
+    p_spot_type: params.spotType,
+    p_project_id: params.projectId,
+    p_trails: params.trails,
+  })
+  if (error) {
+    console.error('[submit]', error)
+    return { spotId: null, error: error.message }
+  }
+  return { spotId: (data as string) ?? null, error: null }
+}
+
 export async function deleteUserProject(projectId: string): Promise<boolean> {
   const { error } = await supabase.from('illustrator_projects').delete().eq('id', projectId)
   if (error) {
