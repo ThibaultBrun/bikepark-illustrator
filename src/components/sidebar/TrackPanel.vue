@@ -59,7 +59,7 @@
           :title="t('track.fitProject')"
           @click="$emit('fit-project')"
         >
-          <Repeat2 class="title-action-icon" />
+          <Search class="title-action-icon" />
         </button>
 
         <span class="count-badge">{{ tracks.length }}</span>
@@ -72,56 +72,63 @@
 
     <div v-for="track in tracks" :key="track.id" class="track-card" :class="{ expanded: isExpanded(track.id) }">
       <div class="track-header">
-        <button
-          type="button"
-          class="expand-button"
-          :class="{ open: isExpanded(track.id) }"
-          :title="isExpanded(track.id) ? t('track.hideSettings') : t('track.showSettings')"
-          :aria-expanded="isExpanded(track.id)"
-          @click="toggleExpanded(track.id)"
-        >
-          <component :is="isExpanded(track.id) ? ChevronUp : Pencil" class="expand-icon" />
-        </button>
+        <input
+          v-model="track.label"
+          class="text-input track-name"
+          type="text"
+          :placeholder="t('track.labelPh')"
+        />
 
-        <input v-model="track.label" class="text-input grow" type="text" :placeholder="t('track.labelPh')" />
+        <div class="track-actions">
+          <button
+            type="button"
+            class="visibility-button"
+            :title="t('track.editTrack')"
+            @click="$emit('edit-track', track.id)"
+          >
+            <Pencil class="visibility-icon" />
+          </button>
 
-        <button
-          type="button"
-          class="visibility-button"
-          :title="t('track.editTrack')"
-          @click="$emit('edit-track', track.id)"
-        >
-          <Spline class="visibility-icon" />
-        </button>
+          <button
+            type="button"
+            class="visibility-button"
+            :title="t('track.fitTrack')"
+            @click="$emit('fit-track', track.id)"
+          >
+            <Search class="visibility-icon" />
+          </button>
 
-        <button
-          type="button"
-          class="visibility-button"
-          :title="t('track.fitTrack')"
-          @click="$emit('fit-track', track.id)"
-        >
-          <Repeat2 class="visibility-icon" />
-        </button>
+          <button
+            type="button"
+            class="visibility-button"
+            :class="{ active: track.visible }"
+            :title="track.visible ? t('track.hideTrack') : t('track.showTrack')"
+            :aria-pressed="track.visible"
+            @click="track.visible = !track.visible"
+          >
+            <component :is="track.visible ? Eye : EyeOff" class="visibility-icon" />
+          </button>
 
-        <button
-          type="button"
-          class="visibility-button"
-          :class="{ active: track.visible }"
-          :title="track.visible ? t('track.hideTrack') : t('track.showTrack')"
-          :aria-pressed="track.visible"
-          @click="track.visible = !track.visible"
-        >
-          <component :is="track.visible ? Eye : EyeOff" class="visibility-icon" />
-        </button>
+          <button
+            type="button"
+            class="expand-button"
+            :class="{ open: isExpanded(track.id) }"
+            :title="isExpanded(track.id) ? t('track.hideSettings') : t('track.showSettings')"
+            :aria-expanded="isExpanded(track.id)"
+            @click="toggleExpanded(track.id)"
+          >
+            <component :is="isExpanded(track.id) ? ChevronUp : ChevronDown" class="expand-icon" />
+          </button>
 
-        <button
-          type="button"
-          class="delete-button"
-          :title="t('track.deleteTrack')"
-          @click="removeTrack(track.id)"
-        >
-          <Trash2 class="delete-icon" />
-        </button>
+          <button
+            type="button"
+            class="delete-button"
+            :title="t('track.deleteTrack')"
+            @click="removeTrack(track.id)"
+          >
+            <Trash2 class="delete-icon" />
+          </button>
+        </div>
       </div>
 
       <div v-if="isExpanded(track.id)" class="track-settings">
@@ -286,7 +293,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ChevronUp, Eye, EyeOff, Pencil, PencilLine, Repeat2, Spline, Trash2 } from 'lucide-vue-next'
+import { ChevronDown, ChevronUp, Eye, EyeOff, Pencil, PencilLine, Search, Trash2 } from 'lucide-vue-next'
 import type { GpxTrack, TrackLabelStyle, TrackStyle } from '../../types/gpx'
 
 const { t } = useI18n()
@@ -578,7 +585,19 @@ function removeTrack(trackId: string) {
 
 .track-header {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.track-name {
+  width: 100%;
+}
+
+.track-actions {
+  display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -985,7 +1004,7 @@ function removeTrack(trackId: string) {
 
 @media (max-width: 960px) {
   .track-header {
-    align-items: center;
+    align-items: stretch;
   }
 }
 </style>
