@@ -1181,6 +1181,10 @@ function setupPlacedSymbolInteractions() {
       return
     }
 
+    // Pendant un pan/rotation (bouton enfoncé), on saute la requête coûteuse
+    // pour éviter les saccades de navigation.
+    if ((e.originalEvent as MouseEvent | undefined)?.buttons) return
+
     const feature = symbolFeatureAtPoint(e.point)
     if (feature) {
       map.getCanvas().style.cursor = 'grab'
@@ -1241,6 +1245,9 @@ function setupLabelDragging() {
       map.getCanvas().style.cursor = 'grabbing'
       return
     }
+
+    // Pas de requête de survol pendant un pan/rotation (bouton enfoncé) → fluidité.
+    if ((e.originalEvent as MouseEvent | undefined)?.buttons) return
 
     const labelLayerIds = props.tracks.map((track) => `track-label-${track.id}`)
     const existingLayerIds = labelLayerIds.filter((id) => map!.getLayer(id))
