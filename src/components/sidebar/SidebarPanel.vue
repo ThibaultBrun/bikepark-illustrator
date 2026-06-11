@@ -96,6 +96,8 @@
         @upload-svg="$emit('upload-svg', $event)"
         @update-symbol-size="$emit('update-symbol-size', $event)"
         @update-symbol-transform="$emit('update-symbol-transform', $event)"
+        @remove-symbol="$emit('remove-symbol', $event)"
+        @start-move-symbol="$emit('start-move-symbol', $event)"
       />
       <MapPanel
         v-else-if="activeSection === 'map'"
@@ -193,6 +195,8 @@ defineEmits<{
     flipX?: boolean
     flipY?: boolean
   }): void
+  (e: 'remove-symbol', payload: { symbolId: string }): void
+  (e: 'start-move-symbol', symbolId: string): void
   (e: 'track-width-change', track: GpxTrack): void
   (e: 'update:map-settings', value: MapSettings): void
   (e: 'export-zip'): void

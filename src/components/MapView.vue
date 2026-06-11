@@ -62,6 +62,7 @@ const props = withDefaults(
     hillshadeStrength?: number
     labelFont?: MapLabelFont
     showPistaTrails?: boolean
+    repositionSymbolId?: string | null
     savedCamera?: MapCameraState | null
     cameraRestoreKey?: number
     fitRequest?: { type: 'project' | 'track'; trackId?: string; nonce: number } | null
@@ -77,6 +78,7 @@ const props = withDefaults(
     hillshadeStrength: 100,
     labelFont: 'segoe',
     showPistaTrails: true,
+    repositionSymbolId: null,
     savedCamera: null,
     cameraRestoreKey: 0,
     fitRequest: null,
@@ -90,6 +92,8 @@ const emit = defineEmits<{
   (e: 'complete-symbol-drag'): void
   (e: 'remove-symbol', payload: { symbolId: string }): void
   (e: 'select-symbol', payload: { symbolId: string | null }): void
+  (e: 'symbol-repositioned'): void
+  (e: 'request-move-symbol', symbolId: string): void
   (e: 'update-symbol-position', payload: { symbolId: string; position: [number, number] }): void
   (e: 'update-symbol-size', payload: { symbolId: string; iconSize: number }): void
   (e: 'update-camera', payload: MapCameraState): void
@@ -1157,10 +1161,51 @@ function setupPlacedSymbolInteractions() {
     if (editorActive) return
     if (isDraggingPlacedSymbol.value) return
 
+    // Mode repositionnement : le prochain clic place le symbole ici.
+    if (props.repositionSymbolId) {
+      emit('update-symbol-position', {
+        symbolId: props.repositionSymbolId,
+        position: [e.lngLat.lng, e.lngLat.lat],
+      })
+      emit('symbol-repositioned')
+      return
+    }
+
     const feature = symbolFeatureAtPoint(e.point)
     const symbolId = feature?.properties?.placedSymbolId as string | undefined
     emit('select-symbol', { symbolId: symbolId ?? null })
   })
+
+  // Appui long sur un symbole (mobile) -> demande de repositionnement.
+  let longPressTimer: number | null = null
+  let longPressStart: { x: number; y: number } | null = null
+  const clearLongPress = () => {
+    if (longPressTimer !== null) {
+      window.clearTimeout(longPressTimer)
+      longPressTimer = null
+    }
+    longPressStart = null
+  }
+  map.on('touchstart', (e) => {
+    if (editorActive || props.repositionSymbolId) return
+    const feature = symbolFeatureAtPoint(e.point)
+    const symbolId = feature?.properties?.placedSymbolId as string | undefined
+    if (!symbolId) return
+    longPressStart = { x: e.point.x, y: e.point.y }
+    longPressTimer = window.setTimeout(() => {
+      longPressTimer = null
+      emit('request-move-symbol', symbolId)
+    }, 550)
+  })
+  map.on('touchmove', (e) => {
+    if (longPressStart) {
+      const dx = e.point.x - longPressStart.x
+      const dy = e.point.y - longPressStart.y
+      if (dx * dx + dy * dy > 100) clearLongPress()
+    }
+  })
+  map.on('touchend', clearLongPress)
+  map.on('touchcancel', clearLongPress)
 
   map.on('mousemove', (e) => {
     if (!map) return

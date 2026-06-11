@@ -35,6 +35,8 @@
       @cancel-publication="onCancelPublication"
       @locate="onLocate"
       @start-symbol-drag="onStartSymbolDrag"
+      @remove-symbol="onRemoveSymbol"
+      @start-move-symbol="onStartMoveSymbol"
       @upload-svg="onUploadSvg"
       @update-symbol-size="onUpdateSymbolSize"
       @update-symbol-transform="onUpdateSymbolTransform"
@@ -57,6 +59,7 @@
         :hillshade-strength="mapSettings.hillshade"
         :label-font="mapSettings.labelFont"
         :show-pista-trails="mapSettings.showPistaTrails"
+        :reposition-symbol-id="repositionSymbolId"
         :saved-camera="mapCamera"
         :camera-restore-key="cameraRestoreKey"
         :fit-request="fitRequest"
@@ -73,6 +76,8 @@
         @track-drawn="onTrackDrawn"
         @track-geometry-updated="onTrackGeometryUpdated"
         @editor-closed="onEditorClosed"
+        @symbol-repositioned="onSymbolRepositioned"
+        @request-move-symbol="onStartMoveSymbol"
       />
 
       <div v-if="editorMode !== 'idle'" class="track-editor-bar">
@@ -183,17 +188,10 @@
 
     <div v-if="submitToast" class="submit-toast">{{ submitToast }}</div>
 
-    <div v-if="selectedSymbolId && editorMode === 'idle'" class="symbol-action-bar">
-      <span class="symbol-action-bar__label">Symbole sélectionné</span>
-      <button type="button" class="symbol-action-bar__btn danger" @click="deleteSelectedSymbol">
-        🗑 Supprimer
-      </button>
-      <button
-        type="button"
-        class="symbol-action-bar__btn"
-        @click="onSelectSymbol({ symbolId: null })"
-      >
-        Fermer
+    <div v-if="repositionSymbolId" class="symbol-action-bar">
+      <span class="symbol-action-bar__label">📍 Touche la carte pour déplacer le symbole</span>
+      <button type="button" class="symbol-action-bar__btn" @click="repositionSymbolId = null">
+        Annuler
       </button>
     </div>
 
@@ -327,6 +325,7 @@ const mapCamera = ref<MapCameraState | null>(null)
 const cameraRestoreKey = ref(0)
 const draggingSymbolId = ref<SymbolId | null>(null)
 const selectedSymbolId = ref<string | null>(null)
+const repositionSymbolId = ref<string | null>(null)
 const dragPointer = ref({ x: 0, y: 0 })
 const fitRequest = ref<{ type: 'project' | 'track'; trackId?: string; nonce: number } | null>(null)
 const isSidebarOpen = ref(false)
@@ -1085,8 +1084,14 @@ function onRemoveSymbol(payload: { symbolId: string }) {
   }
 }
 
-function deleteSelectedSymbol() {
-  if (selectedSymbolId.value) onRemoveSymbol({ symbolId: selectedSymbolId.value })
+function onStartMoveSymbol(symbolId: string) {
+  repositionSymbolId.value = symbolId
+  // Sur mobile on referme le panneau pour voir la carte.
+  if (isMobileViewport()) isSidebarOpen.value = false
+}
+
+function onSymbolRepositioned() {
+  repositionSymbolId.value = null
 }
 
 function onSelectSymbol(payload: { symbolId: string | null }) {

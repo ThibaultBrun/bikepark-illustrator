@@ -117,6 +117,23 @@
             </button>
           </div>
         </div>
+
+        <div class="symbol-actions">
+          <button
+            type="button"
+            class="symbol-action-btn"
+            @click="$emit('start-move-symbol', selectedPlacedSymbol.id)"
+          >
+            <Move class="symbol-action-ic" /> Déplacer
+          </button>
+          <button
+            type="button"
+            class="symbol-action-btn danger"
+            @click="$emit('remove-symbol', { symbolId: selectedPlacedSymbol.id })"
+          >
+            <Trash2 class="symbol-action-ic" /> Supprimer
+          </button>
+        </div>
       </div>
     </div>
   </section>
@@ -188,7 +205,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { FlipHorizontal2, FlipVertical2, RefreshCw, RotateCw } from 'lucide-vue-next'
+import { FlipHorizontal2, FlipVertical2, Move, RefreshCw, RotateCw, Trash2 } from 'lucide-vue-next'
 import { defaultSymbolLibrary, getSymbolDefinition, type MapSymbol, type SymbolDefinition, type SymbolId } from '../../types/symbol'
 
 const props = defineProps<{
@@ -211,6 +228,8 @@ const emit = defineEmits<{
     flipX?: boolean
     flipY?: boolean
   }): void
+  (e: 'remove-symbol', payload: { symbolId: string }): void
+  (e: 'start-move-symbol', symbolId: string): void
 }>()
 
 const selectedPlacedSymbol = computed(() => {
@@ -603,5 +622,40 @@ async function onSvgFiles(event: Event) {
   .symbol-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+.symbol-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.symbol-action-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #4a4234;
+  background: #25211a;
+  color: #e5e7eb;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.symbol-action-btn.danger {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+}
+
+.symbol-action-ic {
+  width: 15px;
+  height: 15px;
 }
 </style>
