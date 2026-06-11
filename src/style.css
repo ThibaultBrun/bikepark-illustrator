@@ -6,7 +6,7 @@
     BlinkMacSystemFont,
     'Segoe UI',
     sans-serif;
-  color: #111827;
+  color: #2d2820;
   background: #f3f4f6;
 }
 
@@ -65,7 +65,7 @@ body {
   justify-content: center;
   align-items: center;
   padding: 12px;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: linear-gradient(135deg, #cda35a, #dcb469);
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
@@ -74,12 +74,12 @@ body {
 
 .upload-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 6px 14px rgba(205, 163, 90, 0.4);
 }
 .sidebar {
   width: 320px;
   padding: 20px;
-  background: #0f172a; /* dark pro */
+  background: #25211a; /* dark pro */
   color: #e5e7eb;
   overflow-y: auto;
 }
@@ -92,15 +92,15 @@ body {
 
 .subtitle {
   font-size: 13px;
-  color: #94a3b8;
+  color: #b3a890;
   margin-bottom: 20px;
 }
 .panel {
   margin-bottom: 16px;
   padding: 14px;
-  background: #111827;
+  background: #2d2820;
   border-radius: 14px;
-  border: 1px solid #1f2937;
+  border: 1px solid #38322a;
 }
 
 .panel h2 {
@@ -110,8 +110,8 @@ body {
 }
 
 .track-card {
-  background: #020617;
-  border: 1px solid #1e293b;
+  background: #1c1813;
+  border: 1px solid #38322a;
   border-radius: 12px;
   padding: 12px;
   margin-bottom: 10px;
@@ -124,13 +124,13 @@ body {
 }
 
 .track-card:hover {
-  border-color: #3b82f6;
+  border-color: #dcb469;
 }
 
 .text-input,
 .select-input {
-  background: #020617;
-  border: 1px solid #1e293b;
+  background: #1c1813;
+  border: 1px solid #38322a;
   color: #e5e7eb;
   border-radius: 8px;
   padding: 8px;
@@ -140,7 +140,7 @@ body {
 .text-input:focus,
 .select-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #dcb469;
 }
 .field span {
   font-size: 11px;
@@ -155,5 +155,5 @@ input[type="color"] {
 }
 .checkbox {
   font-size: 12px;
-  color: #94a3b8;
+  color: #b3a890;
 }

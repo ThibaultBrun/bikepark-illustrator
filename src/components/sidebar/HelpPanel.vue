@@ -74,8 +74,8 @@ const helpItems = [
   gap: 14px;
   margin-bottom: 16px;
   padding: 14px;
-  background: #111827;
-  border: 1px solid #1f2937;
+  background: #2d2820;
+  border: 1px solid #38322a;
   border-radius: 16px;
 }
 
@@ -94,12 +94,12 @@ const helpItems = [
 .panel-header-copy h2 {
   margin: 0;
   font-size: 14px;
-  color: #cbd5e1;
+  color: #d8ccb6;
 }
 
 .panel-header-copy p {
   margin: 0;
-  color: #94a3b8;
+  color: #b3a890;
   line-height: 1.5;
   font-size: 13px;
 }
@@ -111,9 +111,9 @@ const helpItems = [
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: rgba(37, 99, 235, 0.18);
-  border: 1px solid rgba(96, 165, 250, 0.28);
-  color: #dbeafe;
+  background: rgba(205, 163, 90, 0.18);
+  border: 1px solid rgba(220, 180, 105, 0.28);
+  color: #f0cd8a;
 }
 
 .action-button {
@@ -124,9 +124,9 @@ const helpItems = [
   min-height: 44px;
   padding: 11px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(96, 165, 250, 0.42);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(59, 130, 246, 0.9));
-  color: #eff6ff;
+  border: 1px solid rgba(220, 180, 105, 0.42);
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.9), rgba(220, 180, 105, 0.9));
+  color: #f7ecd4;
   font: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -139,7 +139,7 @@ const helpItems = [
 
 .action-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(30, 64, 175, 0.3);
+  box-shadow: 0 12px 28px rgba(120, 90, 33, 0.3);
   filter: brightness(1.04);
 }
 
@@ -174,8 +174,8 @@ const helpItems = [
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  background: rgba(37, 99, 235, 0.16);
-  color: #93c5fd;
+  background: rgba(205, 163, 90, 0.16);
+  color: #e7c98a;
 }
 
 .help-item__icon :deep(svg) {
@@ -192,12 +192,12 @@ const helpItems = [
 
 .help-item__copy strong {
   font-size: 13px;
-  color: #e2e8f0;
+  color: #ece2cf;
 }
 
 .help-item__copy span {
   font-size: 12px;
-  color: #94a3b8;
+  color: #b3a890;
   line-height: 1.45;
 }
 
@@ -205,14 +205,14 @@ const helpItems = [
   margin: 0;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(37, 99, 235, 0.1);
-  border: 1px solid rgba(96, 165, 250, 0.18);
-  color: #cbd5e1;
+  background: rgba(205, 163, 90, 0.1);
+  border: 1px solid rgba(220, 180, 105, 0.18);
+  color: #d8ccb6;
   font-size: 12px;
   line-height: 1.5;
 }
 
 .help-footnote strong {
-  color: #eff6ff;
+  color: #f7ecd4;
 }
 </style>

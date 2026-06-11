@@ -49,8 +49,8 @@ function onZipSelected(event: Event) {
   gap: 14px;
   margin-bottom: 16px;
   padding: 14px;
-  background: #111827;
-  border: 1px solid #1f2937;
+  background: #2d2820;
+  border: 1px solid #38322a;
   border-radius: 16px;
 }
 
@@ -69,12 +69,12 @@ function onZipSelected(event: Event) {
 .panel-header-copy h2 {
   margin: 0;
   font-size: 14px;
-  color: #cbd5e1;
+  color: #d8ccb6;
 }
 
 .panel-header-copy p {
   margin: 0;
-  color: #94a3b8;
+  color: #b3a890;
   line-height: 1.5;
   font-size: 13px;
 }
@@ -86,9 +86,9 @@ function onZipSelected(event: Event) {
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: rgba(37, 99, 235, 0.18);
-  border: 1px solid rgba(96, 165, 250, 0.28);
-  color: #dbeafe;
+  background: rgba(205, 163, 90, 0.18);
+  border: 1px solid rgba(220, 180, 105, 0.28);
+  color: #f0cd8a;
 }
 
 .action-grid {
@@ -106,7 +106,7 @@ function onZipSelected(event: Event) {
   border-radius: 12px;
   border: 1px solid rgba(51, 65, 85, 0.95);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96));
-  color: #e2e8f0;
+  color: #ece2cf;
   font: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -120,14 +120,14 @@ function onZipSelected(event: Event) {
 
 .action-button:hover {
   transform: translateY(-1px);
-  border-color: rgba(96, 165, 250, 0.4);
+  border-color: rgba(220, 180, 105, 0.4);
   box-shadow: 0 12px 28px rgba(2, 6, 23, 0.22);
 }
 
 .action-button.primary {
-  border-color: rgba(96, 165, 250, 0.42);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(59, 130, 246, 0.9));
-  color: #eff6ff;
+  border-color: rgba(220, 180, 105, 0.42);
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.9), rgba(220, 180, 105, 0.9));
+  color: #f7ecd4;
 }
 
 .import-button {

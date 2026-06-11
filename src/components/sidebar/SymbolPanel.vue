@@ -301,8 +301,8 @@ async function onSvgFiles(event: Event) {
 .panel {
   margin-bottom: 16px;
   padding: 14px;
-  background: #111827;
-  border: 1px solid #1f2937;
+  background: #2d2820;
+  border: 1px solid #38322a;
   border-radius: 16px;
 }
 
@@ -319,7 +319,7 @@ async function onSvgFiles(event: Event) {
 .panel h3 {
   margin: 0;
   font-size: 14px;
-  color: #cbd5e1;
+  color: #d8ccb6;
 }
 
 .hint-badge,
@@ -331,15 +331,15 @@ async function onSvgFiles(event: Event) {
   height: 24px;
   padding: 0 10px;
   border-radius: 999px;
-  background: #1e293b;
-  color: #93c5fd;
+  background: #38322a;
+  color: #e7c98a;
   font-size: 11px;
   font-weight: 700;
 }
 
 .panel-copy {
   margin: 0 0 14px;
-  color: #94a3b8;
+  color: #b3a890;
   line-height: 1.5;
   font-size: 13px;
 }
@@ -351,9 +351,9 @@ async function onSvgFiles(event: Event) {
   width: 100%;
   padding: 11px 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(59, 130, 246, 0.2));
-  border: 1px dashed rgba(96, 165, 250, 0.42);
-  color: #dbeafe;
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.18), rgba(220, 180, 105, 0.2));
+  border: 1px dashed rgba(220, 180, 105, 0.42);
+  color: #f0cd8a;
   font-weight: 700;
   cursor: pointer;
   transition:
@@ -364,8 +364,8 @@ async function onSvgFiles(event: Event) {
 
 .upload-btn:hover {
   transform: translateY(-1px);
-  border-color: rgba(147, 197, 253, 0.75);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.24), rgba(59, 130, 246, 0.24));
+  border-color: rgba(240, 205, 138, 0.75);
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.24), rgba(220, 180, 105, 0.24));
 }
 
 .upload-btn input {
@@ -373,7 +373,7 @@ async function onSvgFiles(event: Event) {
 }
 
 .empty-state {
-  color: #94a3b8;
+  color: #b3a890;
   font-size: 13px;
 }
 
@@ -382,7 +382,7 @@ async function onSvgFiles(event: Event) {
   align-items: center;
   gap: 10px;
   padding: 9px;
-  border: 1px solid #1e293b;
+  border: 1px solid #38322a;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96));
 }
@@ -440,14 +440,14 @@ async function onSvgFiles(event: Event) {
 
 .size-option:hover {
   transform: translateY(-1px);
-  border-color: rgba(96, 165, 250, 0.34);
+  border-color: rgba(220, 180, 105, 0.34);
 }
 
 .size-option.active {
-  border-color: rgba(96, 165, 250, 0.8);
-  background: linear-gradient(180deg, rgba(30, 64, 175, 0.38), rgba(30, 41, 59, 0.94));
+  border-color: rgba(220, 180, 105, 0.8);
+  background: linear-gradient(180deg, rgba(120, 90, 33, 0.38), rgba(30, 41, 59, 0.94));
   box-shadow:
-    0 0 0 1px rgba(147, 197, 253, 0.22),
+    0 0 0 1px rgba(240, 205, 138, 0.22),
     0 10px 24px rgba(2, 6, 23, 0.22);
 }
 
@@ -472,7 +472,7 @@ async function onSvgFiles(event: Event) {
   gap: 10px;
   width: 100%;
   padding: 10px;
-  border: 1px solid #1e293b;
+  border: 1px solid #38322a;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96));
   color: #e5e7eb;
@@ -488,7 +488,7 @@ async function onSvgFiles(event: Event) {
 
 .symbol-card:hover {
   transform: translateY(-1px);
-  border-color: rgba(96, 165, 250, 0.4);
+  border-color: rgba(220, 180, 105, 0.4);
   box-shadow: 0 12px 28px rgba(2, 6, 23, 0.22);
 }
 
@@ -497,12 +497,12 @@ async function onSvgFiles(event: Event) {
 }
 
 .symbol-card:focus-visible {
-  outline: 2px solid rgba(96, 165, 250, 0.9);
+  outline: 2px solid rgba(220, 180, 105, 0.9);
   outline-offset: 2px;
 }
 
 .symbol-preview {
-  --symbol-color: #3b82f6;
+  --symbol-color: #dcb469;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -510,8 +510,8 @@ async function onSvgFiles(event: Event) {
   height: 40px;
   border-radius: 14px;
   flex: 0 0 auto;
-  background: color-mix(in srgb, var(--symbol-color) 7%, #0f172a);
-  border: 1px solid color-mix(in srgb, var(--symbol-color) 14%, #1e293b);
+  background: color-mix(in srgb, var(--symbol-color) 7%, #25211a);
+  border: 1px solid color-mix(in srgb, var(--symbol-color) 14%, #38322a);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
@@ -548,7 +548,7 @@ async function onSvgFiles(event: Event) {
   height: 26px;
   border-radius: 6px;
   background: transparent;
-  color: #0f172a;
+  color: #25211a;
 }
 
 .symbol-preview-icon :deep(svg) {
@@ -567,7 +567,7 @@ async function onSvgFiles(event: Event) {
 }
 
 .transform-option {
-  color: #e2e8f0;
+  color: #ece2cf;
 }
 
 .transform-icon {
@@ -589,14 +589,14 @@ async function onSvgFiles(event: Event) {
 .symbol-name {
   font-size: 12px;
   font-weight: 700;
-  color: #f8fafc;
+  color: #f7f2e7;
 }
 
 .symbol-description {
   margin-top: 2px;
   font-size: 11px;
   line-height: 1.35;
-  color: #94a3b8;
+  color: #b3a890;
 }
 
 @media (max-width: 480px) {

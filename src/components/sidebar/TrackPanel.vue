@@ -240,12 +240,22 @@
         </div>
       </div>
     </div>
+
+    <button
+      v-if="tracks.length > 0"
+      type="button"
+      class="submit-btn"
+      @click="$emit('submit-project')"
+    >
+      <Send class="submit-btn__icon" aria-hidden="true" />
+      <span>Soumettre à Pista</span>
+    </button>
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { ChevronUp, Eye, EyeOff, Pencil, PencilLine, Repeat2, Spline, Trash2 } from 'lucide-vue-next'
+import { ChevronUp, Eye, EyeOff, Pencil, PencilLine, Repeat2, Send, Spline, Trash2 } from 'lucide-vue-next'
 import type { GpxTrack, TrackLabelStyle, TrackStyle } from '../../types/gpx'
 
 const props = defineProps<{
@@ -260,6 +270,7 @@ const emit = defineEmits<{
   (e: 'remove-track', trackId: string): void
   (e: 'new-track'): void
   (e: 'edit-track', trackId: string): void
+  (e: 'submit-project'): void
   (e: 'fit-project'): void
   (e: 'fit-track', trackId: string): void
   (e: 'update:project-name', value: string): void
@@ -334,8 +345,8 @@ function removeTrack(trackId: string) {
   --track-control-size: 32px;
   margin-bottom: 16px;
   padding: 14px;
-  background: #111827;
-  border: 1px solid #1f2937;
+  background: #2d2820;
+  border: 1px solid #38322a;
   border-radius: 16px;
 }
 
@@ -355,7 +366,7 @@ function removeTrack(trackId: string) {
 .panel h2 {
   margin: 0;
   font-size: 14px;
-  color: #cbd5e1;
+  color: #d8ccb6;
 }
 
 .title-action-button {
@@ -365,9 +376,9 @@ function removeTrack(trackId: string) {
   width: 28px;
   height: 28px;
   padding: 0;
-  border: 1px solid rgba(96, 165, 250, 0.3);
+  border: 1px solid rgba(220, 180, 105, 0.3);
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(205, 163, 90, 0.12);
   color: #bfdbfe;
   font: inherit;
   font-size: 11px;
@@ -381,8 +392,8 @@ function removeTrack(trackId: string) {
 
 .title-action-button:hover {
   transform: translateY(-1px);
-  border-color: rgba(147, 197, 253, 0.5);
-  background: rgba(37, 99, 235, 0.18);
+  border-color: rgba(240, 205, 138, 0.5);
+  background: rgba(205, 163, 90, 0.18);
 }
 
 .title-action-icon {
@@ -398,8 +409,8 @@ function removeTrack(trackId: string) {
   height: 24px;
   padding: 0 8px;
   border-radius: 999px;
-  background: #1e293b;
-  color: #93c5fd;
+  background: #38322a;
+  color: #e7c98a;
   font-size: 12px;
   font-weight: 700;
 }
@@ -411,7 +422,7 @@ function removeTrack(trackId: string) {
   width: 100%;
   padding: 12px 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: linear-gradient(135deg, #cda35a, #dcb469);
   color: white;
   font-weight: 700;
   cursor: pointer;
@@ -422,7 +433,7 @@ function removeTrack(trackId: string) {
 
 .upload-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 8px 20px rgba(205, 163, 90, 0.35);
 }
 
 .upload-btn input {
@@ -438,9 +449,9 @@ function removeTrack(trackId: string) {
   margin-top: 10px;
   padding: 11px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(96, 165, 250, 0.4);
-  background: rgba(37, 99, 235, 0.12);
-  color: #dbeafe;
+  border: 1px solid rgba(220, 180, 105, 0.4);
+  background: rgba(205, 163, 90, 0.12);
+  color: #f0cd8a;
   font: inherit;
   font-weight: 700;
   font-size: 13px;
@@ -453,8 +464,8 @@ function removeTrack(trackId: string) {
 
 .draw-btn:hover {
   transform: translateY(-1px);
-  background: rgba(37, 99, 235, 0.2);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+  background: rgba(205, 163, 90, 0.2);
+  box-shadow: 0 8px 20px rgba(205, 163, 90, 0.25);
 }
 
 .draw-btn__icon {
@@ -462,8 +473,41 @@ function removeTrack(trackId: string) {
   height: 16px;
 }
 
+.submit-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(220, 180, 105, 0.5);
+  background: linear-gradient(135deg, #cda35a, #f0cd8a);
+  color: #2a1f0c;
+  font: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+
+.submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(205, 163, 90, 0.3);
+  filter: brightness(1.04);
+}
+
+.submit-btn__icon {
+  width: 16px;
+  height: 16px;
+}
+
 .empty-state {
-  color: #94a3b8;
+  color: #b3a890;
   font-size: 13px;
 }
 
@@ -472,8 +516,8 @@ function removeTrack(trackId: string) {
   flex-direction: column;
   gap: 10px;
   padding: 12px;
-  background: #020617;
-  border: 1px solid #1e293b;
+  background: #1c1813;
+  border: 1px solid #38322a;
   border-radius: 14px;
   margin-bottom: 10px;
   transition: border-color 0.15s ease;
@@ -481,7 +525,7 @@ function removeTrack(trackId: string) {
 
 .track-card:hover,
 .track-card.expanded {
-  border-color: #3b82f6;
+  border-color: #dcb469;
 }
 
 .track-header {
@@ -513,15 +557,15 @@ function removeTrack(trackId: string) {
   min-width: 0;
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid #1e293b;
-  background: #0f172a;
+  border: 1px solid #38322a;
+  background: #25211a;
   color: #e5e7eb;
   font: inherit;
 }
 
 .text-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #dcb469;
 }
 
 .expand-button,
@@ -534,10 +578,10 @@ function removeTrack(trackId: string) {
   height: 36px;
   flex: 0 0 auto;
   padding: 0;
-  border: 1px solid #1e293b;
+  border: 1px solid #38322a;
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96));
-  color: #94a3b8;
+  color: #b3a890;
   cursor: pointer;
   transition:
     border-color 0.15s ease,
@@ -552,15 +596,15 @@ function removeTrack(trackId: string) {
 .delete-button:hover {
   transform: translateY(-1px);
   border-color: #475569;
-  color: #e2e8f0;
+  color: #ece2cf;
   box-shadow: 0 10px 24px rgba(2, 6, 23, 0.22);
 }
 
 .expand-button.open,
 .visibility-button.active {
-  border-color: #60a5fa;
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.24), rgba(30, 64, 175, 0.2));
-  color: #eff6ff;
+  border-color: #dcb469;
+  background: linear-gradient(180deg, rgba(205, 163, 90, 0.24), rgba(120, 90, 33, 0.2));
+  color: #f7ecd4;
   box-shadow: inset 0 0 0 1px rgba(191, 219, 254, 0.15);
 }
 
@@ -620,7 +664,7 @@ function removeTrack(trackId: string) {
   height: var(--track-control-size);
   flex: 0 0 var(--track-control-size);
   padding: 0;
-  border: 1px solid #1e293b;
+  border: 1px solid #38322a;
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96));
   cursor: pointer;
@@ -640,8 +684,8 @@ function removeTrack(trackId: string) {
 
 .width-button.active,
 .style-button.active {
-  border-color: #60a5fa;
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.24), rgba(30, 64, 175, 0.2));
+  border-color: #dcb469;
+  background: linear-gradient(180deg, rgba(205, 163, 90, 0.24), rgba(120, 90, 33, 0.2));
   box-shadow: inset 0 0 0 1px rgba(191, 219, 254, 0.15);
 }
 
@@ -829,13 +873,13 @@ function removeTrack(trackId: string) {
 .color-button.active .color-swatch {
   box-shadow:
     inset 0 0 0 2px rgba(255, 255, 255, 0.65),
-    0 0 0 3px rgba(96, 165, 250, 0.28),
+    0 0 0 3px rgba(220, 180, 105, 0.28),
     0 6px 14px rgba(0, 0, 0, 0.18);
 }
 
 .track-meta {
   font-size: 12px;
-  color: #94a3b8;
+  color: #b3a890;
 }
 
 @media (max-width: 960px) {

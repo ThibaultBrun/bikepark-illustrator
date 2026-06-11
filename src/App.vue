@@ -25,6 +25,7 @@
       @remove-track="onRemoveTrack"
       @new-track="beginNewTrack"
       @edit-track="beginEditTrack"
+      @submit-project="showSubmit = true"
       @start-symbol-drag="onStartSymbolDrag"
       @upload-svg="onUploadSvg"
       @update-symbol-size="onUpdateSymbolSize"
@@ -171,15 +172,6 @@
       </button>
     </div>
 
-    <button
-      v-if="tracks.length > 0 && editorMode === 'idle'"
-      type="button"
-      class="submit-fab"
-      @click="showSubmit = true"
-    >
-      📤 Soumettre à Pista
-    </button>
-
     <div v-if="submitToast" class="submit-toast">{{ submitToast }}</div>
 
     <SubmitDialog
@@ -249,7 +241,7 @@ async function onSignOut() {
 
 const predefinedColors = [
   '#22c55e',
-  '#3b82f6',
+  '#dcb469',
   '#ef4444',
   '#000000',
   '#6b7280',
@@ -1125,7 +1117,7 @@ watch(
   grid-template-columns: minmax(0, 1fr);
   width: 100%;
   height: 100%;
-  background: #020617;
+  background: #1c1813;
 }
 
 .map-wrapper {
@@ -1152,13 +1144,13 @@ watch(
   padding: 12px 16px;
   border-radius: 14px;
   background: rgba(2, 6, 23, 0.92);
-  border: 1px solid rgba(96, 165, 250, 0.4);
+  border: 1px solid rgba(220, 180, 105, 0.4);
   box-shadow: 0 18px 40px rgba(2, 6, 23, 0.5);
   backdrop-filter: blur(8px);
 }
 
 .track-editor-bar__hint {
-  color: #cbd5e1;
+  color: #d8ccb6;
   font-size: 13px;
   line-height: 1.4;
 }
@@ -1174,7 +1166,7 @@ watch(
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.3);
   background: transparent;
-  color: #e2e8f0;
+  color: #ece2cf;
   font: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -1188,9 +1180,9 @@ watch(
 }
 
 .track-editor-bar__btn.primary {
-  border-color: rgba(96, 165, 250, 0.5);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(59, 130, 246, 0.95));
-  color: #eff6ff;
+  border-color: rgba(220, 180, 105, 0.5);
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.95), rgba(220, 180, 105, 0.95));
+  color: #f7ecd4;
 }
 
 @media (max-width: 960px) {
@@ -1248,8 +1240,8 @@ watch(
   border-radius: 28px;
   background:
     linear-gradient(145deg, rgba(15, 23, 42, 0.82), rgba(2, 6, 23, 0.68)),
-    radial-gradient(circle at top, rgba(96, 165, 250, 0.12), transparent 58%);
-  color: #f8fafc;
+    radial-gradient(circle at top, rgba(220, 180, 105, 0.12), transparent 58%);
+  color: #f7f2e7;
   text-align: center;
   box-shadow:
     0 24px 60px rgba(2, 6, 23, 0.26),
@@ -1261,12 +1253,12 @@ watch(
 .app-resume-state__card {
   max-width: 460px;
   padding: 28px;
-  border: 1px solid rgba(96, 165, 250, 0.26);
+  border: 1px solid rgba(220, 180, 105, 0.26);
   border-radius: 28px;
   background:
     linear-gradient(145deg, rgba(15, 23, 42, 0.94), rgba(2, 6, 23, 0.9)),
-    radial-gradient(circle at top, rgba(96, 165, 250, 0.14), transparent 58%);
-  color: #f8fafc;
+    radial-gradient(circle at top, rgba(220, 180, 105, 0.14), transparent 58%);
+  color: #f7f2e7;
   text-align: center;
   box-shadow:
     0 24px 60px rgba(2, 6, 23, 0.34),
@@ -1277,12 +1269,12 @@ watch(
   position: relative;
   width: min(460px, 100%);
   padding: 28px;
-  border: 1px solid rgba(96, 165, 250, 0.3);
+  border: 1px solid rgba(220, 180, 105, 0.3);
   border-radius: 28px;
   background:
     linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.92)),
-    radial-gradient(circle at top, rgba(96, 165, 250, 0.18), transparent 58%);
-  color: #f8fafc;
+    radial-gradient(circle at top, rgba(220, 180, 105, 0.18), transparent 58%);
+  color: #f7f2e7;
   box-shadow:
     0 24px 60px rgba(2, 6, 23, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -1297,7 +1289,7 @@ watch(
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.72);
-  color: #cbd5e1;
+  color: #d8ccb6;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -1310,15 +1302,15 @@ watch(
 }
 
 .app-load-state__dismiss:hover {
-  border-color: rgba(96, 165, 250, 0.4);
+  border-color: rgba(220, 180, 105, 0.4);
   background: rgba(30, 41, 59, 0.92);
-  color: #f8fafc;
+  color: #f7f2e7;
   transform: translateY(-1px);
 }
 
 .app-empty-state__eyebrow {
   margin-bottom: 10px;
-  color: #93c5fd;
+  color: #e7c98a;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -1327,7 +1319,7 @@ watch(
 
 .app-resume-state__eyebrow {
   margin-bottom: 10px;
-  color: #93c5fd;
+  color: #e7c98a;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -1336,7 +1328,7 @@ watch(
 
 .app-load-state__eyebrow {
   margin-bottom: 10px;
-  color: #93c5fd;
+  color: #e7c98a;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -1366,21 +1358,21 @@ watch(
 
 .app-empty-state p {
   margin: 0;
-  color: #cbd5e1;
+  color: #d8ccb6;
   font-size: 14px;
   line-height: 1.6;
 }
 
 .app-resume-state p {
   margin: 0;
-  color: #cbd5e1;
+  color: #d8ccb6;
   font-size: 14px;
   line-height: 1.65;
 }
 
 .app-load-state p {
   margin: 0 0 18px;
-  color: #cbd5e1;
+  color: #d8ccb6;
   font-size: 14px;
   line-height: 1.65;
 }
@@ -1399,8 +1391,8 @@ watch(
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, #2563eb, #60a5fa);
-  box-shadow: 0 0 28px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(90deg, #cda35a, #dcb469);
+  box-shadow: 0 0 28px rgba(220, 180, 105, 0.4);
   transition: width 0.24s ease;
 }
 
@@ -1410,12 +1402,12 @@ watch(
   justify-content: space-between;
   gap: 12px;
   margin-top: 12px;
-  color: #cbd5e1;
+  color: #d8ccb6;
   font-size: 13px;
 }
 
 .app-load-state__meta strong {
-  color: #f8fafc;
+  color: #f7f2e7;
   font-size: 18px;
   letter-spacing: -0.03em;
 }
@@ -1437,19 +1429,19 @@ watch(
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 16px;
   background: rgba(15, 23, 42, 0.68);
-  color: #cbd5e1;
+  color: #d8ccb6;
 }
 
 .app-load-state__step.is-done {
-  border-color: rgba(96, 165, 250, 0.3);
+  border-color: rgba(220, 180, 105, 0.3);
   background: rgba(15, 23, 42, 0.84);
-  color: #eff6ff;
+  color: #f7ecd4;
 }
 
 .app-load-state__step.is-active {
-  border-color: rgba(96, 165, 250, 0.4);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(15, 23, 42, 0.84));
-  color: #f8fafc;
+  border-color: rgba(220, 180, 105, 0.4);
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.18), rgba(15, 23, 42, 0.84));
+  color: #f7f2e7;
 }
 
 .app-load-state__step-icon {
@@ -1460,12 +1452,12 @@ watch(
   min-height: 28px;
   border-radius: 999px;
   background: rgba(30, 41, 59, 0.9);
-  color: #93c5fd;
+  color: #e7c98a;
 }
 
 .app-load-state__step.is-done .app-load-state__step-icon {
-  background: rgba(30, 64, 175, 0.28);
-  color: #dbeafe;
+  background: rgba(120, 90, 33, 0.28);
+  color: #f0cd8a;
 }
 
 .app-load-state__step.is-active .app-load-state__step-icon svg {
@@ -1494,7 +1486,7 @@ watch(
 }
 
 .app-resume-state p strong {
-  color: #f8fafc;
+  color: #f7f2e7;
 }
 
 .app-empty-state__cta {
@@ -1504,16 +1496,16 @@ watch(
   justify-content: center;
   min-width: 138px;
   padding: 12px 18px;
-  border: 1px solid rgba(96, 165, 250, 0.42);
+  border: 1px solid rgba(220, 180, 105, 0.42);
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.88), rgba(59, 130, 246, 0.88));
-  color: #eff6ff;
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.88), rgba(220, 180, 105, 0.88));
+  color: #f7ecd4;
   font: inherit;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   box-shadow:
-    0 16px 34px rgba(30, 64, 175, 0.28),
+    0 16px 34px rgba(120, 90, 33, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
   transition:
     transform 0.16s ease,
@@ -1524,7 +1516,7 @@ watch(
 .app-empty-state__cta:hover {
   transform: translateY(-1px);
   box-shadow:
-    0 18px 38px rgba(30, 64, 175, 0.34),
+    0 18px 38px rgba(120, 90, 33, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.16);
   filter: brightness(1.04);
 }
@@ -1556,18 +1548,18 @@ watch(
 }
 
 .app-resume-state__primary {
-  border: 1px solid rgba(96, 165, 250, 0.42);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.88), rgba(59, 130, 246, 0.88));
-  color: #eff6ff;
+  border: 1px solid rgba(220, 180, 105, 0.42);
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.88), rgba(220, 180, 105, 0.88));
+  color: #f7ecd4;
   box-shadow:
-    0 16px 34px rgba(30, 64, 175, 0.28),
+    0 16px 34px rgba(120, 90, 33, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .app-resume-state__secondary {
   border: 1px solid rgba(148, 163, 184, 0.22);
   background: rgba(15, 23, 42, 0.66);
-  color: #e2e8f0;
+  color: #ece2cf;
 }
 
 .app-resume-state__primary:hover,
@@ -1587,7 +1579,7 @@ watch(
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.18);
-  color: #f8fafc;
+  color: #f7f2e7;
   transform: translateX(-50%);
   box-shadow: 0 8px 22px rgba(2, 6, 23, 0.1);
   backdrop-filter: blur(6px);
@@ -1601,14 +1593,14 @@ watch(
   z-index: 9;
   padding: 11px 16px;
   border-radius: 13px;
-  border: 1px solid rgba(96, 165, 250, 0.5);
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: #eff6ff;
+  border: 1px solid rgba(220, 180, 105, 0.5);
+  background: linear-gradient(135deg, #cda35a, #dcb469);
+  color: #f7ecd4;
   font: inherit;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 12px 28px rgba(30, 64, 175, 0.35);
+  box-shadow: 0 12px 28px rgba(120, 90, 33, 0.35);
 }
 
 .submit-fab:hover {
@@ -1644,8 +1636,8 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #020617;
-  color: #94a3b8;
+  background: #1c1813;
+  color: #b3a890;
   font-size: 14px;
 }
 
@@ -1667,7 +1659,7 @@ watch(
 
 .account-chip__email {
   font-size: 12px;
-  color: #cbd5e1;
+  color: #d8ccb6;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1679,7 +1671,7 @@ watch(
   border-radius: 9px;
   border: 1px solid rgba(148, 163, 184, 0.25);
   background: transparent;
-  color: #e2e8f0;
+  color: #ece2cf;
   font: inherit;
   font-size: 12px;
   font-weight: 700;
@@ -1708,7 +1700,7 @@ watch(
 }
 
 .symbol-drag-preview {
-  --preview-color: #3b82f6;
+  --preview-color: #dcb469;
   position: fixed;
   z-index: 80;
   display: inline-flex;
@@ -1733,7 +1725,7 @@ watch(
   height: 22px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.96);
-  color: #0f172a;
+  color: #25211a;
 }
 
 .symbol-drag-preview__core :deep(svg) {

@@ -78,6 +78,7 @@
         @remove-track="$emit('remove-track', $event)"
         @new-track="$emit('new-track')"
         @edit-track="$emit('edit-track', $event)"
+        @submit-project="$emit('submit-project')"
         @track-width-change="$emit('track-width-change', $event)"
         @update:project-name="$emit('update:project-name', $event)"
       />
@@ -156,6 +157,7 @@ defineEmits<{
   (e: 'remove-track', trackId: string): void
   (e: 'new-track'): void
   (e: 'edit-track', trackId: string): void
+  (e: 'submit-project'): void
   (e: 'update:project-name', value: string): void
   (e: 'start-symbol-drag', payload: {
     symbolId: import('../../types/symbol').SymbolId
@@ -230,7 +232,7 @@ const activeSectionMeta = computed(() => {
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.9);
-  color: #cbd5e1;
+  color: #d8ccb6;
   font: inherit;
   cursor: pointer;
   backdrop-filter: blur(10px);
@@ -246,7 +248,7 @@ const activeSectionMeta = computed(() => {
 .rail-nav-button:hover {
   background: rgba(30, 41, 59, 0.96);
   transform: translateY(-1px);
-  border-color: rgba(96, 165, 250, 0.35);
+  border-color: rgba(220, 180, 105, 0.35);
 }
 
 .rail-nav {
@@ -256,9 +258,9 @@ const activeSectionMeta = computed(() => {
 }
 
 .rail-nav-button.active {
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.35), rgba(30, 64, 175, 0.35));
-  border-color: rgba(96, 165, 250, 0.5);
-  color: #eff6ff;
+  background: linear-gradient(180deg, rgba(205, 163, 90, 0.35), rgba(120, 90, 33, 0.35));
+  border-color: rgba(220, 180, 105, 0.5);
+  color: #f7ecd4;
 }
 
 .rail-nav-icon {
@@ -316,7 +318,7 @@ const activeSectionMeta = computed(() => {
   max-width: 100%;
   height: 100%;
   padding: 18px;
-  background: #0f172a;
+  background: #25211a;
   color: #e5e7eb;
   overflow-y: auto;
   box-shadow: 14px 0 40px rgba(2, 6, 23, 0.45);
@@ -350,7 +352,7 @@ const activeSectionMeta = computed(() => {
 
 .subtitle {
   margin: 0;
-  color: #94a3b8;
+  color: #b3a890;
   font-size: 13px;
 }
 
@@ -469,7 +471,7 @@ const activeSectionMeta = computed(() => {
     border: 1px solid rgba(30, 41, 59, 0.9);
     border-radius: 14px;
     background: rgba(17, 24, 39, 0.9);
-    color: #cbd5e1;
+    color: #d8ccb6;
     font: inherit;
     font-size: 11px;
     font-weight: 700;
@@ -477,9 +479,9 @@ const activeSectionMeta = computed(() => {
   }
 
   .mobile-section-button.active {
-    background: linear-gradient(180deg, rgba(37, 99, 235, 0.32), rgba(30, 64, 175, 0.3));
-    border-color: rgba(96, 165, 250, 0.55);
-    color: #eff6ff;
+    background: linear-gradient(180deg, rgba(205, 163, 90, 0.32), rgba(120, 90, 33, 0.3));
+    border-color: rgba(220, 180, 105, 0.55);
+    color: #f7ecd4;
   }
 
   .mobile-section-icon {

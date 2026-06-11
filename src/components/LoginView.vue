@@ -104,7 +104,7 @@ function traduire(msg: string) {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: radial-gradient(1200px 600px at 50% -10%, #1e3a8a 0%, #020617 60%);
+  background: radial-gradient(1200px 600px at 50% -10%, #3a2f1c 0%, #1c1813 60%);
 }
 
 .login-card {
@@ -115,8 +115,8 @@ function traduire(msg: string) {
   gap: 16px;
   padding: 24px;
   border-radius: 18px;
-  background: #0b1220;
-  border: 1px solid #1f2937;
+  background: #2a251e;
+  border: 1px solid #38322a;
   box-shadow: 0 30px 60px rgba(2, 6, 23, 0.6);
 }
 
@@ -129,14 +129,14 @@ function traduire(msg: string) {
 .login-brand h1 {
   margin: 0;
   font-size: 17px;
-  color: #e2e8f0;
+  color: #ece2cf;
 }
 
 .login-brand p {
   margin: 4px 0 0;
   font-size: 13px;
   line-height: 1.45;
-  color: #94a3b8;
+  color: #b3a890;
 }
 
 .google-btn {
@@ -146,9 +146,9 @@ function traduire(msg: string) {
   gap: 10px;
   min-height: 44px;
   border-radius: 12px;
-  border: 1px solid #334155;
-  background: #f8fafc;
-  color: #0f172a;
+  border: 1px solid #4a4234;
+  background: #f7f2e7;
+  color: #25211a;
   font: inherit;
   font-weight: 700;
   font-size: 14px;
@@ -178,7 +178,7 @@ function traduire(msg: string) {
   content: '';
   flex: 1;
   height: 1px;
-  background: #1f2937;
+  background: #38322a;
 }
 
 .login-form {
@@ -192,31 +192,31 @@ function traduire(msg: string) {
   flex-direction: column;
   gap: 6px;
   font-size: 12px;
-  color: #94a3b8;
+  color: #b3a890;
 }
 
 .field input {
   min-height: 42px;
   padding: 0 12px;
   border-radius: 10px;
-  border: 1px solid #334155;
-  background: #020617;
-  color: #e2e8f0;
+  border: 1px solid #4a4234;
+  background: #1c1813;
+  color: #ece2cf;
   font: inherit;
   font-size: 14px;
 }
 
 .field input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #dcb469;
 }
 
 .primary-btn {
   min-height: 44px;
   border-radius: 12px;
-  border: 1px solid rgba(96, 165, 250, 0.5);
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: #eff6ff;
+  border: 1px solid rgba(220, 180, 105, 0.5);
+  background: linear-gradient(135deg, #cda35a, #dcb469);
+  color: #f7ecd4;
   font: inherit;
   font-weight: 700;
   font-size: 14px;
@@ -231,7 +231,7 @@ function traduire(msg: string) {
 .toggle {
   background: none;
   border: none;
-  color: #93c5fd;
+  color: #e7c98a;
   font: inherit;
   font-size: 13px;
   cursor: pointer;

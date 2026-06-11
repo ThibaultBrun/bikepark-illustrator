@@ -164,8 +164,8 @@ function selectFont(labelFont: MapLabelFont) {
 .panel {
   margin-bottom: 16px;
   padding: 14px;
-  background: #111827;
-  border: 1px solid #1f2937;
+  background: #2d2820;
+  border: 1px solid #38322a;
   border-radius: 16px;
 }
 
@@ -184,12 +184,12 @@ function selectFont(labelFont: MapLabelFont) {
 .panel-header-copy h2 {
   margin: 0;
   font-size: 14px;
-  color: #cbd5e1;
+  color: #d8ccb6;
 }
 
 .panel-header-copy p {
   margin: 0;
-  color: #94a3b8;
+  color: #b3a890;
   line-height: 1.5;
   font-size: 13px;
 }
@@ -201,9 +201,9 @@ function selectFont(labelFont: MapLabelFont) {
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: rgba(37, 99, 235, 0.18);
-  border: 1px solid rgba(96, 165, 250, 0.28);
-  color: #dbeafe;
+  background: rgba(205, 163, 90, 0.18);
+  border: 1px solid rgba(220, 180, 105, 0.28);
+  color: #f0cd8a;
 }
 
 .slider-field {
@@ -217,18 +217,18 @@ function selectFont(labelFont: MapLabelFont) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: #cbd5e1;
+  color: #d8ccb6;
   font-size: 12px;
   font-weight: 700;
 }
 
 .slider-label-row strong {
-  color: #eff6ff;
+  color: #f7ecd4;
 }
 
 .slider-field input[type='range'] {
   width: 100%;
-  accent-color: #3b82f6;
+  accent-color: #dcb469;
   cursor: pointer;
 }
 
@@ -249,8 +249,8 @@ function selectFont(labelFont: MapLabelFont) {
   border-radius: 14px;
   background:
     linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)),
-    radial-gradient(circle at top, rgba(96, 165, 250, 0.08), transparent 60%);
-  color: #eff6ff;
+    radial-gradient(circle at top, rgba(220, 180, 105, 0.08), transparent 60%);
+  color: #f7ecd4;
   cursor: pointer;
   transition:
     border-color 0.15s ease,
@@ -260,10 +260,10 @@ function selectFont(labelFont: MapLabelFont) {
 
 .font-dropdown-trigger:hover {
   transform: translateY(-1px);
-  border-color: rgba(96, 165, 250, 0.4);
+  border-color: rgba(220, 180, 105, 0.4);
   box-shadow:
     0 12px 28px rgba(2, 6, 23, 0.22),
-    0 0 0 1px rgba(96, 165, 250, 0.08);
+    0 0 0 1px rgba(220, 180, 105, 0.08);
 }
 
 .font-dropdown-trigger-copy {
@@ -291,14 +291,14 @@ function selectFont(labelFont: MapLabelFont) {
   white-space: nowrap;
   font-size: 15px;
   font-weight: 700;
-  color: #f8fafc;
+  color: #f7f2e7;
 }
 
 .font-dropdown-trigger-caret {
   width: 10px;
   height: 10px;
-  border-right: 2px solid #93c5fd;
-  border-bottom: 2px solid #93c5fd;
+  border-right: 2px solid #e7c98a;
+  border-bottom: 2px solid #e7c98a;
   transform: rotate(45deg) translateY(-1px);
   transition: transform 0.18s ease;
 }
@@ -323,7 +323,7 @@ function selectFont(labelFont: MapLabelFont) {
   border-radius: 16px;
   background:
     linear-gradient(180deg, rgba(2, 6, 23, 0.99), rgba(15, 23, 42, 0.98)),
-    radial-gradient(circle at top, rgba(96, 165, 250, 0.07), transparent 62%);
+    radial-gradient(circle at top, rgba(220, 180, 105, 0.07), transparent 62%);
   box-shadow:
     0 20px 42px rgba(2, 6, 23, 0.38),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -348,7 +348,7 @@ function selectFont(labelFont: MapLabelFont) {
   border: 1px solid rgba(30, 41, 59, 0.92);
   border-radius: 12px;
   background: rgba(15, 23, 42, 0.78);
-  color: #e2e8f0;
+  color: #ece2cf;
   text-align: left;
   cursor: pointer;
   transition:
@@ -360,15 +360,15 @@ function selectFont(labelFont: MapLabelFont) {
 
 .font-option:hover {
   transform: translateY(-1px);
-  border-color: rgba(96, 165, 250, 0.32);
+  border-color: rgba(220, 180, 105, 0.32);
   box-shadow: 0 10px 24px rgba(2, 6, 23, 0.14);
 }
 
 .font-option.active {
-  border-color: rgba(96, 165, 250, 0.78);
-  background: linear-gradient(180deg, rgba(30, 64, 175, 0.3), rgba(15, 23, 42, 0.92));
+  border-color: rgba(220, 180, 105, 0.78);
+  background: linear-gradient(180deg, rgba(120, 90, 33, 0.3), rgba(15, 23, 42, 0.92));
   box-shadow:
-    0 0 0 1px rgba(147, 197, 253, 0.14),
+    0 0 0 1px rgba(240, 205, 138, 0.14),
     0 10px 24px rgba(2, 6, 23, 0.16);
 }
 
@@ -381,7 +381,7 @@ function selectFont(labelFont: MapLabelFont) {
   border-radius: 10px;
   flex: 0 0 auto;
   background: rgba(255, 255, 255, 0.06);
-  color: #f8fafc;
+  color: #f7f2e7;
   font-size: 17px;
   font-weight: 700;
 }
@@ -417,7 +417,7 @@ function selectFont(labelFont: MapLabelFont) {
   min-height: 22px;
   padding: 0 7px;
   border-radius: 999px;
-  background: rgba(96, 165, 250, 0.18);
+  background: rgba(220, 180, 105, 0.18);
   color: #bfdbfe;
   font-size: 9px;
   font-weight: 700;

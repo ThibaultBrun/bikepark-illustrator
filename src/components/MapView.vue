@@ -504,7 +504,7 @@ function buildPlacedSymbolSvg(symbol: MapSymbol, definition: SymbolDefinition) {
     .trim()
     .replace(
       /^<svg\b/i,
-      `<svg x="${centerX - symbol.iconSize / 2}" y="${centerY - symbol.iconSize / 2}" width="${symbol.iconSize}" height="${symbol.iconSize}" color="#0f172a" overflow="visible"`,
+      `<svg x="${centerX - symbol.iconSize / 2}" y="${centerY - symbol.iconSize / 2}" width="${symbol.iconSize}" height="${symbol.iconSize}" color="#25211a" overflow="visible"`,
     )
   const hasTransform = symbol.rotation !== 0 || symbol.flipX || symbol.flipY
   const iconContent = hasTransform
@@ -1528,7 +1528,7 @@ onMounted(() => {
         'hillshade-exaggeration': Math.min(props.terrainExaggeration * 0.2, 1),
         'hillshade-shadow-color': '#000000',
         'hillshade-highlight-color': '#ffffff',
-        'hillshade-accent-color': '#1f2937',
+        'hillshade-accent-color': '#38322a',
       },
     })
 
@@ -1847,10 +1847,10 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px dashed rgba(96, 165, 250, 0.9);
+  border: 2px dashed rgba(220, 180, 105, 0.9);
   border-radius: 24px;
   background: rgba(15, 23, 42, 0.16);
-  color: #eff6ff;
+  color: #f7ecd4;
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -1919,16 +1919,16 @@ onBeforeUnmount(() => {
   font-size: 12px;
   cursor: pointer;
   background: #f3f4f6;
-  color: #111827;
+  color: #2d2820;
 }
 
 .baselayer-switcher button.active {
-  background: #111827;
+  background: #2d2820;
   color: white;
 }
 
 :global(.map-symbol-marker) {
-  --symbol-color: #3b82f6;
+  --symbol-color: #dcb469;
   --marker-size: 28px;
   --marker-core-size: 24px;
   --marker-icon-size: 17px;
@@ -1962,7 +1962,7 @@ onBeforeUnmount(() => {
   height: var(--marker-core-size);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.96);
-  color: #0f172a;
+  color: #25211a;
 }
 
 :global(.map-symbol-marker__icon) {

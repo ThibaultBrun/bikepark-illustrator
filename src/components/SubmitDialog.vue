@@ -167,8 +167,8 @@ function onSubmit() {
   gap: 14px;
   padding: 20px;
   border-radius: 16px;
-  background: #0b1220;
-  border: 1px solid #1f2937;
+  background: #2a251e;
+  border: 1px solid #38322a;
   box-shadow: 0 30px 60px rgba(2, 6, 23, 0.6);
 }
 
@@ -181,13 +181,13 @@ function onSubmit() {
 .submit-header h2 {
   margin: 0;
   font-size: 16px;
-  color: #e2e8f0;
+  color: #ece2cf;
 }
 
 .x {
   border: none;
   background: none;
-  color: #94a3b8;
+  color: #b3a890;
   font-size: 16px;
   cursor: pointer;
 }
@@ -196,7 +196,7 @@ function onSubmit() {
   margin: 0;
   font-size: 12.5px;
   line-height: 1.5;
-  color: #94a3b8;
+  color: #b3a890;
 }
 
 .grid {
@@ -209,7 +209,7 @@ function onSubmit() {
   flex-direction: column;
   gap: 5px;
   font-size: 12px;
-  color: #94a3b8;
+  color: #b3a890;
 }
 
 .field input,
@@ -218,9 +218,9 @@ function onSubmit() {
   min-height: 40px;
   padding: 0 10px;
   border-radius: 9px;
-  border: 1px solid #334155;
-  background: #020617;
-  color: #e2e8f0;
+  border: 1px solid #4a4234;
+  background: #1c1813;
+  color: #ece2cf;
   font: inherit;
   font-size: 13px;
 }
@@ -228,7 +228,7 @@ function onSubmit() {
 .field input:focus,
 .sel:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #dcb469;
 }
 
 .trails {
@@ -240,7 +240,7 @@ function onSubmit() {
 .trails-title {
   font-size: 13px;
   font-weight: 700;
-  color: #cbd5e1;
+  color: #d8ccb6;
 }
 
 .empty {
@@ -258,16 +258,16 @@ function onSubmit() {
 
 .trail-name {
   font-size: 13px;
-  color: #e2e8f0;
+  color: #ece2cf;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .sel.diff-green { color: #86efac; }
-.sel.diff-blue { color: #93c5fd; }
+.sel.diff-blue { color: #e7c98a; }
 .sel.diff-red { color: #fca5a5; }
-.sel.diff-black { color: #cbd5e1; }
+.sel.diff-black { color: #d8ccb6; }
 
 .error {
   margin: 0;
@@ -293,15 +293,15 @@ function onSubmit() {
 }
 
 .ghost {
-  border: 1px solid #334155;
+  border: 1px solid #4a4234;
   background: transparent;
-  color: #e2e8f0;
+  color: #ece2cf;
 }
 
 .primary {
-  border: 1px solid rgba(96, 165, 250, 0.5);
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: #eff6ff;
+  border: 1px solid rgba(220, 180, 105, 0.5);
+  background: linear-gradient(135deg, #cda35a, #dcb469);
+  color: #f7ecd4;
 }
 
 .primary:disabled,
