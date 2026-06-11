@@ -1,0 +1,62 @@
+import { supabase } from './supabase'
+import type { BikeparkProject } from '../types/project'
+
+// Itération 1 : un projet illustrator par utilisateur, stocké en jsonb dans
+// public.illustrator_projects (remplace le localStorage). La matérialisation en
+// spots/trails Pista + la soumission viendront ensuite.
+
+export type StoredProject = { id: string; data: BikeparkProject; title: string | null }
+
+export async function loadUserProject(): Promise<StoredProject | null> {
+  const { data, error } = await supabase
+    .from('illustrator_projects')
+    .select('id, data, title')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+  if (error) {
+    console.error('[projects] load', error)
+    return null
+  }
+  const row = data?.[0]
+  if (!row) return null
+  return { id: row.id as string, data: row.data as BikeparkProject, title: (row.title as string) ?? null }
+}
+
+export async function saveUserProject(
+  projectId: string | null,
+  snapshot: BikeparkProject,
+  title: string,
+): Promise<string | null> {
+  // created_by est posé par défaut à auth.uid() côté DB (RLS l'impose).
+  if (projectId) {
+    const { error } = await supabase
+      .from('illustrator_projects')
+      .update({ data: snapshot, title, updated_at: new Date().toISOString() })
+      .eq('id', projectId)
+    if (error) {
+      console.error('[projects] update', error)
+      return null
+    }
+    return projectId
+  }
+
+  const { data, error } = await supabase
+    .from('illustrator_projects')
+    .insert({ data: snapshot, title })
+    .select('id')
+    .single()
+  if (error) {
+    console.error('[projects] insert', error)
+    return null
+  }
+  return (data?.id as string) ?? null
+}
+
+export async function deleteUserProject(projectId: string): Promise<boolean> {
+  const { error } = await supabase.from('illustrator_projects').delete().eq('id', projectId)
+  if (error) {
+    console.error('[projects] delete', error)
+    return false
+  }
+  return true
+}

@@ -1,5 +1,9 @@
 <template>
-  <div class="app" :class="{ 'sidebar-open': isSidebarOpen }">
+  <div v-if="!authReady" class="auth-loading">Chargement…</div>
+
+  <LoginView v-else-if="!authSession" />
+
+  <div v-else class="app" :class="{ 'sidebar-open': isSidebarOpen }">
     <SidebarPanel
       :is-open="isSidebarOpen"
       :active-section="activeSection"
@@ -160,6 +164,13 @@
       <span class="app-floating-brand__name">Bikepark Illustrator</span>
     </div>
 
+    <div class="account-chip">
+      <span class="account-chip__email" :title="authUser?.email ?? ''">{{ authUser?.email }}</span>
+      <button type="button" class="account-chip__logout" title="Se déconnecter" @click="onSignOut">
+        Déconnexion
+      </button>
+    </div>
+
     <div
       v-if="draggingSymbolId && dragPreview"
       class="symbol-drag-preview"
@@ -183,6 +194,9 @@ import { gpx } from '@mapbox/togeojson'
 import JSZip from 'jszip'
 import localforage from 'localforage'
 import MapView from './components/MapView.vue'
+import LoginView from './components/LoginView.vue'
+import { useAuth } from './lib/useAuth'
+import { loadUserProject, saveUserProject } from './lib/projectsStore'
 import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
@@ -204,6 +218,12 @@ import {
   type SymbolId,
   type UploadedSymbolPayload,
 } from './types/symbol'
+
+const { session: authSession, ready: authReady, user: authUser, signOut } = useAuth()
+
+async function onSignOut() {
+  await signOut()
+}
 
 const predefinedColors = [
   '#22c55e',
@@ -284,6 +304,7 @@ const saveStatusMessage = ref('')
 const lastSavedAt = ref<string | null>(null)
 const hasSavedProject = ref(false)
 const hasHydratedProject = ref(false)
+const currentProjectId = ref<string | null>(null)
 const projectLoadSessionId = ref(0)
 const dismissedProjectLoadSessionId = ref<number | null>(null)
 let projectLoadFinishTimer: number | null = null
@@ -554,19 +575,25 @@ function applyProject(project: BikeparkProject) {
 async function saveProjectToBrowser() {
   try {
     saveStatus.value = 'saving'
-    saveStatusMessage.value = 'Sauvegarde locale en cours.'
+    saveStatusMessage.value = 'Sauvegarde en cours.'
 
     const snapshot = createProjectSnapshot()
-    await localforage.setItem(PROJECT_STORAGE_KEY, snapshot)
+    const id = await saveUserProject(
+      currentProjectId.value,
+      snapshot,
+      sanitizeProjectName(projectName.value),
+    )
+    if (!id) throw new Error('save failed')
 
+    currentProjectId.value = id
     lastSavedAt.value = snapshot.savedAt
     hasSavedProject.value = true
     saveStatus.value = 'saved'
-    saveStatusMessage.value = 'Projet enregistre dans ce navigateur.'
+    saveStatusMessage.value = 'Projet enregistré (cloud).'
   } catch (error) {
     console.error(error)
     saveStatus.value = 'error'
-    saveStatusMessage.value = 'Impossible de sauvegarder dans le navigateur.'
+    saveStatusMessage.value = 'Sauvegarde impossible.'
   }
 }
 
@@ -601,20 +628,25 @@ async function restoreProjectFromBrowser() {
   }
 }
 
-async function hydrateInitialProjectState() {
+async function hydrateFromDb() {
+  hasHydratedProject.value = false
   try {
-    const stored = await localforage.getItem<BikeparkProject>(PROJECT_STORAGE_KEY)
+    const stored = await loadUserProject()
     if (!stored) {
+      currentProjectId.value = null
       hasSavedProject.value = false
       saveStatus.value = 'idle'
       saveStatusMessage.value = ''
       hasHydratedProject.value = true
       hasStartedWelcome.value = true
+      // Première visite (aucun projet) : on lance le tuto une fois.
+      if (!hasSeenTour()) window.setTimeout(() => launchTour(), 600)
       return
     }
 
-    const project = normalizeProject(stored)
-    beginProjectLoad('Reprise de la sauvegarde', project)
+    currentProjectId.value = stored.id
+    const project = normalizeProject(stored.data)
+    beginProjectLoad('Reprise de ta sauvegarde', project)
     applyProject(project)
     hasSavedProject.value = true
     lastSavedAt.value = project.savedAt
@@ -622,10 +654,24 @@ async function hydrateInitialProjectState() {
   } catch (error) {
     console.error(error)
     saveStatus.value = 'error'
-    saveStatusMessage.value = 'Impossible de relire la sauvegarde locale.'
+    saveStatusMessage.value = 'Impossible de charger ton projet.'
     hasHydratedProject.value = true
     hasStartedWelcome.value = true
   }
+}
+
+function resetToEmpty() {
+  hasHydratedProject.value = false
+  currentProjectId.value = null
+  tracks.value = []
+  symbols.value = []
+  customSymbols.value = []
+  mapCamera.value = null
+  projectName.value = 'Mon bikepark'
+  hasSavedProject.value = false
+  lastSavedAt.value = null
+  saveStatus.value = 'idle'
+  saveStatusMessage.value = ''
 }
 
 async function clearProjectFromBrowser() {
@@ -996,14 +1042,18 @@ async function onGpxFiles(event: Event) {
   input.value = ''
 }
 
-onMounted(async () => {
-  await hydrateInitialProjectState()
-
-  // Premiere visite : on lance le tutoriel automatiquement une seule fois.
-  if (!hasSeenTour() && !hasSavedProject.value) {
-    window.setTimeout(() => launchTour(), 600)
-  }
-})
+// Charge le projet du user à la connexion ; réinitialise à la déconnexion.
+watch(
+  authSession,
+  (s, prev) => {
+    if (s && !prev) {
+      void hydrateFromDb()
+    } else if (!s && prev) {
+      resetToEmpty()
+    }
+  },
+  { immediate: true },
+)
 
 watch(
   [tracks, symbols, customSymbols, mapSettings, hasStartedWelcome, projectName],
@@ -1488,6 +1538,68 @@ watch(
   box-shadow: 0 8px 22px rgba(2, 6, 23, 0.1);
   backdrop-filter: blur(6px);
   pointer-events: none;
+}
+
+.auth-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #020617;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.account-chip {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px 5px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  max-width: 46vw;
+}
+
+.account-chip__email {
+  font-size: 12px;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-chip__logout {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: transparent;
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.account-chip__logout:hover {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+@media (max-width: 960px) {
+  .account-chip__email {
+    display: none;
+  }
+  .account-chip {
+    top: 14px;
+    right: 14px;
+  }
 }
 
 .app-floating-brand__name {
