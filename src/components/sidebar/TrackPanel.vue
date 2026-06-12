@@ -72,14 +72,27 @@
 
     <div v-for="track in tracks" :key="track.id" class="track-card" :class="{ expanded: isExpanded(track.id) }">
       <div class="track-header">
-        <input
-          v-model="track.label"
-          class="text-input track-name"
-          type="text"
-          :placeholder="t('track.labelPh')"
-        />
+        <div class="track-title-row">
+          <input
+            v-model="track.label"
+            class="text-input track-name"
+            type="text"
+            :placeholder="t('track.labelPh')"
+          />
 
-        <div class="track-actions">
+          <button
+            type="button"
+            class="expand-button"
+            :class="{ open: isExpanded(track.id) }"
+            :title="isExpanded(track.id) ? t('track.hideSettings') : t('track.showSettings')"
+            :aria-expanded="isExpanded(track.id)"
+            @click="toggleExpanded(track.id)"
+          >
+            <component :is="isExpanded(track.id) ? ChevronUp : ChevronDown" class="expand-icon" />
+          </button>
+        </div>
+
+        <div v-if="isExpanded(track.id)" class="track-actions">
           <button
             type="button"
             class="visibility-button"
@@ -107,17 +120,6 @@
             @click="track.visible = !track.visible"
           >
             <component :is="track.visible ? Eye : EyeOff" class="visibility-icon" />
-          </button>
-
-          <button
-            type="button"
-            class="expand-button"
-            :class="{ open: isExpanded(track.id) }"
-            :title="isExpanded(track.id) ? t('track.hideSettings') : t('track.showSettings')"
-            :aria-expanded="isExpanded(track.id)"
-            @click="toggleExpanded(track.id)"
-          >
-            <component :is="isExpanded(track.id) ? ChevronUp : ChevronDown" class="expand-icon" />
           </button>
 
           <button
@@ -590,8 +592,15 @@ function removeTrack(trackId: string) {
   gap: 8px;
 }
 
+.track-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .track-name {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
 .track-actions {
