@@ -38,6 +38,8 @@
       @cancel-publication="onCancelPublication"
       @propose-to-spot="onProposeToSpot"
       @preview-in-pista="onPreviewInPista"
+      @set-visibility="onSetVisibility"
+      @copy-link="onCopyLink"
       @locate="onLocate"
       @start-symbol-drag="onStartSymbolDrag"
       @remove-symbol="onRemoveSymbol"
@@ -257,7 +259,7 @@ import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
 import { useAuth } from './lib/useAuth'
-import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, getSpotSlug, listUserProjects, loadProjectById, createProject, deleteUserProject, proposeTrailsToSpot, type ProjectListItem, type SubmitTrail } from './lib/projectsStore'
+import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, getSpotSlug, setSpotVisibility, listUserProjects, loadProjectById, createProject, deleteUserProject, proposeTrailsToSpot, type ProjectListItem, type SubmitTrail, type VisibilityLevel } from './lib/projectsStore'
 import { hasSeenTour, startTour } from './lib/useTour'
 import type { MapSettings } from './components/sidebar/map-settings'
 import SidebarPanel from './components/sidebar/SidebarPanel.vue'
@@ -451,6 +453,43 @@ async function onPreviewInPista() {
   }
   const loc = PISTA_LOCALES.has(String(locale.value)) ? String(locale.value) : 'fr'
   window.open(`https://pista.bike/${loc}/spot/${slug}`, '_blank', 'noopener')
+}
+
+async function pistaSpotUrl(spotId: string): Promise<string | null> {
+  const slug = await getSpotSlug(spotId)
+  if (!slug) return null
+  const loc = PISTA_LOCALES.has(String(locale.value)) ? String(locale.value) : 'fr'
+  return `https://pista.bike/${loc}/spot/${slug}`
+}
+
+// Change le niveau de confidentialité du spot du projet (privé/désindexé/public).
+async function onSetVisibility(level: VisibilityLevel) {
+  if (!currentSpotId.value) return
+  const err = await setSpotVisibility(currentSpotId.value, level)
+  if (err) {
+    showToast(t('toast.visibilityFail'))
+    return
+  }
+  currentSpotStatus.value =
+    level === 'private' ? 'draft' : level === 'unlisted' ? 'unlisted' : 'submitted'
+  showToast(t(`toast.vis_${level}`))
+}
+
+// Copie le lien Pista du spot (partage désindexé/public).
+async function onCopyLink() {
+  const spotId = previewSpotId.value ?? currentSpotId.value
+  if (!spotId) return
+  const url = await pistaSpotUrl(spotId)
+  if (!url) {
+    showToast(t('toast.previewUnavailable'))
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(url)
+    showToast(t('toast.linkCopied'))
+  } catch {
+    window.prompt(t('toast.linkCopied'), url)
+  }
 }
 
 async function syncPistaDraft() {

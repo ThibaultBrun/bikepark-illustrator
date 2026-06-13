@@ -118,6 +118,8 @@
         @cancel-publication="$emit('cancel-publication')"
         @propose-to-spot="$emit('propose-to-spot', $event)"
         @preview-in-pista="$emit('preview-in-pista')"
+        @set-visibility="$emit('set-visibility', $event)"
+        @copy-link="$emit('copy-link')"
       />
       <LocatePanel
         v-else-if="activeSection === 'locate'"
@@ -166,7 +168,7 @@ const props = defineProps<{
   predefinedColors: string[]
   mapSettings: MapSettings
   projectName: string
-  spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
+  spotStatus: 'draft' | 'unlisted' | 'submitted' | 'published' | 'archived' | null
   canPreview?: boolean
   preselectedSpot?: { id: string; name: string } | null
   projects: { id: string; title: string | null; spotId: string | null }[]
@@ -189,6 +191,8 @@ defineEmits<{
   (e: 'cancel-publication'): void
   (e: 'propose-to-spot', payload: { id: string; name: string }): void
   (e: 'preview-in-pista'): void
+  (e: 'set-visibility', level: 'private' | 'unlisted' | 'public'): void
+  (e: 'copy-link'): void
   (e: 'locate', payload: { lng: number; lat: number; label: string }): void
   (e: 'select-project', id: string): void
   (e: 'new-project'): void

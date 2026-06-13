@@ -12,27 +12,48 @@
     </div>
 
     <div class="block">
-      <div class="block-title">{{ t('exportPanel.pubTitle') }}</div>
+      <div class="block-title">{{ t('exportPanel.visibilityTitle') }}</div>
 
       <p v-if="!spotStatus" class="hint">{{ t('exportPanel.pubHintNew') }}</p>
 
-      <template v-else-if="spotStatus === 'draft'">
-        <button type="button" class="action-button primary" @click="$emit('request-publication')">
-          {{ t('exportPanel.requestPub') }}
-        </button>
-        <p class="hint">{{ t('exportPanel.pubHintDraft') }}</p>
-      </template>
+      <template v-else>
+        <div class="visibility-seg">
+          <button
+            type="button"
+            :class="{ active: level === 'private' }"
+            @click="$emit('set-visibility', 'private')"
+          >
+            🔒 {{ t('exportPanel.visPrivate') }}
+          </button>
+          <button
+            type="button"
+            :class="{ active: level === 'unlisted' }"
+            @click="$emit('set-visibility', 'unlisted')"
+          >
+            🔗 {{ t('exportPanel.visUnlisted') }}
+          </button>
+          <button
+            type="button"
+            :class="{ active: level === 'public' }"
+            @click="$emit('set-visibility', 'public')"
+          >
+            🌍 {{ t('exportPanel.visPublic') }}
+          </button>
+        </div>
 
-      <template v-else-if="spotStatus === 'submitted'">
-        <p class="status status--pending">{{ t('exportPanel.pending') }}</p>
-        <button type="button" class="action-button" @click="$emit('cancel-publication')">
-          {{ t('exportPanel.cancelRequest') }}
+        <p class="hint" :class="{ 'status--pending': spotStatus === 'submitted', 'status--ok': spotStatus === 'published' }">
+          {{ visibilityHint }}
+        </p>
+
+        <button
+          v-if="spotStatus === 'unlisted' || spotStatus === 'published'"
+          type="button"
+          class="action-button"
+          @click="$emit('copy-link')"
+        >
+          🔗 {{ t('exportPanel.copyLink') }}
         </button>
-        <p class="hint">{{ t('exportPanel.cancelHint') }}</p>
       </template>
-      <p v-else-if="spotStatus === 'published'" class="status status--ok">
-        {{ t('exportPanel.published') }}
-      </p>
 
       <button
         v-if="canPreview"
@@ -96,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import SidebarIcon from './SidebarIcon.vue'
 import { searchPublishedSpots, type PublicSpot } from '../../lib/projectsStore'
@@ -104,7 +125,7 @@ import { searchPublishedSpots, type PublicSpot } from '../../lib/projectsStore'
 const { t } = useI18n()
 
 const props = defineProps<{
-  spotStatus: 'draft' | 'submitted' | 'published' | 'archived' | null
+  spotStatus: 'draft' | 'unlisted' | 'submitted' | 'published' | 'archived' | null
   canPreview?: boolean
   preselectedSpot?: { id: string; name: string } | null
   trackCount: number
@@ -117,7 +138,34 @@ const emit = defineEmits<{
   (e: 'cancel-publication'): void
   (e: 'propose-to-spot', payload: { id: string; name: string }): void
   (e: 'preview-in-pista'): void
+  (e: 'set-visibility', level: 'private' | 'unlisted' | 'public'): void
+  (e: 'copy-link'): void
 }>()
+
+// Niveau de visibilité courant déduit du statut du spot.
+const level = computed<'private' | 'unlisted' | 'public'>(() => {
+  switch (props.spotStatus) {
+    case 'unlisted':
+      return 'unlisted'
+    case 'submitted':
+    case 'published':
+      return 'public'
+    default:
+      return 'private' // draft / null
+  }
+})
+const visibilityHint = computed(() => {
+  switch (props.spotStatus) {
+    case 'unlisted':
+      return t('exportPanel.visHintUnlisted')
+    case 'submitted':
+      return t('exportPanel.visHintPending')
+    case 'published':
+      return t('exportPanel.visHintPublic')
+    default:
+      return t('exportPanel.visHintPrivate')
+  }
+})
 
 const spotQuery = ref('')
 const spotResults = ref<PublicSpot[]>([])
@@ -168,6 +216,32 @@ function onZipSelected(event: Event) {
 </script>
 
 <style scoped>
+.visibility-seg {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.visibility-seg button {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: 10px;
+  border: 1px solid #38322a;
+  background: transparent;
+  color: #b3a890;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.visibility-seg button:hover {
+  background: rgba(220, 180, 105, 0.12);
+}
+.visibility-seg button.active {
+  background: linear-gradient(135deg, rgba(205, 163, 90, 0.95), rgba(220, 180, 105, 0.95));
+  border-color: rgba(220, 180, 105, 0.5);
+  color: #2a2118;
+}
 .panel {
   display: flex;
   flex-direction: column;

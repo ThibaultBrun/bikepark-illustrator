@@ -5,7 +5,7 @@ import type { BikeparkProject } from '../types/project'
 // public.illustrator_projects (remplace le localStorage). La matérialisation en
 // spots/trails Pista + la soumission viendront ensuite.
 
-export type SpotStatus = 'draft' | 'submitted' | 'published' | 'archived'
+export type SpotStatus = 'draft' | 'unlisted' | 'submitted' | 'published' | 'archived'
 export type StoredProject = {
   id: string
   data: BikeparkProject
@@ -89,6 +89,25 @@ export async function getSpotStatus(spotId: string): Promise<SpotStatus | null> 
     return null
   }
   return (data?.status as SpotStatus) ?? null
+}
+
+export type VisibilityLevel = 'private' | 'unlisted' | 'public'
+
+// Change le niveau de confidentialité d'un spot (privé/désindexé = libre,
+// public = demande d'approbation). RPC SECURITY DEFINER (cascade sur les pistes).
+export async function setSpotVisibility(
+  spotId: string,
+  level: VisibilityLevel,
+): Promise<string | null> {
+  const { error } = await supabase.rpc('set_spot_visibility', {
+    p_spot_id: spotId,
+    p_level: level,
+  })
+  if (error) {
+    console.error('[visibility]', error)
+    return error.message
+  }
+  return null
 }
 
 // Slug du spot pour construire l'URL de prévisualisation Pista (/spot/<slug>).
