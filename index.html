@@ -6,72 +6,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- SEO -->
-    <title>Bikepark Illustrator — Outil gratuit pour dessiner et illustrer un bikepark en ligne</title>
+    <title>Pista Illustrator — Dessine, importe et partage tes pistes VTT</title>
     <meta
       name="description"
-      content="Outil 100% gratuit, sans inscription ni installation, pour dessiner et illustrer un bikepark : importez vos traces GPX, stylisez les pistes par couleur et difficulté, ajoutez des symboles (remontées, parkings, départs) sur un fond satellite ou OSM avec relief 3D. Tout se passe dans le navigateur."
+      content="L'éditeur de Pista pour dessiner tes pistes VTT ou importer tes traces GPX sur une carte satellite avec relief 3D, puis les garder privées, les partager par lien ou les publier sur pista.bike. Gratuit avec ton compte Pista."
     />
     <meta
       name="keywords"
-      content="dessiner un bikepark, illustrer un bikepark, créer une carte de bikepark, plan de bikepark, outil traces GPX, carte VTT, pistes VTT, bike park map, relief 3D"
+      content="pista, pista.bike, illustrator pista, dessiner ses pistes vtt, créer un spot vtt, partager pistes vtt, importer gpx vtt, carte bikepark, relief 3D, plan de bikepark"
     />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#020617" />
-    <link rel="canonical" href="https://bikepark.tbrun.dev/" />
+    <meta name="theme-color" content="#25211a" />
+    <link rel="canonical" href="https://illustrator.pista.bike/" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Bikepark Illustrator" />
-    <meta property="og:title" content="Bikepark Illustrator — Outil gratuit pour dessiner votre bikepark en ligne" />
+    <meta property="og:site_name" content="Pista Illustrator" />
+    <meta property="og:title" content="Pista Illustrator — Dessine, importe et partage tes pistes VTT" />
     <meta
       property="og:description"
-      content="100% gratuit, sans inscription ni installation. Importez vos GPX, stylisez vos pistes par difficulté, ajoutez des symboles sur un fond satellite avec relief 3D — directement dans le navigateur."
+      content="L'éditeur de Pista : dessine tes pistes ou importe tes GPX sur une carte 3D, garde-les privées, partage-les par lien ou publie-les sur pista.bike."
     />
-    <meta property="og:url" content="https://bikepark.tbrun.dev/" />
-    <meta property="og:image" content="https://bikepark.tbrun.dev/og.png" />
+    <meta property="og:url" content="https://illustrator.pista.bike/" />
+    <meta property="og:image" content="https://api.pista.bike/storage/v1/object/public/blog/pista-collab/editor.png" />
     <meta property="og:locale" content="fr_FR" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Bikepark Illustrator — Outil gratuit pour dessiner votre bikepark en ligne" />
+    <meta name="twitter:title" content="Pista Illustrator — Dessine, importe et partage tes pistes VTT" />
     <meta
       name="twitter:description"
-      content="100% gratuit, sans inscription ni installation. GPX stylisés, symboles, fond satellite et relief 3D, directement dans le navigateur."
+      content="L'éditeur de Pista : dessine ou importe tes pistes VTT, garde-les privées, partage-les par lien ou publie-les sur pista.bike."
     />
-    <meta name="twitter:image" content="https://bikepark.tbrun.dev/og.png" />
+    <meta name="twitter:image" content="https://api.pista.bike/storage/v1/object/public/blog/pista-collab/editor.png" />
 
     <!-- Données structurées -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "Bikepark Illustrator",
-        "url": "https://bikepark.tbrun.dev/",
-        "description": "Outil web gratuit pour dessiner et illustrer un bikepark : traces GPX stylisées, symboles, fond satellite ou OSM et relief 3D, directement dans le navigateur.",
+        "name": "Pista Illustrator",
+        "url": "https://illustrator.pista.bike/",
+        "description": "L'éditeur de Pista pour dessiner ou importer ses pistes VTT (GPX) sur une carte 3D, les garder privées, les partager par lien ou les publier sur pista.bike.",
         "applicationCategory": "DesignApplication",
         "operatingSystem": "Web",
         "inLanguage": "fr",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "EUR"
-        }
+        "isPartOf": { "@type": "WebSite", "name": "Pista", "url": "https://www.pista.bike/" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
       }
     </script>
   </head>
   <body>
     <div id="app">
-      <!-- Contenu de repli affiché tant que l'app n'est pas chargée (et pour les robots sans JS) -->
-      <noscript>
-        <h1>Bikepark Illustrator — outil gratuit pour dessiner et illustrer un bikepark en ligne</h1>
+      <!-- Contenu de repli (visible le temps du chargement + pour les crawlers) :
+           remplacé par l'application Vue au montage. -->
+      <div id="seo-fallback" style="max-width:720px;margin:8vh auto;padding:0 20px;font-family:system-ui,sans-serif;color:#b3a890;line-height:1.5">
+        <h1 style="color:#f0cd8a">Pista Illustrator — dessine, importe et partage tes pistes VTT</h1>
         <p>
-          Bikepark Illustrator est un outil web <strong>100% gratuit</strong> (sans inscription
-          ni installation) pour créer le visuel d'un bikepark :
-          importez vos traces GPX, choisissez la couleur et le style de chaque piste,
-          ajoutez des symboles (remontées, parkings, départs) sur un fond satellite ou
-          OpenStreetMap avec relief 3D. Tout se passe dans le navigateur, sans installation.
-          Activez JavaScript pour lancer l'application.
+          <strong>Pista Illustrator</strong> est l'éditeur de
+          <a href="https://www.pista.bike/" style="color:#dcb469">Pista</a> pour créer tes pistes
+          de VTT, enduro et DH : <strong>dessine</strong> ton tracé point par point ou
+          <strong>importe ton GPX</strong> (Strava, GPS), stylise chaque piste par couleur et
+          difficulté, et ajoute des symboles sur un fond satellite avec relief 3D.
         </p>
+        <p>
+          Tu décides ensuite de leur visibilité, comme sur YouTube :
+          <strong>privé</strong> (toi seul), <strong>désindexé</strong> (accessible par lien) ou
+          <strong>public</strong> (publié sur Pista après validation). C'est gratuit avec ton
+          compte Pista.
+        </p>
+        <p><a href="https://www.pista.bike/" style="color:#dcb469">Découvrir Pista →</a></p>
+      </div>
+      <noscript>
+        <p>Active JavaScript pour lancer l'éditeur Pista Illustrator.</p>
       </noscript>
     </div>
     <script type="module" src="/src/main.ts"></script>

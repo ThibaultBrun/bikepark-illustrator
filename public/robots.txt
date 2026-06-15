@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://bikepark.tbrun.dev/sitemap.xml
+Sitemap: https://illustrator.pista.bike/sitemap.xml
