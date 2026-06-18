@@ -1837,6 +1837,19 @@ function flyTo(lng: number, lat: number, zoom = 14) {
   map.flyTo({ center: [lng, lat], zoom, essential: true })
 }
 
+// Capture la vue carte actuelle (tracés + symboles + labels + relief) en PNG.
+// Les contrôles et markers d'édition sont du DOM hors canvas → image propre.
+function exportImage(): string | null {
+  if (!map) return null
+  try {
+    map.triggerRepaint()
+    return map.getCanvas().toDataURL('image/png')
+  } catch (e) {
+    console.error('[export] image', e)
+    return null
+  }
+}
+
 defineExpose({
   beginDrawTrack,
   beginEditTrack,
@@ -1845,6 +1858,7 @@ defineExpose({
   setEditorMode,
   editorUndo,
   flyTo,
+  exportImage,
 })
 
 onMounted(() => {
@@ -1871,6 +1885,8 @@ onMounted(() => {
     maxPitch: 85,
     maxTileCacheSize: 100,
     maxZoom: 20,
+    // Permet de capturer le canvas WebGL (export image du bikepark).
+    preserveDrawingBuffer: true,
   })
 
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right')

@@ -28,6 +28,7 @@ export default {
     map: { title: 'Mapa', desc: 'Doitu oinarri-mapa eta ikus-aukerak.' },
     locate: { title: 'Kokatu', desc: 'Bilatu helbide edo leku bat.' },
     export: { title: 'Esportatu', desc: 'Prestatu azken irteerak eta esportazioak.' },
+    print: { title: 'Irudia', desc: 'Esportatu zure bikeparkaren irudi bat.' },
     help: { title: 'Laguntza', desc: 'Bisita gidatua eta funtzioen gogorarazpena.' },
   },
 
@@ -137,6 +138,13 @@ export default {
     finish: 'Amaitu',
   },
 
+  print: {
+    title: 'Esportatu irudi bat',
+    desc: 'Atera uneko maparen ikuspegia (pistak, sinboloak, erliebea) PNG gisa.',
+    hint: 'Koka, zooma eta okertu mapa nahi duzun bezala, gero esportatu. Kontrolak eta edizio-markak ez dira sartzen.',
+    exportPng: '📷 Esportatu PNG gisa',
+  },
+
   reposition: {
     add: '📍 Sakatu mapan sinboloa gehitzeko',
     move: '📍 Sakatu mapan sinboloa mugitzeko',
@@ -157,6 +165,8 @@ export default {
     vis_unlisted: 'Spot-a zerrendatu gabe jarri da 🔗',
     vis_public: 'Argitalpena eskatuta — berrespenaren zain.',
     linkCopied: 'Esteka kopiatu da ✅',
+    exportImageOk: 'Irudia esportatuta ✅',
+    exportImageFail: 'Ezin izan da irudia esportatu.',
   },
 
   help: {

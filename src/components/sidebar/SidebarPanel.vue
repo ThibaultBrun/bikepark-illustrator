@@ -125,6 +125,10 @@
         v-else-if="activeSection === 'locate'"
         @locate="$emit('locate', $event)"
       />
+      <PrintPanel
+        v-else-if="activeSection === 'print'"
+        @export-image="$emit('export-image')"
+      />
       <HelpPanel
         v-else
         @start-tour="$emit('start-tour')"
@@ -149,6 +153,7 @@ import type { GpxTrack } from '../../types/gpx'
 import type { MapSymbol, SymbolDefinition } from '../../types/symbol'
 import ExportPanel from './ExportPanel.vue'
 import LocatePanel from './LocatePanel.vue'
+import PrintPanel from './PrintPanel.vue'
 import HelpPanel from './HelpPanel.vue'
 import MapPanel from './MapPanel.vue'
 import type { MapSettings } from './map-settings'
@@ -191,6 +196,7 @@ defineEmits<{
   (e: 'cancel-publication'): void
   (e: 'propose-to-spot', payload: { id: string; name: string }): void
   (e: 'preview-in-pista'): void
+  (e: 'export-image'): void
   (e: 'set-visibility', level: 'private' | 'unlisted' | 'public'): void
   (e: 'copy-link'): void
   (e: 'locate', payload: { lng: number; lat: number; label: string }): void

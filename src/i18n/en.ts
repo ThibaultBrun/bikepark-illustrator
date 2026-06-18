@@ -27,6 +27,7 @@ export default {
     map: { title: 'Map', desc: 'Adjust the basemap and visual options.' },
     locate: { title: 'Locate', desc: 'Search for an address or place.' },
     export: { title: 'Export', desc: 'Prepare final outputs and exports.' },
+    print: { title: 'Image', desc: 'Export an image of your bikepark in progress.' },
     help: { title: 'Help', desc: 'Guided tour and feature reminder.' },
   },
 
@@ -136,6 +137,13 @@ export default {
     finish: 'Done',
   },
 
+  print: {
+    title: 'Export an image',
+    desc: 'Capture the current map view (trails, symbols, relief) as PNG.',
+    hint: 'Frame, zoom and tilt your map as you like, then export. Controls and editing handles are not included.',
+    exportPng: '📷 Export as PNG',
+  },
+
   reposition: {
     add: '📍 Tap the map to add the symbol',
     move: '📍 Tap the map to move the symbol',
@@ -156,6 +164,8 @@ export default {
     vis_unlisted: 'Spot set to unlisted 🔗',
     vis_public: 'Publication requested — awaiting review.',
     linkCopied: 'Link copied ✅',
+    exportImageOk: 'Image exported ✅',
+    exportImageFail: 'Image export failed.',
   },
 
   help: {

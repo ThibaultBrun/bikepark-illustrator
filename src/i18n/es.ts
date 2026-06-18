@@ -27,6 +27,7 @@ export default {
     map: { title: 'Mapa', desc: 'Ajustar el mapa base y las opciones visuales.' },
     locate: { title: 'Localizar', desc: 'Buscar una dirección o un lugar.' },
     export: { title: 'Exportar', desc: 'Preparar las salidas y exportaciones finales.' },
+    print: { title: 'Imagen', desc: 'Exporta una imagen de tu bikepark en curso.' },
     help: { title: 'Ayuda', desc: 'Visita guiada y recordatorio de funciones.' },
   },
 
@@ -136,6 +137,13 @@ export default {
     finish: 'Terminar',
   },
 
+  print: {
+    title: 'Exportar una imagen',
+    desc: 'Captura la vista actual del mapa (pistas, símbolos, relieve) en PNG.',
+    hint: 'Encuadra, amplía e inclina tu mapa como quieras, luego exporta. Los controles y marcadores de edición no se incluyen.',
+    exportPng: '📷 Exportar en PNG',
+  },
+
   reposition: {
     add: '📍 Toca el mapa para añadir el símbolo',
     move: '📍 Toca el mapa para mover el símbolo',
@@ -156,6 +164,8 @@ export default {
     vis_unlisted: 'Spot puesto en no listado 🔗',
     vis_public: 'Publicación solicitada — pendiente de validación.',
     linkCopied: 'Enlace copiado ✅',
+    exportImageOk: 'Imagen exportada ✅',
+    exportImageFail: 'Error al exportar la imagen.',
   },
 
   help: {

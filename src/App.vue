@@ -40,6 +40,7 @@
       @preview-in-pista="onPreviewInPista"
       @set-visibility="onSetVisibility"
       @copy-link="onCopyLink"
+      @export-image="onExportImage"
       @locate="onLocate"
       @start-symbol-drag="onStartSymbolDrag"
       @remove-symbol="onRemoveSymbol"
@@ -302,7 +303,7 @@ const predefinedColors = [
 ]
 
 const sidebarSections = computed<SidebarSection[]>(() =>
-  (['track', 'symbol', 'map', 'locate', 'export', 'help'] as const).map((id) => ({
+  (['track', 'symbol', 'map', 'locate', 'print', 'export', 'help'] as const).map((id) => ({
     id,
     icon: id.charAt(0).toUpperCase(),
     title: t(`sections.${id}.title`),
@@ -320,10 +321,27 @@ const mapViewRef = ref<{
   setEditorMode: (mode: 'draw' | 'edit') => void
   editorUndo: () => void
   flyTo: (lng: number, lat: number, zoom?: number) => void
+  exportImage: () => string | null
 } | null>(null)
 
 function onLocate(payload: { lng: number; lat: number; label: string }) {
   mapViewRef.value?.flyTo(payload.lng, payload.lat, 14)
+}
+
+// Export image : capture la vue carte actuelle et la télécharge en PNG.
+function onExportImage() {
+  const url = mapViewRef.value?.exportImage()
+  if (!url) {
+    showToast(t('toast.exportImageFail'))
+    return
+  }
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${sanitizeProjectName(projectName.value) || 'bikepark'}.png`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  showToast(t('toast.exportImageOk'))
 }
 const editorMode = ref<'idle' | 'draw' | 'edit'>('idle')
 const editorPointCount = ref(0)
