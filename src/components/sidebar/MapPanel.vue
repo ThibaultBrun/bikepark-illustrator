@@ -131,7 +131,7 @@
     </label>
   </section>
 
-  <section v-if="isAdmin" class="panel">
+  <section v-if="canViewHeatmap" class="panel">
     <div class="panel-header">
       <div class="placeholder-icon" aria-hidden="true">
         <SidebarIcon name="blend" />
@@ -154,8 +154,11 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { mapLabelFontOptions, type MapLabelFont, type MapSettings } from './map-settings'
 import SidebarIcon from './SidebarIcon.vue'
+import { useAuth } from '../../lib/useAuth'
 
 const { t } = useI18n()
+// Accès heatmap découplé du statut admin (admin OU flag heatmap_access).
+const { canViewHeatmap } = useAuth()
 
 const props = defineProps<{
   settings: MapSettings

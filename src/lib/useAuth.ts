@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 
@@ -7,16 +7,22 @@ const session = ref<Session | null>(null)
 const user = ref<User | null>(null)
 const ready = ref(false)
 const isAdmin = ref(false)
+const heatmapAccess = ref(false)
+// Accès heatmap = admin OU flag heatmap_access en base (découplé du statut admin).
+const canViewHeatmap = computed(() => isAdmin.value || heatmapAccess.value)
 let initialized = false
 
 async function refreshAdmin() {
   const uid = user.value?.id
   if (!uid) {
     isAdmin.value = false
+    heatmapAccess.value = false
     return
   }
-  const { data } = await supabase.from('profiles').select('is_admin').eq('id', uid).maybeSingle()
+  // select('*') : tolère l'absence de la colonne heatmap_access (dégrade au lieu de casser).
+  const { data } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
   isAdmin.value = !!(data as { is_admin?: boolean } | null)?.is_admin
+  heatmapAccess.value = !!(data as { heatmap_access?: boolean } | null)?.heatmap_access
 }
 
 function init() {
@@ -46,6 +52,8 @@ export function useAuth() {
     user,
     ready,
     isAdmin,
+    heatmapAccess,
+    canViewHeatmap,
     signInWithPassword: (email: string, password: string) =>
       supabase.auth.signInWithPassword({ email, password }),
     signUp: (email: string, password: string) =>
