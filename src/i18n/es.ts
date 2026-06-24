@@ -114,8 +114,11 @@ export default {
     visHintPrivate: '🔒 Privado — visible solo para ti.',
     visHintUnlisted: '🔗 No listado — accesible solo con el enlace, oculto de las búsquedas. Copia el enlace para compartir.',
     visHintPending: '⏳ Solicitud de publicación enviada — pendiente de validación.',
-    visHintPublic: '🌍 Público — listado y visible para todos.',
+    visHintPublic: '🌍 Público — propuesto como nuevo spot (validación admin), luego visible para todos.',
     copyLink: 'Copiar enlace',
+    spotTypeLabel: 'Tipo de spot',
+    regionLabel: 'Región (opcional)',
+    regionPh: 'ej.: País Vasco',
     localTitle: 'Exportación local',
     exportZip: 'Exportar en ZIP',
     importZip: 'Importar un ZIP',
@@ -143,6 +146,8 @@ export default {
     hint: 'Encuadra, amplía e inclina tu mapa como quieras, luego exporta. Los controles y marcadores de edición no se incluyen.',
     exportPng: '📷 Exportar en PNG',
   },
+
+  spotType: { bikepark: 'Bike park', zone_enduro: 'Zona enduro', secteur: 'Sector', skills_park: 'Skills park' },
 
   reposition: {
     add: '📍 Toca el mapa para añadir el símbolo',

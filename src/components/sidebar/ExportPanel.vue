@@ -45,6 +45,27 @@
           {{ visibilityHint }}
         </p>
 
+        <div class="spot-meta">
+          <label class="field-mini">
+            <span>{{ t('exportPanel.spotTypeLabel') }}</span>
+            <select
+              :value="spotType"
+              @change="$emit('update:spot-type', ($event.target as HTMLSelectElement).value as any)"
+            >
+              <option v-for="o in spotTypes" :key="o" :value="o">{{ t('spotType.' + o) }}</option>
+            </select>
+          </label>
+          <label class="field-mini">
+            <span>{{ t('exportPanel.regionLabel') }}</span>
+            <input
+              :value="spotRegion"
+              type="text"
+              :placeholder="t('exportPanel.regionPh')"
+              @input="$emit('update:spot-region', ($event.target as HTMLInputElement).value)"
+            />
+          </label>
+        </div>
+
         <button
           v-if="spotStatus === 'unlisted' || spotStatus === 'published'"
           type="button"
@@ -124,10 +145,15 @@ import { searchPublishedSpots, type PublicSpot } from '../../lib/projectsStore'
 
 const { t } = useI18n()
 
+type SpotType = 'bikepark' | 'zone_enduro' | 'secteur' | 'skills_park'
+const spotTypes: readonly SpotType[] = ['bikepark', 'zone_enduro', 'secteur', 'skills_park']
+
 const props = defineProps<{
   spotStatus: 'draft' | 'unlisted' | 'submitted' | 'published' | 'archived' | null
   canPreview?: boolean
   preselectedSpot?: { id: string; name: string } | null
+  spotRegion?: string
+  spotType?: SpotType
   trackCount: number
 }>()
 
@@ -140,6 +166,8 @@ const emit = defineEmits<{
   (e: 'preview-in-pista'): void
   (e: 'set-visibility', level: 'private' | 'unlisted' | 'public'): void
   (e: 'copy-link'): void
+  (e: 'update:spot-region', value: string): void
+  (e: 'update:spot-type', value: SpotType): void
 }>()
 
 // Niveau de visibilité courant déduit du statut du spot.
@@ -241,6 +269,36 @@ function onZipSelected(event: Event) {
   background: linear-gradient(135deg, rgba(205, 163, 90, 0.95), rgba(220, 180, 105, 0.95));
   border-color: rgba(220, 180, 105, 0.5);
   color: #2a2118;
+}
+.spot-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+.field-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: #b3a890;
+}
+.field-mini select,
+.field-mini input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid #4a4234;
+  background: #1c1813;
+  color: #ece2cf;
+  font: inherit;
+  font-size: 13px;
+}
+.field-mini select:focus,
+.field-mini input:focus {
+  outline: none;
+  border-color: #dcb469;
 }
 .panel {
   display: flex;

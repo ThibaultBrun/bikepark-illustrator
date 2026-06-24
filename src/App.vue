@@ -18,6 +18,8 @@
       :spot-status="currentSpotStatus"
       :can-preview="!!(previewSpotId || currentSpotId)"
       :preselected-spot="proposeTargetSpot"
+      :spot-region="spotRegion"
+      :spot-type="spotType"
       :projects="projects"
       :current-project-id="currentProjectId"
       :is-admin="authIsAdmin"
@@ -41,6 +43,8 @@
       @set-visibility="onSetVisibility"
       @copy-link="onCopyLink"
       @export-image="onExportImage"
+      @update:spot-region="spotRegion = $event"
+      @update:spot-type="spotType = $event"
       @locate="onLocate"
       @start-symbol-drag="onStartSymbolDrag"
       @remove-symbol="onRemoveSymbol"
@@ -272,6 +276,7 @@ import {
   PROJECT_VERSION,
   type MapCameraState,
   type BikeparkProject,
+  type SpotType,
 } from './types/project'
 import {
   buildCustomSymbolDefinition,
@@ -406,6 +411,9 @@ const currentSpotStatus = ref<import('./lib/projectsStore').SpotStatus | null>(n
 // Spot à prévisualiser dans Pista : le spot du projet par défaut, ou le spot
 // existant ciblé après une proposition « Proposer à un spot existant ».
 const previewSpotId = ref<string | null>(incomingSpot?.id ?? null)
+// Métadonnées du spot proposé (nouveau spot) : région optionnelle + type.
+const spotRegion = ref('')
+const spotType = ref<SpotType>('bikepark')
 const projects = ref<ProjectListItem[]>([])
 const submitToast = ref('')
 let pistaSyncTimer: number | null = null
@@ -521,8 +529,8 @@ async function syncPistaDraft() {
   try {
     const { spotId } = await submitProject({
       name: sanitizeProjectName(projectName.value),
-      region: '',
-      spotType: 'bikepark',
+      region: spotRegion.value,
+      spotType: spotType.value,
       projectId: currentProjectId.value,
       trails,
     })
@@ -774,6 +782,8 @@ function createProjectSnapshot(): BikeparkProject {
     customSymbols: JSON.parse(JSON.stringify(customSymbols.value)) as SymbolDefinition[],
     mapSettings: JSON.parse(JSON.stringify(mapSettings.value)) as MapSettings,
     mapCamera: JSON.parse(JSON.stringify(mapCamera.value)) as MapCameraState | null,
+    spotRegion: spotRegion.value,
+    spotType: spotType.value,
   }
 }
 
@@ -809,6 +819,12 @@ function normalizeProject(raw: Partial<BikeparkProject> | null | undefined): Bik
             bearing: Number(raw.mapCamera.bearing ?? 0),
           }
         : null,
+    spotRegion: typeof raw?.spotRegion === 'string' ? raw.spotRegion : '',
+    spotType: (['bikepark', 'zone_enduro', 'secteur', 'skills_park'] as const).includes(
+      raw?.spotType as SpotType,
+    )
+      ? (raw!.spotType as SpotType)
+      : 'bikepark',
   }
 }
 
@@ -831,6 +847,8 @@ function applyProject(project: BikeparkProject) {
   cameraRestoreKey.value += 1
   updateProjectLoadStep('camera', 'done')
   projectName.value = sanitizeProjectName(project.projectName)
+  spotRegion.value = project.spotRegion ?? ''
+  spotType.value = project.spotType ?? 'bikepark'
   hasStartedWelcome.value = project.hasStartedWelcome || project.tracks.length > 0 || project.symbols.length > 0
   selectedSymbolId.value = null
   saveStatus.value = 'saved'
@@ -951,6 +969,8 @@ function resetToEmpty() {
   customSymbols.value = []
   mapCamera.value = null
   projectName.value = 'Mon bikepark'
+  spotRegion.value = ''
+  spotType.value = 'bikepark'
   hasSavedProject.value = false
   lastSavedAt.value = null
   saveStatus.value = 'idle'

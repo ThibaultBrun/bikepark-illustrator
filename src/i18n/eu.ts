@@ -115,8 +115,11 @@ export default {
     visHintPrivate: '🔒 Pribatua — zuk soilik ikus dezakezu.',
     visHintUnlisted: '🔗 Zerrendatu gabea — estekaren bidez soilik, bilaketetatik ezkutatua. Kopiatu esteka partekatzeko.',
     visHintPending: '⏳ Argitalpen eskaera bidalita — administrariaren berrespenaren zain.',
-    visHintPublic: '🌍 Publikoa — zerrendatua eta denentzat ikusgai.',
+    visHintPublic: '🌍 Publikoa — spot berri gisa proposatua (administrariaren berrespena), gero denentzat ikusgai.',
     copyLink: 'Kopiatu esteka',
+    spotTypeLabel: 'Spot mota',
+    regionLabel: 'Eskualdea (aukerakoa)',
+    regionPh: 'adib.: Euskal Herria',
     localTitle: 'Esportazio lokala',
     exportZip: 'Esportatu ZIP gisa',
     importZip: 'Inportatu ZIP bat',
@@ -144,6 +147,8 @@ export default {
     hint: 'Koka, zooma eta okertu mapa nahi duzun bezala, gero esportatu. Kontrolak eta edizio-markak ez dira sartzen.',
     exportPng: '📷 Esportatu PNG gisa',
   },
+
+  spotType: { bikepark: 'Bike park', zone_enduro: 'Enduro eremua', secteur: 'Sektorea', skills_park: 'Skills park' },
 
   reposition: {
     add: '📍 Sakatu mapan sinboloa gehitzeko',

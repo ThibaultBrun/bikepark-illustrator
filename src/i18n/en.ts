@@ -114,8 +114,11 @@ export default {
     visHintPrivate: '🔒 Private — visible only to you.',
     visHintUnlisted: '🔗 Unlisted — only reachable via the link, hidden from search. Copy the link to share.',
     visHintPending: '⏳ Public request sent — awaiting admin review.',
-    visHintPublic: '🌍 Public — listed and visible to everyone.',
+    visHintPublic: '🌍 Public — proposed as a new spot (admin review), then visible to everyone.',
     copyLink: 'Copy link',
+    spotTypeLabel: 'Spot type',
+    regionLabel: 'Region (optional)',
+    regionPh: 'e.g. Basque Country',
     localTitle: 'Local export',
     exportZip: 'Export as ZIP',
     importZip: 'Import a ZIP',
@@ -143,6 +146,8 @@ export default {
     hint: 'Frame, zoom and tilt your map as you like, then export. Controls and editing handles are not included.',
     exportPng: '📷 Export as PNG',
   },
+
+  spotType: { bikepark: 'Bike park', zone_enduro: 'Enduro zone', secteur: 'Sector', skills_park: 'Skills park' },
 
   reposition: {
     add: '📍 Tap the map to add the symbol',

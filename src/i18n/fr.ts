@@ -114,8 +114,11 @@ export default {
     visHintPrivate: '🔒 Privé — visible par toi seul.',
     visHintUnlisted: '🔗 Désindexé — accessible uniquement via le lien, absent des recherches. Copie le lien pour partager.',
     visHintPending: '⏳ Passage en public demandé — en attente de validation par un admin.',
-    visHintPublic: '🌍 Public — listé et visible par tous.',
+    visHintPublic: '🌍 Public — proposé comme nouveau spot (validation admin), puis visible par tous.',
     copyLink: 'Copier le lien',
+    spotTypeLabel: 'Type de spot',
+    regionLabel: 'Région (optionnel)',
+    regionPh: 'ex : Pays Basque',
     localTitle: 'Export local',
     exportZip: 'Exporter en ZIP',
     importZip: 'Importer un ZIP',
@@ -143,6 +146,8 @@ export default {
     hint: 'Cadre, zoome et incline ta carte comme tu veux, puis exporte. Les contrôles et repères d\'édition ne sont pas inclus.',
     exportPng: '📷 Exporter en PNG',
   },
+
+  spotType: { bikepark: 'Bike park', zone_enduro: 'Zone enduro', secteur: 'Secteur', skills_park: 'Skills park' },
 
   reposition: {
     add: '📍 Touche la carte pour ajouter le symbole',

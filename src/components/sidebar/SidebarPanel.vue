@@ -111,7 +111,11 @@
         :spot-status="spotStatus"
         :can-preview="canPreview"
         :preselected-spot="preselectedSpot"
+        :spot-region="spotRegion"
+        :spot-type="spotType"
         :track-count="tracks.length"
+        @update:spot-region="$emit('update:spot-region', $event)"
+        @update:spot-type="$emit('update:spot-type', $event)"
         @export-zip="$emit('export-zip')"
         @import-zip="$emit('import-zip', $event)"
         @request-publication="$emit('request-publication')"
@@ -176,6 +180,8 @@ const props = defineProps<{
   spotStatus: 'draft' | 'unlisted' | 'submitted' | 'published' | 'archived' | null
   canPreview?: boolean
   preselectedSpot?: { id: string; name: string } | null
+  spotRegion?: string
+  spotType?: 'bikepark' | 'zone_enduro' | 'secteur' | 'skills_park'
   projects: { id: string; title: string | null; spotId: string | null }[]
   currentProjectId: string | null
   isAdmin: boolean
@@ -197,6 +203,8 @@ defineEmits<{
   (e: 'propose-to-spot', payload: { id: string; name: string }): void
   (e: 'preview-in-pista'): void
   (e: 'export-image'): void
+  (e: 'update:spot-region', value: string): void
+  (e: 'update:spot-type', value: 'bikepark' | 'zone_enduro' | 'secteur' | 'skills_park'): void
   (e: 'set-visibility', level: 'private' | 'unlisted' | 'public'): void
   (e: 'copy-link'): void
   (e: 'locate', payload: { lng: number; lat: number; label: string }): void

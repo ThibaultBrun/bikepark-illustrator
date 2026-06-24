@@ -13,6 +13,8 @@ export type MapCameraState = {
   bearing: number
 }
 
+export type SpotType = 'bikepark' | 'zone_enduro' | 'secteur' | 'skills_park'
+
 export type BikeparkProject = {
   version: number
   savedAt: string
@@ -23,4 +25,7 @@ export type BikeparkProject = {
   customSymbols: SymbolDefinition[]
   mapSettings: MapSettings
   mapCamera: MapCameraState | null
+  /** Métadonnées du spot proposé (région optionnelle, type) */
+  spotRegion?: string
+  spotType?: SpotType
 }
