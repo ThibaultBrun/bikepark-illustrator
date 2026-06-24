@@ -172,6 +172,7 @@ export default {
     linkCopied: 'Esteka kopiatu da ✅',
     exportImageOk: 'Irudia esportatuta ✅',
     exportImageFail: 'Ezin izan da irudia esportatu.',
+    needTrails: 'Marraztu edo inportatu pista bat lehenik.',
   },
 
   help: {

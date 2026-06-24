@@ -171,6 +171,7 @@ export default {
     linkCopied: 'Lien copié ✅',
     exportImageOk: 'Image exportée ✅',
     exportImageFail: 'Échec de l\'export de l\'image.',
+    needTrails: 'Dessine ou importe au moins une piste d\'abord.',
   },
 
   help: {

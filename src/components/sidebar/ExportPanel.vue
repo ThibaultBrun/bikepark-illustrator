@@ -14,67 +14,63 @@
     <div class="block">
       <div class="block-title">{{ t('exportPanel.visibilityTitle') }}</div>
 
-      <p v-if="!spotStatus" class="hint">{{ t('exportPanel.pubHintNew') }}</p>
-
-      <template v-else>
-        <div class="visibility-seg">
-          <button
-            type="button"
-            :class="{ active: level === 'private' }"
-            @click="$emit('set-visibility', 'private')"
+      <div class="spot-meta">
+        <label class="field-mini">
+          <span>{{ t('exportPanel.spotTypeLabel') }}</span>
+          <select
+            :value="spotType"
+            @change="$emit('update:spot-type', ($event.target as HTMLSelectElement).value as any)"
           >
-            🔒 {{ t('exportPanel.visPrivate') }}
-          </button>
-          <button
-            type="button"
-            :class="{ active: level === 'unlisted' }"
-            @click="$emit('set-visibility', 'unlisted')"
-          >
-            🔗 {{ t('exportPanel.visUnlisted') }}
-          </button>
-          <button
-            type="button"
-            :class="{ active: level === 'public' }"
-            @click="$emit('set-visibility', 'public')"
-          >
-            🌍 {{ t('exportPanel.visPublic') }}
-          </button>
-        </div>
+            <option v-for="o in spotTypes" :key="o" :value="o">{{ t('spotType.' + o) }}</option>
+          </select>
+        </label>
+        <label class="field-mini">
+          <span>{{ t('exportPanel.regionLabel') }}</span>
+          <input
+            :value="spotRegion"
+            type="text"
+            :placeholder="t('exportPanel.regionPh')"
+            @input="$emit('update:spot-region', ($event.target as HTMLInputElement).value)"
+          />
+        </label>
+      </div>
 
-        <p class="hint" :class="{ 'status--pending': spotStatus === 'submitted', 'status--ok': spotStatus === 'published' }">
-          {{ visibilityHint }}
-        </p>
-
-        <div class="spot-meta">
-          <label class="field-mini">
-            <span>{{ t('exportPanel.spotTypeLabel') }}</span>
-            <select
-              :value="spotType"
-              @change="$emit('update:spot-type', ($event.target as HTMLSelectElement).value as any)"
-            >
-              <option v-for="o in spotTypes" :key="o" :value="o">{{ t('spotType.' + o) }}</option>
-            </select>
-          </label>
-          <label class="field-mini">
-            <span>{{ t('exportPanel.regionLabel') }}</span>
-            <input
-              :value="spotRegion"
-              type="text"
-              :placeholder="t('exportPanel.regionPh')"
-              @input="$emit('update:spot-region', ($event.target as HTMLInputElement).value)"
-            />
-          </label>
-        </div>
-
+      <div class="visibility-seg">
         <button
-          v-if="spotStatus === 'unlisted' || spotStatus === 'published'"
           type="button"
-          class="action-button"
-          @click="$emit('copy-link')"
+          :class="{ active: level === 'private' }"
+          @click="$emit('set-visibility', 'private')"
         >
-          🔗 {{ t('exportPanel.copyLink') }}
+          🔒 {{ t('exportPanel.visPrivate') }}
         </button>
-      </template>
+        <button
+          type="button"
+          :class="{ active: level === 'unlisted' }"
+          @click="$emit('set-visibility', 'unlisted')"
+        >
+          🔗 {{ t('exportPanel.visUnlisted') }}
+        </button>
+        <button
+          type="button"
+          :class="{ active: level === 'public' }"
+          @click="$emit('set-visibility', 'public')"
+        >
+          🌍 {{ t('exportPanel.visPublic') }}
+        </button>
+      </div>
+
+      <p class="hint" :class="{ 'status--pending': spotStatus === 'submitted', 'status--ok': spotStatus === 'published' }">
+        {{ visibilityHint }}
+      </p>
+
+      <button
+        v-if="spotStatus === 'unlisted' || spotStatus === 'published'"
+        type="button"
+        class="action-button"
+        @click="$emit('copy-link')"
+      >
+        🔗 {{ t('exportPanel.copyLink') }}
+      </button>
 
       <button
         v-if="canPreview"
@@ -190,8 +186,10 @@ const visibilityHint = computed(() => {
       return t('exportPanel.visHintPending')
     case 'published':
       return t('exportPanel.visHintPublic')
-    default:
+    case 'draft':
       return t('exportPanel.visHintPrivate')
+    default:
+      return t('exportPanel.pubHintNew') // spot pas encore créé
   }
 })
 

@@ -488,10 +488,31 @@ async function pistaSpotUrl(spotId: string): Promise<string | null> {
   return `https://pista.bike/${loc}/spot/${slug}`
 }
 
+// S'assure que le spot du projet existe dans Pista (le crée à la volée si besoin).
+async function ensureSpotExists(): Promise<boolean> {
+  if (currentSpotId.value) return true
+  if (buildTrailsPayload().length === 0) {
+    showToast(t('toast.needTrails'))
+    return false
+  }
+  // Le spot a besoin d'un projet cloud + d'une synchro : on force les deux.
+  if (!currentProjectId.value) await saveProjectToBrowser()
+  await syncPistaDraft()
+  return !!currentSpotId.value
+}
+
 // Change le niveau de confidentialité du spot du projet (privé/désindexé/public).
 async function onSetVisibility(level: VisibilityLevel) {
-  if (!currentSpotId.value) return
-  const err = await setSpotVisibility(currentSpotId.value, level)
+  if (!currentSpotId.value) {
+    const ok = await ensureSpotExists()
+    if (!ok) return
+  }
+  // 'private' = état par défaut du spot fraîchement créé → rien de plus à faire.
+  if (level === 'private' && currentSpotStatus.value === 'draft') {
+    showToast(t('toast.vis_private'))
+    return
+  }
+  const err = await setSpotVisibility(currentSpotId.value!, level)
   if (err) {
     showToast(t('toast.visibilityFail'))
     return
