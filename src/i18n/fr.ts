@@ -165,6 +165,7 @@ export default {
     contribFail: 'Échec de l’envoi des pistes.',
     previewUnavailable: 'Prévisualisation indisponible (spot pas encore synchronisé).',
     visibilityFail: 'Échec du changement de visibilité.',
+    syncFail: 'Échec de la synchro avec Pista — pistes non enregistrées. Réessaie.',
     vis_private: 'Spot passé en privé 🔒',
     vis_unlisted: 'Spot passé en désindexé 🔗',
     vis_public: 'Demande de publication envoyée — en attente de validation.',

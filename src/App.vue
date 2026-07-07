@@ -548,18 +548,26 @@ async function syncPistaDraft() {
 
   pistaSyncing = true
   try {
-    const { spotId } = await submitProject({
+    const { spotId, error } = await submitProject({
       name: sanitizeProjectName(projectName.value),
       region: spotRegion.value,
       spotType: spotType.value,
       projectId: currentProjectId.value,
       trails,
     })
+    if (error) {
+      // Plus de synchro qui rate en silence : on prévient l'utilisateur.
+      showToast(t('toast.syncFail'))
+      return
+    }
     if (spotId) {
       currentSpotId.value = spotId
       if (!previewSpotId.value) previewSpotId.value = spotId
       if (!currentSpotStatus.value) currentSpotStatus.value = 'draft'
     }
+  } catch (e) {
+    console.error('[sync]', e)
+    showToast(t('toast.syncFail'))
   } finally {
     pistaSyncing = false
   }

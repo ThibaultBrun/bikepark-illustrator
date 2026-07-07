@@ -165,6 +165,7 @@ export default {
     contribFail: 'Failed to send the trails.',
     previewUnavailable: 'Preview unavailable (spot not synced yet).',
     visibilityFail: 'Failed to change visibility.',
+    syncFail: 'Sync with Pista failed — trails not saved. Try again.',
     vis_private: 'Spot set to private 🔒',
     vis_unlisted: 'Spot set to unlisted 🔗',
     vis_public: 'Publication requested — awaiting review.',

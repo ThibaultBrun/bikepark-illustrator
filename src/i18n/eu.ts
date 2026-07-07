@@ -166,6 +166,7 @@ export default {
     contribFail: 'Ezin izan dira pistak bidali.',
     previewUnavailable: 'Aurrebista ez dago erabilgarri (spot-a oraindik ez da sinkronizatu).',
     visibilityFail: 'Ezin izan da ikusgaitasuna aldatu.',
+    syncFail: 'Pistarekin sinkronizazioak huts egin du — ibilbideak ez dira gorde. Saiatu berriro.',
     vis_private: 'Spot-a pribatu jarri da 🔒',
     vis_unlisted: 'Spot-a zerrendatu gabe jarri da 🔗',
     vis_public: 'Argitalpena eskatuta — berrespenaren zain.',

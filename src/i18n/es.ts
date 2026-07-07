@@ -165,6 +165,7 @@ export default {
     contribFail: 'Error al enviar las pistas.',
     previewUnavailable: 'Previsualización no disponible (spot aún no sincronizado).',
     visibilityFail: 'Error al cambiar la visibilidad.',
+    syncFail: 'Error al sincronizar con Pista — pistas no guardadas. Inténtalo de nuevo.',
     vis_private: 'Spot puesto en privado 🔒',
     vis_unlisted: 'Spot puesto en no listado 🔗',
     vis_public: 'Publicación solicitada — pendiente de validación.',
