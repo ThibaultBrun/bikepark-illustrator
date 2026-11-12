@@ -35,94 +35,63 @@ const SHAD = 'rgba(30,42,90,0.22)' // ground shadow
 // Lumière NW = face gauche/haut lit, face droite/bas shadow.
 // Ombre au sol décalée SE (bas-droite).
 export const MODULE3D_SVG: Record<Module3DType, string> = {
-  // ── JUMP : rampe kicker, montée sud→nord ──────────────────────────────
+  // ── JUMP : kicker iso 3/4, rider décolle vers la droite ───────────────
+  // Flanc profil (D_MID) sous la ligne de roulage ; surface de roulage (D_LIT)
+  // en parallélogramme décalé +7,-4 ; crête/lip doré sur l'arête haute.
   jump: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
-  <!-- shadow -->
-  <ellipse cx="50" cy="63" rx="30" ry="5" fill="${SHAD}"/>
-  <!-- Left face lit (NW) — narrow sliver, converges toward top -->
-  <path d="M 16,60 L 24,60 L 30,16 L 22,18 Z" fill="${D_LIT}"/>
-  <!-- Ramp face (viewer-facing) — dominant surface -->
-  <path d="M 24,60 L 76,62 L 66,16 L 30,16 Z" fill="${D_MID}"/>
-  <!-- Upper lit band near lip (sky light) -->
-  <path d="M 30,16 L 66,16 L 56,28 L 36,30 Z" fill="${D_LIT}" opacity="0.42"/>
-  <!-- Right shadow face -->
-  <path d="M 76,62 L 78,58 L 68,14 L 66,16 Z" fill="${D_SHD}"/>
-  <!-- Base front strip -->
-  <path d="M 16,60 L 76,62 L 76,66 L 16,64 Z" fill="${D_SHD}"/>
-  <!-- Packed-dirt compaction lines (horizontal, follow ramp slope) -->
-  <path d="M 25,54 Q 50,55 74,57" stroke="${D_SHD}" stroke-width="0.9" fill="none" opacity="0.5"/>
-  <path d="M 27,44 Q 50,45 72,46" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.4"/>
-  <path d="M 30,34 Q 50,34 70,35" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
-  <!-- Curved lip — golden, prominent -->
-  <path d="M 22,18 Q 46,9 68,14" stroke="${GOLD}" stroke-width="2.8" stroke-linecap="round" fill="none" opacity="0.9"/>
-  <!-- Lip bevel underside (subtle curve) -->
-  <path d="M 22,18 Q 46,21 68,16" stroke="${D_LIT}" stroke-width="1.4" fill="none" opacity="0.5"/>
+  <ellipse cx="54" cy="60" rx="34" ry="5" fill="${SHAD}"/>
+  <!-- flanc profil (face avant-gauche, mid) -->
+  <path d="M 16,57 Q 40,56 55,44 Q 70,33 76,21 L 81,57 Z" fill="${D_MID}"/>
+  <!-- surface de roulage (dessus, éclairée) -->
+  <path d="M 16,57 Q 40,56 55,44 Q 70,33 76,21 L 83,17 Q 77,29 62,40 Q 47,51 23,53 Z" fill="${D_LIT}"/>
+  <!-- lignes de compaction qui suivent la pente -->
+  <path d="M 22,54 Q 44,53 58,43 Q 70,35 76,26" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.36"/>
+  <path d="M 20,56 Q 42,55 56,46 Q 68,38 74,30" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.28"/>
+  <!-- arête lip (drop) côté droit, légère ombre -->
+  <path d="M 76,21 L 81,57" stroke="${D_SHD}" stroke-width="1" fill="none" opacity="0.4"/>
+  <!-- crête dorée (arête haute de la surface) -->
+  <path d="M 23,53 Q 47,51 62,40 Q 77,29 83,17" stroke="${GOLD}" stroke-width="2.3" stroke-linecap="round" fill="none" opacity="0.92"/>
+  <!-- tip du lip -->
+  <path d="M 76,21 L 83,17" stroke="${GOLD}" stroke-width="2.6" stroke-linecap="round"/>
 </svg>`,
 
-  // ── DOUBLE : deux rampes / gap jump ──────────────────────────────────
+  // ── DOUBLE : deux kickers face à face (takeoff + landing), gap au milieu ─
   double: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
-  <!-- shadow -->
-  <ellipse cx="50" cy="64" rx="42" ry="5.5" fill="${SHAD}"/>
-  <!-- === KICKER 1 (left, takeoff) === -->
-  <!-- Left face lit (NW) — narrow -->
-  <path d="M 4,58 L 12,58 L 16,16 L 8,18 Z" fill="${D_LIT}"/>
-  <!-- Ramp face viewer-facing -->
-  <path d="M 12,58 L 42,60 L 36,16 L 16,16 Z" fill="${D_MID}"/>
-  <!-- Upper lit zone -->
-  <path d="M 16,16 L 36,16 L 30,26 L 20,28 Z" fill="${D_LIT}" opacity="0.42"/>
-  <!-- Right shadow strip K1 -->
-  <path d="M 42,60 L 44,56 L 38,14 L 36,16 Z" fill="${D_SHD}"/>
-  <!-- Base K1 -->
-  <path d="M 4,58 L 42,60 L 42,64 L 4,62 Z" fill="${D_SHD}"/>
-  <!-- Dirt lines K1 -->
-  <path d="M 13,52 Q 28,53 41,55" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.45"/>
-  <path d="M 15,40 Q 28,41 39,42" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.35"/>
-  <path d="M 17,28 Q 28,28 37,29" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.28"/>
-  <!-- Lip K1 (curved, golden) -->
-  <path d="M 8,18 Q 22,9 38,14" stroke="${GOLD}" stroke-width="2.4" stroke-linecap="round" fill="none" opacity="0.9"/>
-  <path d="M 8,18 Q 22,21 38,16" stroke="${D_LIT}" stroke-width="1.2" fill="none" opacity="0.5"/>
-  <!-- === GAP (visible ground) === -->
-  <path d="M 44,61 L 56,61 L 56,65 L 44,65 Z" fill="${D_MID}" opacity="0.3"/>
-  <!-- === KICKER 2 (right, landing — mirrored) === -->
-  <!-- Left shadow strip K2 -->
-  <path d="M 56,60 L 58,56 L 62,14 L 60,16 Z" fill="${D_SHD}"/>
-  <!-- Ramp face viewer-facing (mirrored) -->
-  <path d="M 58,60 L 62,16 L 84,16 L 88,58 Z" fill="${D_MID}"/>
-  <!-- Upper lit zone mirrored -->
-  <path d="M 62,16 L 84,16 L 80,28 L 68,26 Z" fill="${D_LIT}" opacity="0.42"/>
-  <!-- Right face lit (NW = right side of K2) -->
-  <path d="M 88,58 L 96,58 L 92,18 L 84,16 Z" fill="${D_LIT}"/>
-  <!-- Base K2 -->
-  <path d="M 56,60 L 96,58 L 96,62 L 56,64 Z" fill="${D_SHD}"/>
-  <!-- Dirt lines K2 -->
-  <path d="M 59,54 Q 72,53 87,52" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.45"/>
-  <path d="M 61,42 Q 72,41 85,40" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.35"/>
-  <path d="M 63,28 Q 72,28 83,27" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.28"/>
-  <!-- Lip K2 (mirrored golden lip) -->
-  <path d="M 62,14 Q 72,9 92,18" stroke="${GOLD}" stroke-width="2.4" stroke-linecap="round" fill="none" opacity="0.9"/>
-  <path d="M 62,16 Q 72,19 92,18" stroke="${D_LIT}" stroke-width="1.2" fill="none" opacity="0.5"/>
+  <ellipse cx="50" cy="61" rx="45" ry="5.5" fill="${SHAD}"/>
+  <!-- gap : sol visible entre les deux -->
+  <path d="M 41,57 L 59,57 L 57,61 L 43,61 Z" fill="${D_SHD}" opacity="0.32"/>
+  <!-- === KICKER gauche (takeoff, décolle à droite) === -->
+  <path d="M 6,57 Q 24,56 34,45 Q 42,37 45,27 L 48,57 Z" fill="${D_MID}"/>
+  <path d="M 6,57 Q 24,56 34,45 Q 42,37 45,27 L 51,23 Q 46,34 38,42 Q 28,52 12,54 Z" fill="${D_LIT}"/>
+  <path d="M 11,55 Q 26,54 36,45 Q 43,39 46,31" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <path d="M 45,27 L 48,57" stroke="${D_SHD}" stroke-width="0.9" fill="none" opacity="0.4"/>
+  <path d="M 12,54 Q 28,52 38,42 Q 46,34 51,23" stroke="${GOLD}" stroke-width="2.1" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 45,27 L 51,23" stroke="${GOLD}" stroke-width="2.3" stroke-linecap="round"/>
+  <!-- === KICKER droite (landing, miroir) === -->
+  <path d="M 94,57 Q 76,56 66,45 Q 58,37 55,27 L 52,57 Z" fill="${D_MID}"/>
+  <path d="M 94,57 Q 76,56 66,45 Q 58,37 55,27 L 49,23 Q 54,34 62,42 Q 72,52 88,54 Z" fill="${D_LIT}"/>
+  <path d="M 89,55 Q 74,54 64,45 Q 57,39 54,31" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <path d="M 55,27 L 52,57" stroke="${D_SHD}" stroke-width="0.9" fill="none" opacity="0.4"/>
+  <path d="M 88,54 Q 72,52 62,42 Q 54,34 49,23" stroke="${GOLD}" stroke-width="2.1" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 55,27 L 49,23" stroke="${GOLD}" stroke-width="2.3" stroke-linecap="round"/>
 </svg>`,
 
-  // ── TABLE : table top ─────────────────────────────────────────────────
+  // ── TABLE : butte pleine = takeoff + plateau + landing (iso 3/4) ───────
   table: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
-  <!-- shadow -->
-  <ellipse cx="52" cy="64" rx="38" ry="7" fill="${SHAD}"/>
-  <!-- Left face lit -->
-  <path d="M 10,58 L 24,58 L 30,32 L 14,34 Z" fill="${D_LIT}"/>
-  <!-- Ramp-in face -->
-  <path d="M 24,58 L 38,60 L 36,32 L 30,32 Z" fill="${D_MID}"/>
-  <!-- Flat table top (horizontal, lit by sky) -->
-  <path d="M 30,32 L 36,32 L 60,30 L 56,30 Z" fill="${D_LIT}"/>
-  <!-- Table top wider surface -->
-  <path d="M 14,34 L 30,32 L 56,30 L 42,32 Z" fill="${D_LIT}" opacity="0.85"/>
-  <!-- Ramp-out face -->
-  <path d="M 60,30 L 78,32 L 86,58 L 70,56 Z" fill="${D_MID}"/>
-  <!-- Right face shadow -->
-  <path d="M 78,32 L 86,58 L 90,58 L 82,32 Z" fill="${D_SHD}"/>
-  <!-- Base strip -->
-  <path d="M 10,58 L 90,58 L 90,63 L 10,63 Z" fill="${D_SHD}"/>
-  <!-- Flat top highlight edges -->
-  <path d="M 14,34 L 42,32 L 56,30 L 30,32 Z" fill="none" stroke="${GOLD}" stroke-width="1.6" stroke-linejoin="round" opacity="0.7"/>
+  <ellipse cx="52" cy="60" rx="43" ry="5.5" fill="${SHAD}"/>
+  <!-- flanc profil (mid) : montée, plateau, descente -->
+  <path d="M 12,57 Q 24,56 30,42 L 33,31 L 69,31 L 72,42 Q 78,56 90,57 Z" fill="${D_MID}"/>
+  <!-- plateau sommital plat (éclairé) -->
+  <path d="M 33,31 L 69,31 L 77,26 L 41,26 Z" fill="${D_LIT}"/>
+  <!-- rampe de takeoff (dessus éclairé) -->
+  <path d="M 12,57 Q 24,56 30,42 L 33,31 L 41,26 Q 33,40 20,54 Z" fill="${D_LIT}" opacity="0.94"/>
+  <!-- rampe de landing (dessus, moins exposé) -->
+  <path d="M 69,31 L 77,26 Q 83,52 95,53 L 90,57 Q 78,56 72,42 Z" fill="${D_LIT}" opacity="0.72"/>
+  <!-- compaction sur les deux rampes -->
+  <path d="M 20,54 Q 30,44 33,33" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <path d="M 72,42 Q 76,36 78,30" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <!-- crête dorée le long de l'arête haute -->
+  <path d="M 20,54 Q 33,40 41,26 L 77,26 Q 83,40 90,54" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
 </svg>`,
 
   // ── BERM : virage relevé ──────────────────────────────────────────────
