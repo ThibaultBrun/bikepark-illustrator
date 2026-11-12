@@ -47,6 +47,9 @@ Mockup north-star validé visuellement : /tmp/illus-test/poster.png (cadre+titre
 17. [ ] Export légende seule (PNG/PDF) pour panneau d'accueil.
 18. [ ] Grand format multi-tuiles A0 (si demande réelle).
 
+### 📱 Mobile (Thibault 2026-11-13 : "penser à l'utilisation mobile aussi")
+M1. [ ] **UX mobile / responsive** : l'éditeur doit être utilisable au doigt sur téléphone. Panneaux (MapPanel/PrintPanel/ExportPanel) repliables en drawer/bottom-sheet, boutons/hitboxes ≥44px, pas de hover-only. **Poser & déplacer un module 3D au touch** (tap pour poser, drag tactile pour repositionner, poignées de rotation/taille adaptées au doigt). Toolbar compacte en portrait. Tester les breakpoints (≤480 / ≤768). Export poster reste dispo (bouton accessible). Vérifier au screenshot en viewport mobile (ex 390×844).
+
 ### UX / perf
 19. [ ] Perf canopée : scatter O(N²) → index spatial / bbox par poly, debounce, plafond selon aire (avant de densifier #4).
 20. [ ] `preserveDrawingBuffer` conditionnel (coût perf constant, sert qu'à l'export → off si render offscreen).
