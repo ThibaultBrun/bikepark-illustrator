@@ -61,6 +61,14 @@ M1. [ ] **UX mobile / responsive** : l'éditeur doit être utilisable au doigt s
 24. [ ] Logos : revoir Jump+Remontée, ajouter lavage vélo/aire enfants/abri/école.
 25. [ ] QA export : attendre idle + areTilesLoaded avant capture (anti-poster à trous).
 
+## 🎨 AGENT SPÉCIALISÉ 3D (demandé par Thibault 2026-11-13)
+À CHAQUE itération touchant les modules 3D (`src/types/module3d.ts`, sprites SVG iso) : après le build, lancer un **agent de revue spécialisé "directeur artistique 3D / illustration de bikepark"** (Agent, en background) qui :
+- regarde le screenshot des sprites (/tmp/illus-test/sprites.png) + lit module3d.ts,
+- juge le réalisme/beauté (galbe des lips & landings, lattes de bois des north-shore, cohérence lumière NW / ombre SE golden hour, matière, silhouette iso),
+- propose des correctifs SVG CONCRETS (pas vagues) et peut réécrire les sprites qui rendent moche,
+- barre : niveau visionmapsstudio, "beau pas moche" (lattes bois dessinées, doubles galbées).
+Réinjecter ses retours dans le JOURNAL + backlog. ⚠️ un seul writer sur module3d.ts à la fois (éviter collision loop/agent).
+
 ## GARDE-FOUS BOUCLE
 - Déployer uniquement en **préprod** dans la boucle ; prod = validation Thibault.
 - 1 tâche ciblée par réveil, build OK obligatoire avant rsync.
