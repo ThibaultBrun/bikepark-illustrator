@@ -35,6 +35,14 @@
       >
         Cyclo
       </button>
+
+      <button
+        type="button"
+        :class="{ active: baseLayer === 'illustrated' }"
+        @click="setBaseLayer('illustrated')"
+      >
+        Illustré
+      </button>
     </div>
   </div>
 </template>
@@ -48,6 +56,14 @@ import type { GpxTrack } from '../types/gpx'
 import type { MapCameraState } from '../types/project'
 import type { MapLabelFont } from './sidebar/map-settings'
 import { getSymbolDefinition, getSymbolSvg, type MapSymbol, type SymbolDefinition, type SymbolId } from '../types/symbol'
+import {
+  illustratedLayers,
+  OFM_GLYPHS,
+  OFM_SPRITE,
+  OFM_VECTOR_URL,
+  ILLUS_PREFIX,
+} from '../lib/illustratedBasemap'
+import { ensureTreeImages, scatterCanopy, setCanopyVisible } from '../lib/illustratedCanopy'
 
 const props = withDefaults(
   defineProps<{
@@ -147,7 +163,7 @@ const symbolImageIds = new Set<string>()
 const symbolPositionOverrides = new Map<string, [number, number]>()
 const emittedRenderStages = new Set<string>()
 
-const baseLayer = ref<'cyclosm' | 'esri'>('cyclosm')
+const baseLayer = ref<'cyclosm' | 'esri' | 'illustrated'>('cyclosm')
 
 const placedSymbolSourceId = 'placed-symbol-source'
 const placedSymbolLayerId = 'placed-symbol-layer'
@@ -182,6 +198,8 @@ function initialCamera() {
 function buildStyle(): maplibregl.StyleSpecification {
   return {
     version: 8,
+    glyphs: OFM_GLYPHS,
+    sprite: OFM_SPRITE,
     sources: {
       cyclosm: {
         type: 'raster',
@@ -202,6 +220,11 @@ function buildStyle(): maplibregl.StyleSpecification {
         attribution:
           'Tiles © Esri - Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       },
+      openmaptiles: {
+        type: 'vector',
+        url: OFM_VECTOR_URL,
+        attribution: '&copy; OpenStreetMap contributors, OpenFreeMap',
+      },
     },
     layers: [
       {
@@ -216,11 +239,13 @@ function buildStyle(): maplibregl.StyleSpecification {
         source: 'esri-world-imagery',
         layout: { visibility: 'none' },
       },
+      // Fond illustré (poster) — vectoriel OpenMapTiles, masqué par défaut.
+      ...(illustratedLayers() as unknown as maplibregl.LayerSpecification[]),
     ],
   }
 }
 
-function setBaseLayer(layer: 'cyclosm' | 'esri') {
+function setBaseLayer(layer: 'cyclosm' | 'esri' | 'illustrated') {
   if (!map) return
 
   baseLayer.value = layer
@@ -232,6 +257,42 @@ function setBaseLayer(layer: 'cyclosm' | 'esri') {
   if (map.getLayer('esri')) {
     map.setLayoutProperty('esri', 'visibility', layer === 'esri' ? 'visible' : 'none')
   }
+
+  // Calques du fond illustré (vectoriel) — groupe prefixé `illus-`.
+  const showIllus = layer === 'illustrated'
+  const style = map.getStyle()
+  if (style && style.layers) {
+    for (const l of style.layers) {
+      if (l.id.startsWith(ILLUS_PREFIX) && l.id !== 'illus-canopy') {
+        map.setLayoutProperty(l.id, 'visibility', showIllus ? 'visible' : 'none')
+      }
+    }
+  }
+
+  // Canopée illustrée (arbres) — uniquement en mode illustré.
+  if (showIllus) {
+    ensureTreeImages(map)
+    scheduleCanopyRefresh(0)
+    setCanopyVisible(map, true)
+  } else {
+    setCanopyVisible(map, false)
+  }
+}
+
+// Régénère la canopée après un déplacement (debounce) pour couvrir les nouvelles zones.
+let canopyTimer: ReturnType<typeof setTimeout> | null = null
+function scheduleCanopyRefresh(delay = 400) {
+  if (canopyTimer) clearTimeout(canopyTimer)
+  canopyTimer = setTimeout(() => {
+    canopyTimer = null
+    if (!map || baseLayer.value !== 'illustrated') return
+    try {
+      scatterCanopy(map)
+      setCanopyVisible(map, true)
+    } catch {
+      /* tuiles pas prêtes → prochain moveend */
+    }
+  }, delay)
 }
 
 function fitToArrivalBounds(duration = 1000) {
@@ -993,11 +1054,106 @@ function refreshTracks() {
   }
 
   removeDeletedTrackLayers()
+  refreshTrailPins()
   emitRenderStage('tracks')
   map.triggerRepaint()
   requestAnimationFrame(() => {
     map?.triggerRepaint()
   })
+}
+
+// --- Pastilles numérotées par difficulté (départs de piste) ------------------
+const PIN_SOURCE = 'trail-pins'
+const PIN_COLORS: Record<GpxTrack['difficulty'], string> = {
+  green: '#16a34a',
+  blue: '#2563eb',
+  red: '#dc2626',
+  black: '#111827',
+}
+
+function trackStartCoord(track: GpxTrack): [number, number] | null {
+  const feats = track.geojson?.features ?? []
+  for (const f of feats) {
+    const g = f.geometry
+    if (!g) continue
+    if (g.type === 'LineString' && g.coordinates.length) {
+      const c = g.coordinates[0]
+      return [c[0], c[1]]
+    }
+    if (g.type === 'MultiLineString' && g.coordinates[0]?.length) {
+      const c = g.coordinates[0][0]
+      return [c[0], c[1]]
+    }
+  }
+  return null
+}
+
+function ensureTrailPinLayers() {
+  if (!map) return
+  if (!map.getSource(PIN_SOURCE)) {
+    map.addSource(PIN_SOURCE, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection,
+    })
+  }
+  if (!map.getLayer('trail-pin-circle')) {
+    map.addLayer({
+      id: 'trail-pin-circle',
+      type: 'circle',
+      source: PIN_SOURCE,
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 9, 16, 13, 18, 16],
+        'circle-color': ['get', 'color'],
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 2.4,
+        'circle-pitch-alignment': 'viewport',
+        'circle-pitch-scale': 'viewport',
+      },
+    })
+  }
+  if (!map.getLayer('trail-pin-label')) {
+    map.addLayer({
+      id: 'trail-pin-label',
+      type: 'symbol',
+      source: PIN_SOURCE,
+      layout: {
+        'text-field': ['get', 'label'],
+        'text-font': ['Noto Sans Bold'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 12, 11, 16, 14, 18, 17],
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
+        'text-pitch-alignment': 'viewport',
+      },
+      paint: {
+        'text-color': '#ffffff',
+        'text-halo-color': 'rgba(0,0,0,0.25)',
+        'text-halo-width': 0.6,
+      },
+    })
+  }
+}
+
+function refreshTrailPins() {
+  if (!map) return
+  ensureTrailPinLayers()
+  const features: GeoJSON.Feature[] = []
+  let n = 0
+  for (const track of props.tracks) {
+    if (!track.visible) continue
+    const start = trackStartCoord(track)
+    if (!start) continue
+    n += 1
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: start },
+      properties: {
+        label: String(n),
+        color: PIN_COLORS[track.difficulty] ?? '#2563eb',
+      },
+    })
+  }
+  const src = map.getSource(PIN_SOURCE) as maplibregl.GeoJSONSource | undefined
+  src?.setData({ type: 'FeatureCollection', features })
 }
 
 function emitRenderStage(stage: 'tracks' | 'symbols') {
@@ -1932,6 +2088,10 @@ onMounted(() => {
       })
     }
 
+    ensureTreeImages(map)
+    map.on('moveend', () => {
+      if (baseLayer.value === 'illustrated') scheduleCanopyRefresh()
+    })
     applyTerrainState()
     applyHillshadeState()
     setBaseLayer(baseLayer.value)
