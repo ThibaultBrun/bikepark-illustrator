@@ -18,6 +18,9 @@ Build : `cd /home/debian/repos/bikepark-illustrator && npm run build`.
 ## EN COURS / BACKLOG (priorisé par la revue 2026-11-13, du + rentable au -)
 Mockup north-star validé visuellement : /tmp/illus-test/poster.png (cadre+titre+stats+légende+logos+pistes casing+pins). On construit vers ça.
 
+### 🔝 PRIORITÉ EXPRESSE THIBAULT (2026-11-13, à faire AVANT le reste)
+0. [ ] **Modules 3D sur la carte** (= tâche #9 remontée) : jumps / berms / pumptrack / tables illustrés en volume iso, posables et déplaçables sur la carte, sur zone asphalte/terre. Commencer SIMPLE et visible : un outil "ajouter un module" → sprite iso 2.5D (ombre portée) ancré à une position, type choisi dans une petite palette (saut, double, table, berm, pumptrack, north-shore). Cohérent DA poster (tan + bois + ombres golden hour). But : premier module posable dès le prochain réveil, on raffine ensuite. PUIS enchaîner sur le **catalogue** de modules (galerie de types réutilisables).
+
 ### TOP (quick wins ROI max — à faire d'abord)
 1. [x] **Export HD réel** : `exportImage()` → `setPixelRatio(3)` + attente `idle`+`areTilesLoaded` + `canvas.toBlob`. Toast "Rendu HD…" pendant le calcul. Prérequis de tout le print. ✅ 2026-11-13
 2. [x] **Mode Poster** : `posterCompose.ts` — canvas 1080px : header (nom park+région+badges stats), carte arrondie, légende diff+chips équipements, footer crédit. Bouton "🎨 Exporter Poster" dans PrintPanel. projectName/spotRegion auto-remplis depuis le projet. ✅ 2026-11-13
