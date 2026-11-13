@@ -85,6 +85,7 @@ const props = withDefaults(
     dragPointer?: { x: number; y: number }
     terrainExaggeration?: number
     hillshadeStrength?: number
+    sunAzimuth?: number
     labelFont?: MapLabelFont
     showPistaTrails?: boolean
     showHeatmap?: boolean
@@ -104,6 +105,7 @@ const props = withDefaults(
     dragPointer: () => ({ x: 0, y: 0 }),
     terrainExaggeration: 1.4,
     hillshadeStrength: 100,
+    sunAzimuth: 315,
     labelFont: 'segoe',
     showPistaTrails: true,
     showHeatmap: false,
@@ -303,6 +305,9 @@ function setBaseLayer(layer: 'cyclosm' | 'esri' | 'illustrated') {
       map.setPaintProperty(casingId, 'line-color', 'rgba(255,252,245,0.92)')
     }
   }
+
+  // Mettre à jour les couleurs golden hour selon le mode.
+  applyHillshadeState()
 }
 
 // Régénère la canopée après un déplacement (debounce) pour couvrir les nouvelles zones.
@@ -401,19 +406,44 @@ function applyHillshadeState() {
   if (!map || !map.getLayer('terrain-hillshade')) return
 
   const opacity = Math.max(0, Math.min(props.hillshadeStrength / 100, 1))
+  const illus = baseLayer.value === 'illustrated'
 
   map.setLayoutProperty('terrain-hillshade', 'visibility', opacity > 0 ? 'visible' : 'none')
-  map.setPaintProperty('terrain-hillshade', 'hillshade-shadow-color', `rgba(0, 0, 0, ${opacity})`)
-  map.setPaintProperty(
-    'terrain-hillshade',
-    'hillshade-highlight-color',
-    `rgba(255, 255, 255, ${opacity * 0.9})`,
-  )
-  map.setPaintProperty(
-    'terrain-hillshade',
-    'hillshade-accent-color',
-    `rgba(31, 41, 55, ${opacity})`,
-  )
+
+  // Azimut soleil (0 = nord, sens horaire). Affecte la direction du hillshade.
+  map.setPaintProperty('terrain-hillshade', 'hillshade-illumination-direction', props.sunAzimuth)
+  map.setPaintProperty('terrain-hillshade', 'hillshade-illumination-anchor', 'map')
+
+  if (illus) {
+    // Golden hour : highlight doré chaud, ombres froides bleutées, accent brun-bleu.
+    map.setPaintProperty(
+      'terrain-hillshade',
+      'hillshade-shadow-color',
+      `rgba(42, 52, 90, ${opacity * 0.78})`,
+    )
+    map.setPaintProperty(
+      'terrain-hillshade',
+      'hillshade-highlight-color',
+      `rgba(255, 218, 110, ${opacity * 0.72})`,
+    )
+    map.setPaintProperty(
+      'terrain-hillshade',
+      'hillshade-accent-color',
+      `rgba(50, 42, 68, ${opacity * 0.5})`,
+    )
+  } else {
+    map.setPaintProperty('terrain-hillshade', 'hillshade-shadow-color', `rgba(0, 0, 0, ${opacity})`)
+    map.setPaintProperty(
+      'terrain-hillshade',
+      'hillshade-highlight-color',
+      `rgba(255, 255, 255, ${opacity * 0.9})`,
+    )
+    map.setPaintProperty(
+      'terrain-hillshade',
+      'hillshade-accent-color',
+      `rgba(31, 41, 55, ${opacity})`,
+    )
+  }
 }
 
 function dashArrayForStyle(style: GpxTrack['style']) {
@@ -2358,6 +2388,13 @@ watch(
 
 watch(
   () => props.hillshadeStrength,
+  () => {
+    applyHillshadeState()
+  },
+)
+
+watch(
+  () => props.sunAzimuth,
   () => {
     applyHillshadeState()
   },

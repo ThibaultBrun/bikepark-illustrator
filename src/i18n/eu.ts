@@ -95,6 +95,9 @@ export default {
     osmLabelsTitle: 'OSM etiketak',
     osmLabelsDesc: 'Herriak eta ur-bideak (mapa ilustratua).',
     showOsmLabels: 'Erakutsi OSM etiketak',
+    sunTitle: 'Golden hour argia',
+    sunDesc: 'Eguzkiaren azimuta — urre-koloreko argiak, hotz-itzalak (mapa ilustratua).',
+    sunAngle: 'Eguzki azimuta',
   },
 
   exportPanel: {

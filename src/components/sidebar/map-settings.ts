@@ -13,6 +13,7 @@ export type MapLabelFont =
 export type MapSettings = {
   terrain: number
   hillshade: number
+  sunAzimuth: number
   labelFont: MapLabelFont
   showPistaTrails: boolean
   showHeatmap: boolean

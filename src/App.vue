@@ -71,6 +71,7 @@
         :drag-pointer="dragPointer"
         :terrain-exaggeration="mapSettings.terrain"
         :hillshade-strength="mapSettings.hillshade"
+        :sun-azimuth="mapSettings.sunAzimuth"
         :label-font="mapSettings.labelFont"
         :show-pista-trails="mapSettings.showPistaTrails"
         :show-heatmap="mapSettings.showHeatmap"
@@ -435,6 +436,7 @@ const activeSection = ref<SidebarSectionId>(incomingSpot ? 'export' : 'track')
 const mapSettings = ref<MapSettings>({
   terrain: 1.4,
   hillshade: 100,
+  sunAzimuth: 315,
   labelFont: 'segoe',
   showPistaTrails: true,
   showHeatmap: false,
@@ -873,6 +875,7 @@ function normalizeProject(raw: Partial<BikeparkProject> | null | undefined): Bik
     mapSettings: {
       terrain: Number(raw?.mapSettings?.terrain ?? 1.4),
       hillshade: Number(raw?.mapSettings?.hillshade ?? 100),
+      sunAzimuth: Number(raw?.mapSettings?.sunAzimuth ?? 315),
       labelFont: raw?.mapSettings?.labelFont ?? 'segoe',
       showPistaTrails: raw?.mapSettings?.showPistaTrails ?? true,
       showHeatmap: raw?.mapSettings?.showHeatmap ?? false,

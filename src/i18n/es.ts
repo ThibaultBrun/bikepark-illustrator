@@ -94,6 +94,9 @@ export default {
     osmLabelsTitle: 'Etiquetas OSM',
     osmLabelsDesc: 'Pueblos y ríos contextuales (mapa ilustrado).',
     showOsmLabels: 'Mostrar etiquetas OSM',
+    sunTitle: 'Luz golden hour',
+    sunDesc: 'Azimut del sol — brillos dorados, sombras frías (modo ilustrado).',
+    sunAngle: 'Azimut solar',
   },
 
   exportPanel: {

@@ -56,6 +56,33 @@
   <section class="panel">
     <div class="panel-header">
       <div class="placeholder-icon" aria-hidden="true">
+        <SidebarIcon name="blend" />
+      </div>
+      <div class="panel-header-copy">
+        <h2>{{ t('map.sunTitle') }}</h2>
+        <p>{{ t('map.sunDesc') }}</p>
+      </div>
+    </div>
+
+    <label class="slider-field">
+      <div class="slider-label-row">
+        <span>{{ t('map.sunAngle') }}</span>
+        <strong>{{ settings.sunAzimuth }}° {{ azimuthLabel }}</strong>
+      </div>
+      <input
+        :value="settings.sunAzimuth"
+        type="range"
+        min="0"
+        max="359"
+        step="1"
+        @input="updateSunAzimuth"
+      />
+    </label>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div class="placeholder-icon" aria-hidden="true">
         <SidebarIcon name="symbol" />
       </div>
       <div class="panel-header-copy">
@@ -181,6 +208,18 @@ const { t } = useI18n()
 // Accès heatmap découplé du statut admin (admin OU flag heatmap_access).
 const { canViewHeatmap } = useAuth()
 
+const azimuthLabel = computed(() => {
+  const a = ((props.settings.sunAzimuth % 360) + 360) % 360
+  if (a < 22.5 || a >= 337.5) return 'N'
+  if (a < 67.5) return 'NE'
+  if (a < 112.5) return 'E'
+  if (a < 157.5) return 'SE'
+  if (a < 202.5) return 'S'
+  if (a < 247.5) return 'SO'
+  if (a < 292.5) return 'O'
+  return 'NO'
+})
+
 const props = defineProps<{
   settings: MapSettings
   isAdmin: boolean
@@ -210,6 +249,13 @@ function updateHillshade(event: Event) {
   emit('update:settings', {
     ...props.settings,
     hillshade: Number((event.target as HTMLInputElement).value),
+  })
+}
+
+function updateSunAzimuth(event: Event) {
+  emit('update:settings', {
+    ...props.settings,
+    sunAzimuth: Number((event.target as HTMLInputElement).value),
   })
 }
 

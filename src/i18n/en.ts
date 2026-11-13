@@ -94,6 +94,9 @@ export default {
     osmLabelsTitle: 'OSM labels',
     osmLabelsDesc: 'Villages and waterways labels (illustrated basemap).',
     showOsmLabels: 'Show OSM labels',
+    sunTitle: 'Golden hour light',
+    sunDesc: 'Sun azimuth — golden highlights, cool shadows (illustrated mode).',
+    sunAngle: 'Sun azimuth',
   },
 
   exportPanel: {

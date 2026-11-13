@@ -94,6 +94,9 @@ export default {
     osmLabelsTitle: 'Labels OSM',
     osmLabelsDesc: 'Villages et cours d\'eau contextuels (fond illustré).',
     showOsmLabels: 'Afficher les labels OSM',
+    sunTitle: 'Lumière golden hour',
+    sunDesc: 'Azimut du soleil — highlights dorés, ombres froides (fond illustré).',
+    sunAngle: 'Azimut soleil',
   },
 
   exportPanel: {
