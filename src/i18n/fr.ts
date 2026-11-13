@@ -144,6 +144,7 @@ export default {
     title: 'Exporter une image',
     desc: 'Capture la vue actuelle de la carte (tracés, symboles, relief) en PNG.',
     hint: 'Cadre, zoome et incline ta carte comme tu veux, puis exporte. Les contrôles et repères d\'édition ne sont pas inclus.',
+    exportPoster: 'Exporter Poster',
     exportPng: '📷 Exporter en PNG',
   },
 

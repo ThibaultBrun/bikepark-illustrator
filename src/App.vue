@@ -43,6 +43,7 @@
       @set-visibility="onSetVisibility"
       @copy-link="onCopyLink"
       @export-image="onExportImage"
+      @export-poster="onExportPoster"
       @update:spot-region="spotRegion = $event"
       @update:spot-type="spotType = $event"
       @locate="onLocate"
@@ -280,6 +281,7 @@ import {
 } from './types/project'
 import {
   buildCustomSymbolDefinition,
+  defaultSymbolLibrary,
   getSymbolDefinition,
   getSymbolSvg,
   type MapSymbol,
@@ -287,6 +289,7 @@ import {
   type SymbolId,
   type UploadedSymbolPayload,
 } from './types/symbol'
+import { composePoster } from './lib/posterCompose'
 
 const { t, locale } = useI18n()
 const { session: authSession, ready: authReady, user: authUser, isAdmin: authIsAdmin, signOut } = useAuth()
@@ -345,6 +348,38 @@ async function onExportImage() {
   const a = document.createElement('a')
   a.href = url
   a.download = `${sanitizeProjectName(projectName.value) || 'bikepark'}.png`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+  showToast(t('toast.exportImageOk'))
+}
+
+// Mode Poster : map blob → posterCompose → téléchargement PNG composé.
+async function onExportPoster() {
+  showToast(t('toast.exportRendering'))
+  const mapBlob = await mapViewRef.value?.exportImage()
+  if (!mapBlob) {
+    showToast(t('toast.exportImageFail'))
+    return
+  }
+  const allDefs = [...defaultSymbolLibrary, ...customSymbols.value]
+  const blob = await composePoster({
+    mapBlob,
+    parkName: projectName.value || 'Mon Bikepark',
+    region: spotRegion.value,
+    tracks: tracks.value,
+    symbols: symbols.value,
+    symbolDefs: allDefs,
+  })
+  if (!blob) {
+    showToast(t('toast.exportImageFail'))
+    return
+  }
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${sanitizeProjectName(projectName.value) || 'bikepark'}-poster.png`
   document.body.appendChild(a)
   a.click()
   a.remove()

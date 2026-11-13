@@ -12,7 +12,11 @@
 
     <p class="hint">{{ t('print.hint') }}</p>
 
-    <button type="button" class="action-button primary" @click="$emit('export-image')">
+    <button type="button" class="action-button primary" @click="$emit('export-poster')">
+      🎨 {{ t('print.exportPoster') }}
+    </button>
+
+    <button type="button" class="action-button" @click="$emit('export-image')">
       {{ t('print.exportPng') }}
     </button>
   </section>
@@ -26,6 +30,7 @@ const { t } = useI18n()
 
 defineEmits<{
   (e: 'export-image'): void
+  (e: 'export-poster'): void
 }>()
 </script>
 

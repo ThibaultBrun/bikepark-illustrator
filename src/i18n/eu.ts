@@ -145,6 +145,7 @@ export default {
     title: 'Esportatu irudi bat',
     desc: 'Atera uneko maparen ikuspegia (pistak, sinboloak, erliebea) PNG gisa.',
     hint: 'Koka, zooma eta okertu mapa nahi duzun bezala, gero esportatu. Kontrolak eta edizio-markak ez dira sartzen.',
+    exportPoster: 'Poster esportatu',
     exportPng: '📷 Esportatu PNG gisa',
   },
 
