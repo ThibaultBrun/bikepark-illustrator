@@ -61,9 +61,9 @@ def extruded_profile(name, profile_xz, width, material):
 
 # ---------------------------------------------------------------- modules
 def build_jump():
-    # kicker : rampe concave qui remonte vers un lip à droite puis drop vertical
-    prof = [(0,0),(2.2,0.08),(4.0,0.5),(5.3,1.3),(6.1,2.3),(6.5,2.75),(6.5,0)]
-    return extruded_profile("jump", prof, 3.2, mat("dirt", DIRT))
+    # kicker : rampe concave qui remonte vers un lip marqué à droite puis drop
+    prof = [(0,0),(2.5,0.12),(4.6,0.8),(6.1,2.0),(7.1,3.1),(7.5,3.6),(7.5,0)]
+    return extruded_profile("jump", prof, 4.0, mat("dirt", DIRT))
 
 def build_table():
     prof = [(0,0),(2.6,1.9),(3.4,2.3),(8.2,2.3),(9.0,1.9),(11.6,0)]
@@ -71,12 +71,12 @@ def build_table():
 
 def build_double():
     m = mat("dirt", DIRT)
-    pr = [(0,0),(2.2,0.08),(4.0,0.5),(5.3,1.3),(6.1,2.3),(6.5,2.75),(6.5,0)]
-    a = extruded_profile("double_a", pr, 3.0, m)
-    # landing : miroir en X, décalé après le gap
-    prm = [(-x, z) for (x, z) in pr]
-    b = extruded_profile("double_b", prm, 3.0, m)
-    b.location.x = 6.5 + 3.5 + 6.5  # gap
+    pr = [(0,0),(2.2,0.1),(4.0,0.6),(5.3,1.5),(6.2,2.6),(6.6,3.0),(6.6,0)]
+    GAP = 3.0
+    a = extruded_profile("double_a", pr, 3.2, m)             # lip à x=6.6
+    prm = [(-x, z) for (x, z) in pr]                          # miroir : lip à x=-6.6
+    b = extruded_profile("double_b", prm, 3.2, m)
+    b.location.x = 6.6 + GAP + 6.6                            # base à droite, lip face au gap
     return [a, b]
 
 def build_berm():
@@ -144,25 +144,26 @@ def build_northshore():
     objs = []
     wood = mat("wood", WOOD, rough=0.6)
     woodd = mat("woodd", WOOD_D, rough=0.7)
-    L, W, H = 11.0, 3.4, 3.2
-    # planches du tablier (le long de X), petit gap entre chaque
-    npl = 9
-    gap = 0.12
-    pw = (W - gap * (npl - 1)) / npl
-    for k in range(npl):
-        y = -W/2 + k * (pw + gap) + pw/2
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(L/2, y, H))
-        o = bpy.context.object; o.scale = (L/2, pw/2, 0.22); o.name=f"plank{k}"
-        o.data.materials.append(wood); objs.append(o)
-    # longerons
-    for y in (-W/2+0.3, W/2-0.3):
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(L/2, y, H-0.45))
-        o=bpy.context.object; o.scale=(L/2,0.22,0.35); o.data.materials.append(woodd); objs.append(o)
-    # poteaux
-    for x in (1.2, L/2, L-1.2):
-        for y in (-W/2+0.4, W/2-0.4):
-            bpy.ops.mesh.primitive_cube_add(size=1, location=(x, y, (H-0.6)/2))
-            o=bpy.context.object; o.scale=(0.28,0.28,(H-0.6)/2); o.data.materials.append(woodd); objs.append(o)
+    L, W, H = 10.0, 3.4, 1.6
+    dt = 0.36  # demi-épaisseur dalle
+    # dalle de tablier pleine (ombre au sol propre)
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(L/2, 0, H))
+    d = bpy.context.object; d.scale = (L/2, W/2, dt); d.name = "deck"
+    d.data.materials.append(wood); objs.append(d)
+    # rainures de planches (le long de X, en retrait des bords, sur le dessus)
+    npl = 7
+    for k in range(1, npl):
+        y = -W/2 + k * (W / npl)
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(L/2, y, H + dt))
+        g = bpy.context.object; g.scale = (L/2 - 0.5, 0.05, 0.05); g.name = f"groove{k}"
+        g.data.materials.append(woodd); objs.append(g)
+    # poteaux francs aux 4 coins (épais, sous la dalle)
+    ptop = H - dt
+    for x in (1.3, L - 1.3):
+        for y in (-W/2 + 0.6, W/2 - 0.6):
+            bpy.ops.mesh.primitive_cube_add(size=1, location=(x, y, ptop/2))
+            p = bpy.context.object; p.scale = (0.46, 0.46, ptop/2)
+            p.data.materials.append(woodd); objs.append(p)
     return objs
 
 BUILDERS = {
@@ -220,6 +221,13 @@ def frame_objects(objs):
     size = max((mx - mn).x, (mx - mn).y, (mx - mn).z)
     return center, size
 
+def add_shadow_catcher(center, size):
+    bpy.ops.mesh.primitive_plane_add(size=size * 6, location=(center.x, center.y, 0))
+    ob = bpy.context.object
+    ob.name = "ShadowCatcher"
+    ob.is_shadow_catcher = True
+    return ob
+
 def setup_render():
     sc = bpy.context.scene
     sc.render.engine = 'CYCLES'
@@ -252,8 +260,10 @@ def render_all():
         setup_world_and_light()
         res = fn()
         objs = res if isinstance(res, list) else [res]
+        bpy.context.view_layer.update()  # applique les .location avant de lire matrix_world
         center, size = frame_objects(objs)
         setup_camera(center, size)
+        add_shadow_catcher(center, size)
         bpy.context.scene.render.filepath = os.path.join(OUTDIR, name + ".png")
         print("RENDER", name, "center", center, "size", round(size,2))
         bpy.ops.render.render(write_still=True)
