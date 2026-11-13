@@ -173,6 +173,7 @@ export default {
     brandingLogoUpload: 'Logo hautatu',
     brandingLogoChange: 'Logoa aldatu',
     brandingLogoRemove: 'Ezabatu',
+    exportLegend: 'Esportatu Legenda Panela',
   },
 
   spotType: { bikepark: 'Bike park', zone_enduro: 'Enduro eremua', secteur: 'Sektorea', skills_park: 'Skills park' },

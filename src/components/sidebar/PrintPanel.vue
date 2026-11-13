@@ -107,6 +107,10 @@
     <button type="button" class="action-button" @click="$emit('export-image')">
       {{ t('print.exportPng') }}
     </button>
+
+    <button type="button" class="action-button legend-btn" @click="onExportLegend">
+      🗺 {{ t('print.exportLegend') }}
+    </button>
   </section>
 </template>
 
@@ -131,6 +135,7 @@ const emit = defineEmits<{
   (e: 'export-poster', formatId: PrintFormatId, branding: { posterName: string; region: string; accentColor: string; logoDataUrl: string }): void
   (e: 'export-pdf', formatId: PrintFormatId, branding: { posterName: string; region: string; accentColor: string; logoDataUrl: string }): void
   (e: 'publish-poster', formatId: PrintFormatId, branding: { posterName: string; region: string; accentColor: string; logoDataUrl: string }): void
+  (e: 'export-legend', branding: { posterName: string; region: string; accentColor: string; logoDataUrl: string }): void
 }>()
 
 const selectedFormat = ref<PrintFormatId>('a4p')
@@ -173,6 +178,10 @@ function onExportPdf() {
 
 function onPublishPoster() {
   emit('publish-poster', selectedFormat.value, getBranding())
+}
+
+function onExportLegend() {
+  emit('export-legend', getBranding())
 }
 
 function triggerLogoUpload() {
@@ -483,5 +492,17 @@ function onLogoFileChange(e: Event) {
 .publish-btn:hover {
   background: rgba(34, 100, 70, 0.3);
   border-color: rgba(99, 180, 140, 0.6);
+}
+
+.legend-btn {
+  border-color: rgba(205, 163, 90, 0.25);
+  background: rgba(205, 163, 90, 0.08);
+  color: #d8c89a;
+  font-size: 13px;
+}
+
+.legend-btn:hover {
+  background: rgba(205, 163, 90, 0.16);
+  border-color: rgba(205, 163, 90, 0.4);
 }
 </style>

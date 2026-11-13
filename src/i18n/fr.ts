@@ -172,6 +172,7 @@ export default {
     brandingLogoUpload: 'Choisir un logo',
     brandingLogoChange: 'Changer le logo',
     brandingLogoRemove: 'Supprimer',
+    exportLegend: 'Exporter Légende panneau',
   },
 
   spotType: { bikepark: 'Bike park', zone_enduro: 'Zone enduro', secteur: 'Secteur', skills_park: 'Skills park' },

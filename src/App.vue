@@ -52,6 +52,7 @@
       @export-poster="onExportPoster"
       @export-pdf="onExportPdf"
       @publish-poster="onPublishPoster"
+      @export-legend="onExportLegend"
       @update:spot-region="spotRegion = $event"
       @update:spot-type="spotType = $event"
       @locate="onLocate"
@@ -335,6 +336,7 @@ import {
   type UploadedSymbolPayload,
 } from './types/symbol'
 import { composePoster } from './lib/posterCompose'
+import { composeLegend } from './lib/legendExport'
 import type { PrintFormatId } from './lib/printFormats'
 import { exportPosterAsPdf } from './lib/pdfExport'
 import { uploadPoster } from './lib/posterPublish'
@@ -515,6 +517,37 @@ async function onExportPdf(formatId: PrintFormatId = 'a4p', branding?: PosterBra
     showToast(t('toast.exportImageFail'))
   }
 }
+
+// Export légende seule : panneau d'accueil PNG 1600×480px.
+type LegendBranding = { posterName: string; region: string; accentColor: string; logoDataUrl: string }
+async function onExportLegend(branding?: LegendBranding) {
+  showToast(t('toast.exportRendering'))
+  const allDefs = [...defaultSymbolLibrary, ...customSymbols.value]
+  const blob = await composeLegend({
+    parkName: branding?.posterName || projectName.value || 'Mon Bikepark',
+    region: branding?.region ?? spotRegion.value,
+    tracks: tracks.value,
+    symbols: symbols.value,
+    symbolDefs: allDefs,
+    locale: locale.value,
+    accentColor: branding?.accentColor,
+    logoDataUrl: branding?.logoDataUrl,
+  })
+  if (!blob) {
+    showToast(t('toast.exportImageFail'))
+    return
+  }
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${sanitizeProjectName(projectName.value) || 'bikepark'}-legende.png`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+  showToast(t('toast.exportImageOk'))
+}
+
 const editorMode = ref<'idle' | 'draw' | 'edit'>('idle')
 const editorPointCount = ref(0)
 const editorCanUndo = ref(false)
