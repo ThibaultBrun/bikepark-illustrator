@@ -96,6 +96,22 @@ export function illustratedLayers(): AnyLayer[] {
     }),
 
     // Massifs forestiers — vert profond + liseré sombre marqué (le "trait" illustré).
+    // wood-halo : ombre portée large+floue autour du massif → profondeur illustrée.
+    L({
+      id: 'wood-halo',
+      type: 'line',
+      source: SRC,
+      'source-layer': 'landcover',
+      filter: ['in', ['get', 'class'], ['literal', ['wood', 'forest']]],
+      minzoom: 9,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#1a3410',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 5, 13, 14, 17, 24],
+        'line-opacity': 0.2,
+        'line-blur': 10,
+      },
+    }),
     L({
       id: 'wood',
       type: 'fill',
@@ -115,6 +131,22 @@ export function illustratedLayers(): AnyLayer[] {
         'fill-opacity': 0.92,
       },
     }),
+    // wood-feather : liseré doux intérieur (vert moyen+flou) → transition forêt/clairière adoucie.
+    L({
+      id: 'wood-feather',
+      type: 'line',
+      source: SRC,
+      'source-layer': 'landcover',
+      filter: ['in', ['get', 'class'], ['literal', ['wood', 'forest']]],
+      minzoom: 10,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': P.woodMid,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 15, 10],
+        'line-opacity': 0.28,
+        'line-blur': 5,
+      },
+    }),
     L({
       id: 'wood-edge',
       type: 'line',
@@ -125,9 +157,9 @@ export function illustratedLayers(): AnyLayer[] {
       layout: { 'line-join': 'round', 'line-cap': 'round' },
       paint: {
         'line-color': P.woodEdge,
-        'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 15, 2.6],
-        'line-opacity': 0.55,
-        'line-blur': 0.3,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.3, 15, 3.8],
+        'line-opacity': 0.78,
+        'line-blur': 0.5,
       },
     }),
 
