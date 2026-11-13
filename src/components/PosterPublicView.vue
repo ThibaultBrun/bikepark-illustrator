@@ -112,7 +112,7 @@ async function renderQR() {
   justify-content: center;
   gap: 16px;
   color: #b3a890;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 15px;
 }
 
@@ -162,7 +162,7 @@ async function renderQR() {
   margin: 0;
   font-size: 11px;
   color: #9a8e78;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-display);
   text-align: center;
   max-width: 128px;
 }
@@ -176,7 +176,7 @@ async function renderQR() {
   border-radius: 10px;
   background: linear-gradient(135deg, rgba(205, 163, 90, 0.95), rgba(220, 180, 105, 0.95));
   color: #2a2013;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
@@ -193,7 +193,7 @@ async function renderQR() {
   font-size: 11px;
   color: #9a8e78;
   text-decoration: none;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-display);
 }
 
 .back-link:hover {

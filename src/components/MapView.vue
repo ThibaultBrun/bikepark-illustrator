@@ -1222,7 +1222,7 @@ function tearDropEl(label: string, color: string): HTMLElement {
     <path d="M15 38 C15 38 2 25 2 14 A13 13 0 0 1 28 14 C28 25 15 38 15 38Z"
       fill="${color}" stroke="white" stroke-width="2.5" filter="url(#pin-shadow)"/>
     <text x="15" y="14" text-anchor="middle" dominant-baseline="middle"
-      fill="white" font-size="11" font-family="system-ui,sans-serif" font-weight="700"
+      fill="white" font-size="12" font-family="'Barlow Condensed','Inter',system-ui" font-weight="700"
       style="text-shadow:0 1px 2px rgba(0,0,0,0.3)">${label}</text>
   </svg>`
   el.style.cssText = 'cursor:default;pointer-events:none;line-height:0'
@@ -1292,6 +1292,12 @@ function refreshTrailPins() {
 
 // ── Modules 3D illustrés ──────────────────────────────────────────────────────
 
+// Contact-sol du sprite : l'ombre est à ~88% de la hauteur du viewBox.
+// anchor='bottom' + offset relève le sprite pour poser l'ombre sur le lngLat,
+// et transform-origin sur ce point garde la base fixe quand on tourne.
+const MODULE3D_GROUND_RATIO = 0.88
+const module3dOffset = (h: number): [number, number] => [0, Math.round(h * (1 - MODULE3D_GROUND_RATIO))]
+
 function buildModule3dEl(mod: Module3D): HTMLElement {
   const BASE_W = 90
   const BASE_H = 63
@@ -1303,7 +1309,7 @@ function buildModule3dEl(mod: Module3D): HTMLElement {
     width:${w}px;height:${h}px;cursor:grab;
     filter:drop-shadow(0 3px 6px rgba(20,30,70,0.38));
     transform:rotate(${mod.rotation}deg);
-    transform-origin:center center;
+    transform-origin:50% ${MODULE3D_GROUND_RATIO * 100}%;
     transition:transform 0.1s;
     pointer-events:auto;
   `
@@ -1335,6 +1341,7 @@ function refreshModule3dMarkers() {
       el.style.width = `${w}px`
       el.style.height = `${h}px`
       el.style.transform = `rotate(${mod.rotation}deg)`
+      existing.setOffset(module3dOffset(h))
       const svg = el.querySelector('svg')
       if (svg) {
         svg.style.width = `${w}px`
@@ -1342,7 +1349,7 @@ function refreshModule3dMarkers() {
       }
     } else {
       const el = buildModule3dEl(mod)
-      const marker = new maplibregl.Marker({ element: el, anchor: 'center', draggable: true })
+      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: module3dOffset(Math.round(63 * mod.scale)), draggable: true })
         .setLngLat(mod.lngLat)
         .addTo(map)
       marker.on('dragend', () => {

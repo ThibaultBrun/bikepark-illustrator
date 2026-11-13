@@ -109,7 +109,7 @@ async function copyLink() {
   margin: 0;
   font-size: 17px;
   color: #f0cd8a;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
 }
 
@@ -119,7 +119,7 @@ async function copyLink() {
   color: #b3a890;
   text-align: center;
   line-height: 1.5;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-display);
 }
 
 .qr-canvas {
@@ -169,7 +169,7 @@ async function copyLink() {
   font-size: 12px;
   color: #dcb469;
   text-decoration: none;
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-display);
 }
 
 .open-link:hover {

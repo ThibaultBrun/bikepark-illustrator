@@ -48,15 +48,17 @@ function fillRR(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, 
   ctx.restore()
 }
 
+const DISPLAY_FONT = '"Barlow Condensed", "Inter", system-ui, sans-serif'
+
 function badge(ctx: CanvasRenderingContext2D, x: number, y: number, value: string, label: string) {
   const W = 68, H = 56, R = 11
   fillRR(ctx, x, y, W, H, R, BADGE_BG)
   ctx.save()
   ctx.fillStyle = PAPER
   ctx.textAlign = 'center'
-  ctx.font = '700 22px "Poppins", system-ui, sans-serif'
+  ctx.font = `700 22px ${DISPLAY_FONT}`
   ctx.fillText(value, x + W / 2, y + 32)
-  ctx.font = '600 11px "Poppins", system-ui, sans-serif'
+  ctx.font = `600 11px ${DISPLAY_FONT}`
   ctx.fillStyle = '#c8b894'
   ctx.fillText(label, x + W / 2, y + H - 8)
   ctx.restore()
@@ -75,6 +77,15 @@ export type PosterInput = {
 }
 
 export async function composePoster(opts: PosterInput): Promise<Blob | null> {
+  // Ensure display font is loaded before canvas draw (critical for consistent output)
+  try {
+    await Promise.all([
+      document.fonts.load(`800 40px "Barlow Condensed"`),
+      document.fonts.load(`700 20px "Barlow Condensed"`),
+      document.fonts.load(`600 12px "Barlow Condensed"`),
+    ])
+  } catch { /* font load errors are non-fatal */ }
+
   const fmt = getFormatById(opts.formatId ?? 'a4p')
   const { w: W, h: H } = getCanvasSize(fmt)
   const isLandscape = fmt.rw > fmt.rh
@@ -136,7 +147,7 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   if (opts.region && !isLandscape) {
     ctx.save()
     ctx.fillStyle = accentCol
-    ctx.font = '600 11px "Poppins", system-ui, sans-serif'
+    ctx.font = `600 11px ${DISPLAY_FONT}`
     ctx.letterSpacing = '3px'
     ctx.fillText(opts.region.toUpperCase(), headerX, y + 15)
     ctx.restore()
@@ -146,7 +157,7 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   ctx.save()
   ctx.fillStyle = TEXT_DARK
   const nameSize = isLandscape ? 26 : 38
-  ctx.font = `800 ${nameSize}px "Poppins", system-ui, sans-serif`
+  ctx.font = `800 ${nameSize}px ${DISPLAY_FONT}`
   const rawName = opts.parkName || 'Mon Bikepark'
   const nameY = isLandscape ? y + 38 : y + (opts.region ? 56 : 46)
   ctx.fillText(rawName.toUpperCase(), headerX, nameY)
@@ -156,7 +167,7 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   if (opts.region && isLandscape) {
     ctx.save()
     ctx.fillStyle = accentCol
-    ctx.font = '600 10px "Poppins", system-ui, sans-serif'
+    ctx.font = `600 10px ${DISPLAY_FONT}`
     ctx.letterSpacing = '2px'
     ctx.fillText(opts.region.toUpperCase(), headerX, nameY - nameSize - 4)
     ctx.restore()
@@ -227,7 +238,7 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
 
     // label
     ctx.fillStyle = TEXT_DARK
-    ctx.font = '700 14px "Poppins", system-ui, sans-serif'
+    ctx.font = `700 14px ${DISPLAY_FONT}`
     ctx.textAlign = 'left'
     const lbl = DIFF_LABELS[diff] ?? diff
     ctx.fillText(lbl, lx + DOT_R * 2 + 7, dotY + 5)
@@ -244,7 +255,7 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   if (symLabels.length > 0) {
     ctx.save()
     let sx = W - PAD
-    ctx.font = '600 11px "Poppins", system-ui, sans-serif'
+    ctx.font = `600 11px ${DISPLAY_FONT}`
     for (let i = symLabels.length - 1; i >= 0; i--) {
       const lbl = symLabels[i]
       const tw = ctx.measureText(lbl).width
@@ -267,7 +278,7 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   // ---- FOOTER ----
   ctx.save()
   ctx.fillStyle = FOOTER_COL
-  ctx.font = '700 11px "Poppins", system-ui, sans-serif'
+  ctx.font = `700 11px ${DISPLAY_FONT}`
   ctx.textAlign = 'left'
   ctx.fillText('Carte générée avec PISTA · illustrator.pista.bike', PAD, y + 18)
   ctx.textAlign = 'right'
