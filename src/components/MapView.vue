@@ -277,6 +277,19 @@ function setBaseLayer(layer: 'cyclosm' | 'esri' | 'illustrated') {
   } else {
     setCanopyVisible(map, false)
   }
+
+  // Rafraîchir la couleur des tracés (difficulté en mode illustré).
+  for (const track of props.tracks) {
+    const lineId = `track-line-${track.id}`
+    const casingId = `track-casing-${track.id}`
+    if (map.getLayer(lineId)) {
+      map.setPaintProperty(lineId, 'line-color', effectiveTrackColor(track))
+    }
+    if (map.getLayer(casingId)) {
+      // Le casing garde sa teinte crème quelle que soit la difficulté.
+      map.setPaintProperty(casingId, 'line-color', 'rgba(255,252,245,0.92)')
+    }
+  }
 }
 
 // Régénère la canopée après un déplacement (debounce) pour couvrir les nouvelles zones.
@@ -406,13 +419,32 @@ function arrowSymbolForStyle(style: GpxTrack['style']) {
   return style === 'arrow-reverse' ? '\u2190' : '\u2192'
 }
 
+// En mode illustré, la couleur de la piste suit la difficulté (façon VMS).
+function effectiveTrackColor(track: GpxTrack): string {
+  if (baseLayer.value === 'illustrated') {
+    return PIN_COLORS[track.difficulty] ?? track.color
+  }
+  return track.color
+}
+
 function linePaintForTrack(track: GpxTrack): maplibregl.LinePaint {
   const dashArray = dashArrayForStyle(track.style)
 
   return {
-    'line-color': track.color,
+    'line-color': effectiveTrackColor(track),
     'line-width': track.width,
     'line-opacity': 0.95,
+    ...(dashArray ? { 'line-dasharray': dashArray } : {}),
+  }
+}
+
+// Liseré blanc/crème sous la piste (casing façon poster illustré).
+function lineCasingPaintForTrack(track: GpxTrack): maplibregl.LinePaint {
+  const dashArray = dashArrayForStyle(track.style)
+  return {
+    'line-color': 'rgba(255,252,245,0.92)',
+    'line-width': track.width + 3,
+    'line-opacity': 0.88,
     ...(dashArray ? { 'line-dasharray': dashArray } : {}),
   }
 }
@@ -835,9 +867,25 @@ function ensureTrackLayers(track: GpxTrack) {
 
   const sourceId = `track-source-${track.id}`
   const labelSourceId = `track-label-source-${track.id}`
+  const casingId = `track-casing-${track.id}`
   const lineId = `track-line-${track.id}`
   const labelId = `track-label-${track.id}`
   const arrowId = `track-arrow-${track.id}`
+
+  // Liseré casing (toujours sous la ligne principale)
+  if (!map.getLayer(casingId)) {
+    map.addLayer({
+      id: casingId,
+      type: 'line',
+      source: sourceId,
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+        visibility: track.visible ? 'visible' : 'none',
+      },
+      paint: lineCasingPaintForTrack(track),
+    })
+  }
 
   if (!map.getLayer(lineId)) {
     map.addLayer({
@@ -907,13 +955,34 @@ function rebuildTrackLineLayer(track: GpxTrack) {
   if (!map) return
 
   const sourceId = `track-source-${track.id}`
+  const casingId = `track-casing-${track.id}`
   const lineId = `track-line-${track.id}`
   const labelId = `track-label-${track.id}`
   const arrowId = `track-arrow-${track.id}`
 
+  // Rebuild casing first (doit rester sous la ligne)
+  if (map.getLayer(casingId)) {
+    map.removeLayer(casingId)
+  }
   if (map.getLayer(lineId)) {
     map.removeLayer(lineId)
   }
+
+  // Casing sous la ligne principale
+  map.addLayer(
+    {
+      id: casingId,
+      type: 'line',
+      source: sourceId,
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+        visibility: track.visible ? 'visible' : 'none',
+      },
+      paint: lineCasingPaintForTrack(track),
+    },
+    map.getLayer(arrowId) ? arrowId : map.getLayer(labelId) ? labelId : undefined,
+  )
 
   map.addLayer(
     {
@@ -1020,7 +1089,7 @@ function removeDeletedTrackLayers() {
   const style = map.getStyle()
 
   for (const layer of style.layers ?? []) {
-    const match = layer.id.match(/^track-(line|label|arrow)-(.+)$/)
+    const match = layer.id.match(/^track-(casing|line|label|arrow)-(.+)$/)
     if (!match) continue
 
     const trackId = match[2]
@@ -1563,6 +1632,9 @@ function setTrackLayersVisible(trackId: string, visible: boolean) {
   const track = props.tracks.find((t) => t.id === trackId)
   const lineVis = visible ? (track?.visible ? 'visible' : 'none') : 'none'
   const arrowVis = visible && track ? arrowLayerVisibility(track) : 'none'
+  if (map.getLayer(`track-casing-${trackId}`)) {
+    map.setLayoutProperty(`track-casing-${trackId}`, 'visibility', lineVis)
+  }
   if (map.getLayer(`track-line-${trackId}`)) {
     map.setLayoutProperty(`track-line-${trackId}`, 'visibility', lineVis)
   }
