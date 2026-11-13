@@ -304,12 +304,12 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { gpx } from '@mapbox/togeojson'
-import JSZip from 'jszip'
 import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
-import PosterPublicView from './components/PosterPublicView.vue'
-import PosterQrModal from './components/PosterQrModal.vue'
+import { defineAsyncComponent } from 'vue'
+const PosterPublicView = defineAsyncComponent(() => import('./components/PosterPublicView.vue'))
+const PosterQrModal = defineAsyncComponent(() => import('./components/PosterQrModal.vue'))
 import { useAuth } from './lib/useAuth'
 import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, getSpotSlug, setSpotVisibility, listUserProjects, loadProjectById, createProject, deleteUserProject, proposeTrailsToSpot, type ProjectListItem, type SubmitTrail, type VisibilityLevel } from './lib/projectsStore'
 import { hasSeenTour, startTour } from './lib/useTour'
@@ -1297,6 +1297,7 @@ function downloadBlob(blob: Blob, filename: string) {
 
 async function exportProjectZip() {
   try {
+    const { default: JSZip } = await import('jszip')
     const snapshot = createProjectSnapshot()
     const zip = new JSZip()
     zip.file(PROJECT_ARCHIVE_NAME, JSON.stringify(snapshot, null, 2))
@@ -1314,6 +1315,7 @@ async function exportProjectZip() {
 
 async function importProjectZip(file: File) {
   try {
+    const { default: JSZip } = await import('jszip')
     const zip = await JSZip.loadAsync(file)
     const projectEntry = zip.file(PROJECT_ARCHIVE_NAME)
 

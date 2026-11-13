@@ -1,5 +1,4 @@
-import { driver, type DriveStep } from 'driver.js'
-import 'driver.js/dist/driver.css'
+import type { DriveStep } from 'driver.js'
 import type { SidebarSectionId } from '../components/sidebar/types'
 
 /**
@@ -136,7 +135,12 @@ function buildSteps(isDesktop: boolean): TourStep[] {
   return steps
 }
 
-export function startTour(controls: TourControls) {
+export async function startTour(controls: TourControls) {
+  const [{ driver }, _css] = await Promise.all([
+    import('driver.js'),
+    import('driver.js/dist/driver.css'),
+  ])
+
   const isDesktop = window.matchMedia('(min-width: 961px)').matches
 
   // Sur mobile, le rail est masque : on ouvre le panneau pour que la barre
