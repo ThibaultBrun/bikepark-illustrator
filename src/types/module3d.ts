@@ -94,26 +94,39 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   <path d="M 20,54 Q 33,40 41,26 L 77,26 Q 83,40 90,54" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
 </svg>`,
 
-  // ── BERM : virage relevé ──────────────────────────────────────────────
+  // ── BERM : virage relevé, mur banqué en iso 3/4 ─────────────────────
+  // Viewer SW. Light NW. Le berm = mur de terre courbe qu'on longe penché.
+  // On voit la FACE AVANT du mur (quasi-verticale, face viewer) + la surface
+  // de roulage inclinée au-dessus. Rim doré trace le bord extérieur haut.
   berm: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
-  <!-- shadow -->
-  <ellipse cx="52" cy="62" rx="38" ry="6" fill="${SHAD}"/>
-  <!-- Banked wall = crescent sweeping left→right, inner (low) edge near viewer,
-       outer (high) rim banks away. Built from a bottom curve + top rim curve. -->
-  <!-- Base dirt mass (the whole banked turn body) -->
-  <path d="M 12,56 Q 30,66 54,64 Q 80,62 90,38 Q 86,28 74,30 Q 60,48 38,50 Q 22,51 14,50 Z" fill="${D_MID}"/>
-  <!-- Riding surface (tilted lit face, catches NW light) -->
-  <path d="M 14,50 Q 28,52 40,50 Q 62,47 76,30 Q 84,30 88,38 Q 78,56 56,59 Q 34,61 16,54 Z" fill="${D_LIT}"/>
-  <!-- Inner trough shadow (low near edge, far from light) -->
-  <path d="M 12,56 Q 30,64 52,62 Q 40,56 26,55 Q 18,55 12,56 Z" fill="${D_SHD}" opacity="0.7"/>
-  <!-- Compaction arcs following the bank curve (volume read) -->
-  <path d="M 18,52 Q 42,52 62,38 Q 70,32 78,31" stroke="${D_SHD}" stroke-width="0.9" fill="none" opacity="0.4"/>
-  <path d="M 20,55 Q 44,55 64,42 Q 73,36 82,35" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.32"/>
-  <path d="M 24,58 Q 46,58 66,46 Q 76,40 85,40" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.26"/>
-  <!-- Outer rim highlight (golden lip along the top of the bank) -->
-  <path d="M 14,50 Q 40,51 58,47 Q 74,42 88,38" stroke="${GOLD}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.9"/>
-  <!-- Rim bevel under-curve -->
-  <path d="M 16,52 Q 40,53 58,49 Q 74,44 86,41" stroke="${D_LIT}" stroke-width="1.1" fill="none" opacity="0.5"/>
+  <!-- ground shadow -->
+  <ellipse cx="52" cy="63" rx="38" ry="5" fill="${SHAD}"/>
+  <!-- === BASE ARRIÈRE du mur (sol derrière, ombre) === -->
+  <path d="M 20,55 Q 42,46 68,42 Q 80,42 88,54 L 88,62 Q 72,60 42,60 Z"
+        fill="${D_SHD}" opacity="0.55"/>
+  <!-- === FACE GAUCHE du mur (face viewer côté NW = éclairée D_LIT) === -->
+  <path d="M 10,60 Q 14,44 18,30 Q 26,16 44,14 Q 44,30 38,44 Q 30,52 18,56 Z"
+        fill="${D_LIT}"/>
+  <!-- === FACE DROITE du mur (tourne vers exit, D_MID) === -->
+  <path d="M 44,14 Q 62,16 76,30 Q 84,42 88,54 Q 72,48 56,46 Q 46,44 38,44 Q 44,30 44,14 Z"
+        fill="${D_MID}"/>
+  <!-- === SURFACE DE ROULAGE (dessus incliné, entre rim et gorge intérieure) === -->
+  <path d="M 18,56 Q 30,52 38,44 Q 46,44 56,46 Q 72,48 88,54 Q 82,46 72,38 Q 58,30 44,28 Q 30,30 20,40 Z"
+        fill="${D_LIT}" opacity="0.78"/>
+  <!-- Lignes de compaction terre sur la face du mur -->
+  <path d="M 22,46 Q 34,36 44,28 Q 56,32 68,38 Q 76,42 82,48"
+        stroke="${D_SHD}" stroke-width="0.9" fill="none" opacity="0.36"/>
+  <path d="M 18,52 Q 32,44 42,36 Q 54,38 66,42 Q 76,46 84,52"
+        stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.28"/>
+  <!-- Gorge intérieure : le bas de la zone de roulage -->
+  <path d="M 18,56 Q 36,52 56,50 Q 72,50 86,54"
+        stroke="${D_MID}" stroke-width="1.4" fill="none" opacity="0.5"/>
+  <!-- RIM DORÉ : lèvre extérieure haut du mur (trace tout le bord) -->
+  <path d="M 10,60 Q 14,42 18,28 Q 28,12 44,12 Q 62,12 76,28 Q 84,40 88,53"
+        stroke="${GOLD}" stroke-width="2.7" fill="none" stroke-linecap="round" opacity="0.93"/>
+  <!-- Highlight lit côté entrée (NW fort sur la face gauche) -->
+  <path d="M 10,60 Q 14,42 18,28 Q 26,16 40,13"
+        stroke="${D_LIT}" stroke-width="1.6" fill="none" opacity="0.52" stroke-linecap="round"/>
 </svg>`,
 
   // ── PUMPTRACK : série de rollers ──────────────────────────────────────
