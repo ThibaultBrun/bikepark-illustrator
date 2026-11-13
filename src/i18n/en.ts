@@ -150,6 +150,7 @@ export default {
     title: 'Export an image',
     desc: 'Capture the current map view (trails, symbols, relief) as PNG.',
     hint: 'Frame, zoom and tilt your map as you like, then export. Controls and editing handles are not included.',
+    format: 'Format',
     exportPoster: 'Export Poster',
     exportPng: '📷 Export as PNG',
   },

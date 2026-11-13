@@ -292,6 +292,7 @@ import {
   type UploadedSymbolPayload,
 } from './types/symbol'
 import { composePoster } from './lib/posterCompose'
+import type { PrintFormatId } from './lib/printFormats'
 
 const { t, locale } = useI18n()
 const { session: authSession, ready: authReady, user: authUser, isAdmin: authIsAdmin, signOut } = useAuth()
@@ -358,7 +359,7 @@ async function onExportImage() {
 }
 
 // Mode Poster : map blob → posterCompose → téléchargement PNG composé.
-async function onExportPoster() {
+async function onExportPoster(formatId: PrintFormatId = 'a4p') {
   showToast(t('toast.exportRendering'))
   const mapBlob = await mapViewRef.value?.exportImage()
   if (!mapBlob) {
@@ -373,6 +374,7 @@ async function onExportPoster() {
     tracks: tracks.value,
     symbols: symbols.value,
     symbolDefs: allDefs,
+    formatId,
   })
   if (!blob) {
     showToast(t('toast.exportImageFail'))

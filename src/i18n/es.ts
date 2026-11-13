@@ -150,6 +150,7 @@ export default {
     title: 'Exportar una imagen',
     desc: 'Captura la vista actual del mapa (pistas, símbolos, relieve) en PNG.',
     hint: 'Encuadra, amplía e inclina tu mapa como quieras, luego exporta. Los controles y marcadores de edición no se incluyen.',
+    format: 'Formato',
     exportPoster: 'Exportar Póster',
     exportPng: '📷 Exportar en PNG',
   },

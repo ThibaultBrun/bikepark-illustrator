@@ -1,7 +1,9 @@
-// Compositeur poster illustré : map blob → canvas A4-ish avec titre, légende, crédit.
+// Compositeur poster illustré : map blob → canvas avec titre, légende, crédit.
 import type { GpxTrack } from '../types/gpx'
 import type { MapSymbol, SymbolDefinition } from '../types/symbol'
 import { applyPaperGrain } from './paperTexture'
+import type { PrintFormatId } from './printFormats'
+import { getFormatById, getCanvasSize } from './printFormats'
 
 const PAPER = '#efe4cc'
 const BORDER = '#3a2d1c'
@@ -58,24 +60,26 @@ export type PosterInput = {
   tracks: GpxTrack[]
   symbols: MapSymbol[]
   symbolDefs: SymbolDefinition[]
+  formatId?: PrintFormatId
 }
 
 export async function composePoster(opts: PosterInput): Promise<Blob | null> {
-  const img = await createImageBitmap(opts.mapBlob)
-
-  const W = 1080
-  const PAD = 26
+  const fmt = getFormatById(opts.formatId ?? 'a4p')
+  const { w: W, h: H } = getCanvasSize(fmt)
+  const isLandscape = fmt.rw > fmt.rh
+  const PAD = isLandscape ? 20 : 26
   const INNER_W = W - 2 * PAD
   const FRAME_BORDER = 3
   const FRAME_RAD = 14
 
+  const HEADER_H = isLandscape ? 60 : 94
+  const LEGEND_H = isLandscape ? 48 : 60
+  const FOOTER_H = isLandscape ? 20 : 28
+  const mapReserved = PAD + HEADER_H + 10 + 10 + LEGEND_H + 8 + FOOTER_H + 20
   const mapW = INNER_W
-  const mapH = Math.min(Math.round(mapW * img.height / img.width), 920)
+  const mapH = H - mapReserved
 
-  const HEADER_H = 94
-  const LEGEND_H = 60
-  const FOOTER_H = 28
-  const H = PAD + HEADER_H + 10 + mapH + 10 + LEGEND_H + 8 + FOOTER_H + 20
+  const img = await createImageBitmap(opts.mapBlob)
 
   const canvas = document.createElement('canvas')
   canvas.width = W
@@ -90,7 +94,7 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   let y = PAD
 
   // Région (petite ligne au-dessus)
-  if (opts.region) {
+  if (opts.region && !isLandscape) {
     ctx.save()
     ctx.fillStyle = ACCENT
     ctx.font = '600 11px "Poppins", system-ui, sans-serif'
@@ -102,15 +106,27 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   // Nom du park
   ctx.save()
   ctx.fillStyle = TEXT_DARK
-  ctx.font = '800 38px "Poppins", system-ui, sans-serif'
+  const nameSize = isLandscape ? 26 : 38
+  ctx.font = `800 ${nameSize}px "Poppins", system-ui, sans-serif`
   const rawName = opts.parkName || 'Mon Bikepark'
-  ctx.fillText(rawName.toUpperCase(), PAD, y + (opts.region ? 56 : 46))
+  const nameY = isLandscape ? y + 38 : y + (opts.region ? 56 : 46)
+  ctx.fillText(rawName.toUpperCase(), PAD, nameY)
   ctx.restore()
+
+  // Région inline (paysage)
+  if (opts.region && isLandscape) {
+    ctx.save()
+    ctx.fillStyle = ACCENT
+    ctx.font = '600 10px "Poppins", system-ui, sans-serif'
+    ctx.letterSpacing = '2px'
+    ctx.fillText(opts.region.toUpperCase(), PAD, nameY - nameSize - 4)
+    ctx.restore()
+  }
 
   // Badges stat (droite)
   const nbTracks = opts.tracks.length
   const nbLevels = new Set(opts.tracks.map(t => t.difficulty)).size
-  const badgeY = y + 20
+  const badgeY = isLandscape ? y + 8 : y + 20
 
   if (nbTracks > 0) {
     badge(ctx, W - PAD - 68 * 2 - 10, badgeY, String(nbTracks), 'pistes')
@@ -125,10 +141,22 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   const frameX = PAD
   const frameY = y
 
+  // Cover-crop : remplir le cadre sans distorsion
+  const imgAspect = img.width / img.height
+  const frameAspect = mapW / mapH
+  let sx = 0, sy = 0, sw = img.width, sh = img.height
+  if (imgAspect > frameAspect) {
+    sw = Math.round(img.height * frameAspect)
+    sx = Math.round((img.width - sw) / 2)
+  } else {
+    sh = Math.round(img.width / frameAspect)
+    sy = Math.round((img.height - sh) / 2)
+  }
+
   ctx.save()
   rrPath(ctx, frameX, frameY, mapW, mapH, FRAME_RAD)
   ctx.clip()
-  ctx.drawImage(img, frameX, frameY, mapW, mapH)
+  ctx.drawImage(img, sx, sy, sw, sh, frameX, frameY, mapW, mapH)
   ctx.restore()
 
   ctx.save()

@@ -20,6 +20,7 @@ Mockup north-star validé visuellement : /tmp/illus-test/poster.png (cadre+titre
 
 ### 🔝 PRIORITÉ EXPRESSE THIBAULT (2026-11-13, à faire AVANT le reste)
 0. [ ] **Modules 3D sur la carte** (= tâche #9 remontée) : jumps / berms / pumptrack / tables illustrés en volume iso, posables et déplaçables sur la carte, sur zone asphalte/terre. Commencer SIMPLE et visible : un outil "ajouter un module" → sprite iso 2.5D (ombre portée) ancré à une position, type choisi dans une petite palette (saut, double, table, berm, pumptrack, north-shore). Cohérent DA poster (tan + bois + ombres golden hour). But : premier module posable dès le prochain réveil, on raffine ensuite. PUIS enchaîner sur le **catalogue** de modules (galerie de types réutilisables).
+   ⚠️ BARRE QUALITÉ VISUELLE (Thibault 2026-11-13) : ça doit être BEAU, PAS des blocs géométriques moches posés à l'arrache. Exigences : **north-shore / passerelles en lattes de bois** réellement dessinées (planches, montants, ombres entre lattes), **doubles & tables au galbe propre** (courbe de lip + table + landing crédibles, pas un triangle), matière bois/terre/métal cohérente, ombres portées alignées sur l'azimut golden hour, lumière douce. Niveau "illustration de parc pro façon visionmapsstudio". Itérer via screenshots jusqu'à ce que ce soit vendable. Si un type rend moche → ne pas le livrer tel quel, le retravailler ou poser la question.
 
 ### TOP (quick wins ROI max — à faire d'abord)
 1. [x] **Export HD réel** : `exportImage()` → `setPixelRatio(3)` + attente `idle`+`areTilesLoaded` + `canvas.toBlob`. Toast "Rendu HD…" pendant le calcul. Prérequis de tout le print. ✅ 2026-11-13
@@ -38,7 +39,7 @@ Mockup north-star validé visuellement : /tmp/illus-test/poster.png (cadre+titre
 11. [ ] Liseré massifs + transition forêt/clairière adoucie.
 
 ### Produit vendable
-12. [ ] Formats print + ratios (A4/A3/A2, insta, story) pilotant l'export HD (PrintPanel).
+12. [x] **Formats print + ratios** : sélecteur 4 formats dans PrintPanel (A4 Portrait, A4 Paysage, Carré 1:1, Story 9:16) ; `src/lib/printFormats.ts` ; posterCompose adapte le canvas + cover-crop map image + layout compact paysage. ✅ 2026-11-13
 13. [ ] Export PDF print-ready (jspdf) au bon format + marges + titre/légende.
 14. [ ] **Branding park** : upload logo + nom + couleur d'accent incrustés dans le cartouche (projectsStore). ⚠️ Thibault 2026-11-13 : **champs dédiés pré-remplis avec le nom du projet par défaut** — le titre poster / nom du park doivent se remplir tout seuls depuis le nom du projet courant (projectsStore.currentName), éditables ensuite. Pas de champ vide à remplir à la main.
 15. [ ] Page publique poster plein écran + download + **QR code** (panneau au départ). Base visibility/copyLink déjà là (ExportPanel).
@@ -73,4 +74,5 @@ Mockup north-star validé visuellement : /tmp/illus-test/poster.png (cadre+titre
 - 2026-11-13 : **Déclutter labels OSM** (BACKLOG #5) — suburb/neighbourhood virés du filtre label-village ; toggle "Labels OSM" dans MapPanel (showOsmLabels, 4 langues) + watcher MapView sur illus-label-village/peak/water. Build OK, déployé préprod.
 - 2026-11-13 : **Texture grain papier** (BACKLOG #6) — `paperTexture.ts` (PRNG mulberry32, bi-tonique crème/brun, opacité px variable) ; appliqué en multiply dans posterCompose (22%) + overlay CSS sur la carte live mode illustré (mix-blend-mode:multiply, 55%). Build OK, déployé préprod.
 - 2026-11-13 : **Lumière golden hour** (BACKLOG #7) — slider azimut soleil 0–359° MapPanel, cardinal affiché (N/NE/E/SE/S/SO/O/NO) ; hillshade-illumination-direction + couleurs mode illustré (highlight doré rgba(255,218,110), ombre froide rgba(42,52,90)) ; neutre sur les autres fonds. Build OK, déployé préprod.
-- 2026-11-13 : **Pastilles teardrop + sous-segments** (BACKLOG #8) — DOM markers SVG teardrop (path cercle+pointe, ombre portée feDropShadow, anchor=bottom, couleur difficulté, nbre blanc) ; multi-LineString → pins 15a/15b/15c… ; suppression GeoJSON circle layers. Build OK, déployé préprod. PROCHAINE TÂCHE = BACKLOG #12 Formats print + ratios.
+- 2026-11-13 : **Pastilles teardrop + sous-segments** (BACKLOG #8) — DOM markers SVG teardrop (path cercle+pointe, ombre portée feDropShadow, anchor=bottom, couleur difficulté, nbre blanc) ; multi-LineString → pins 15a/15b/15c… ; suppression GeoJSON circle layers. Build OK, déployé préprod.
+- 2026-11-13 : **Formats print + ratios** (BACKLOG #12) — sélecteur 4 formats dans PrintPanel (A4 Portrait/Paysage, Carré, Story 9:16) ; `printFormats.ts` ; posterCompose adapte canvas + cover-crop map image + layout paysage compact. Build OK, déployé préprod. PROCHAINE TÂCHE = BACKLOG #13 Export PDF.
