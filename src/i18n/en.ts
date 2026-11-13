@@ -170,6 +170,7 @@ export default {
     vis_unlisted: 'Spot set to unlisted 🔗',
     vis_public: 'Publication requested — awaiting review.',
     linkCopied: 'Link copied ✅',
+    exportRendering: 'HD rendering…',
     exportImageOk: 'Image exported ✅',
     exportImageFail: 'Image export failed.',
     needTrails: 'Draw or import at least one trail first.',

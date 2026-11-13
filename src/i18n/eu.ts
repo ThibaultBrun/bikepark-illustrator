@@ -171,6 +171,7 @@ export default {
     vis_unlisted: 'Spot-a zerrendatu gabe jarri da 🔗',
     vis_public: 'Argitalpena eskatuta — berrespenaren zain.',
     linkCopied: 'Esteka kopiatu da ✅',
+    exportRendering: 'HD errendatzen…',
     exportImageOk: 'Irudia esportatuta ✅',
     exportImageFail: 'Ezin izan da irudia esportatu.',
     needTrails: 'Marraztu edo inportatu pista bat lehenik.',

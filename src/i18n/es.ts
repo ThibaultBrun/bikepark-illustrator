@@ -170,6 +170,7 @@ export default {
     vis_unlisted: 'Spot puesto en no listado 🔗',
     vis_public: 'Publicación solicitada — pendiente de validación.',
     linkCopied: 'Enlace copiado ✅',
+    exportRendering: 'Renderizado HD en curso…',
     exportImageOk: 'Imagen exportada ✅',
     exportImageFail: 'Error al exportar la imagen.',
     needTrails: 'Dibuja o importa al menos una pista primero.',

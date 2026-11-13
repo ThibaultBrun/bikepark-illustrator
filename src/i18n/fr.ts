@@ -170,6 +170,7 @@ export default {
     vis_unlisted: 'Spot passé en désindexé 🔗',
     vis_public: 'Demande de publication envoyée — en attente de validation.',
     linkCopied: 'Lien copié ✅',
+    exportRendering: 'Rendu HD en cours…',
     exportImageOk: 'Image exportée ✅',
     exportImageFail: 'Échec de l\'export de l\'image.',
     needTrails: 'Dessine ou importe au moins une piste d\'abord.',

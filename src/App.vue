@@ -326,26 +326,29 @@ const mapViewRef = ref<{
   setEditorMode: (mode: 'draw' | 'edit') => void
   editorUndo: () => void
   flyTo: (lng: number, lat: number, zoom?: number) => void
-  exportImage: () => string | null
+  exportImage: (scale?: number) => Promise<Blob | null>
 } | null>(null)
 
 function onLocate(payload: { lng: number; lat: number; label: string }) {
   mapViewRef.value?.flyTo(payload.lng, payload.lat, 14)
 }
 
-// Export image : capture la vue carte actuelle et la télécharge en PNG.
-function onExportImage() {
-  const url = mapViewRef.value?.exportImage()
-  if (!url) {
+// Export HD : setPixelRatio×3 → idle → toBlob → téléchargement.
+async function onExportImage() {
+  showToast(t('toast.exportRendering'))
+  const blob = await mapViewRef.value?.exportImage()
+  if (!blob) {
     showToast(t('toast.exportImageFail'))
     return
   }
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `${sanitizeProjectName(projectName.value) || 'bikepark'}.png`
   document.body.appendChild(a)
   a.click()
   a.remove()
+  URL.revokeObjectURL(url)
   showToast(t('toast.exportImageOk'))
 }
 const editorMode = ref<'idle' | 'draw' | 'edit'>('idle')

@@ -1993,16 +1993,36 @@ function flyTo(lng: number, lat: number, zoom = 14) {
   map.flyTo({ center: [lng, lat], zoom, essential: true })
 }
 
-// Capture la vue carte actuelle (tracés + symboles + labels + relief) en PNG.
-// Les contrôles et markers d'édition sont du DOM hors canvas → image propre.
-function exportImage(): string | null {
+// Capture la vue carte en PNG haute résolution (scale × résolution écran).
+// setPixelRatio augmente temporairement la résolution rendue par MapLibre,
+// on attend idle+areTilesLoaded pour éviter les trous de tuiles.
+async function exportImage(scale = 3): Promise<Blob | null> {
   if (!map) return null
+  const originalRatio = window.devicePixelRatio ?? 1
   try {
-    map.triggerRepaint()
-    return map.getCanvas().toDataURL('image/png')
+    map.setPixelRatio(scale)
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('export timeout')), 15_000)
+      const check = () => {
+        if (map!.areTilesLoaded()) {
+          clearTimeout(timeout)
+          resolve()
+        } else {
+          map!.once('idle', check)
+        }
+      }
+      map!.once('idle', check)
+      map!.triggerRepaint()
+    })
+    return new Promise<Blob | null>((resolve) => {
+      map!.getCanvas().toBlob((blob) => resolve(blob), 'image/png')
+    })
   } catch (e) {
-    console.error('[export] image', e)
+    console.error('[export] image HD', e)
     return null
+  } finally {
+    map.setPixelRatio(originalRatio)
+    map.triggerRepaint()
   }
 }
 
