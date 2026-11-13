@@ -1,6 +1,9 @@
 <template>
+  <!-- Embed widget view — no auth required, iframe-safe -->
+  <EmbedView v-if="embedPosterId" :project-id="embedPosterId" />
+
   <!-- Public poster view — no auth required -->
-  <PosterPublicView v-if="publicPosterId" :project-id="publicPosterId" />
+  <PosterPublicView v-else-if="publicPosterId" :project-id="publicPosterId" />
 
   <template v-else>
   <div v-if="!authReady" class="auth-loading">{{ t('loading') }}</div>
@@ -309,6 +312,7 @@ import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
 import { defineAsyncComponent } from 'vue'
 const PosterPublicView = defineAsyncComponent(() => import('./components/PosterPublicView.vue'))
+const EmbedView = defineAsyncComponent(() => import('./components/EmbedView.vue'))
 const PosterQrModal = defineAsyncComponent(() => import('./components/PosterQrModal.vue'))
 import { useAuth } from './lib/useAuth'
 import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, getSpotSlug, setSpotVisibility, listUserProjects, loadProjectById, createProject, deleteUserProject, proposeTrailsToSpot, type ProjectListItem, type SubmitTrail, type VisibilityLevel } from './lib/projectsStore'
@@ -348,6 +352,10 @@ const { session: authSession, ready: authReady, user: authUser, isAdmin: authIsA
 // Public poster routing: /poster/:id → no-auth viewer
 const _pathParts = window.location.pathname.match(/^\/poster\/([^/?#]+)/)
 const publicPosterId = _pathParts ? _pathParts[1] : null
+
+// Embed widget routing: /embed/:id → iframe-ready minimal view
+const _embedParts = window.location.pathname.match(/^\/embed\/([^/?#]+)/)
+const embedPosterId = _embedParts ? _embedParts[1] : null
 
 // QR modal après publication d'un poster en ligne
 const posterQrUrl = ref<string | null>(null)

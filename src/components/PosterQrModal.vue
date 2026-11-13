@@ -16,12 +16,24 @@
       </div>
 
       <a :href="url" target="_blank" class="open-link">Ouvrir le poster ↗</a>
+
+      <!-- Embed code section -->
+      <div class="embed-section">
+        <p class="embed-title">📎 Intégrer sur votre site</p>
+        <div class="link-row">
+          <input :value="embedCode" readonly class="link-input embed-code-input" @focus="($event.target as HTMLInputElement).select()" />
+          <button type="button" class="copy-btn" @click="copyEmbed">
+            {{ copiedEmbed ? '✓ Copié' : '</>' }}
+          </button>
+        </div>
+        <p class="embed-hint">Copiez ce code HTML dans votre page web ou CMS.</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import QRCode from 'qrcode'
 
 const props = defineProps<{ url: string }>()
@@ -30,6 +42,12 @@ defineEmits<{ (e: 'close'): void }>()
 const qrCanvas = ref<HTMLCanvasElement | null>(null)
 const linkInput = ref<HTMLInputElement | null>(null)
 const copied = ref(false)
+const copiedEmbed = ref(false)
+
+const embedUrl = computed(() => props.url.replace('/poster/', '/embed/'))
+const embedCode = computed(() =>
+  `<iframe src="${embedUrl.value}" width="600" height="420" style="border:none;border-radius:12px;" allowfullscreen loading="lazy"></iframe>`
+)
 
 onMounted(async () => {
   if (qrCanvas.value) {
@@ -55,6 +73,17 @@ async function copyLink() {
     document.execCommand('copy')
     copied.value = true
     setTimeout(() => { copied.value = false }, 2000)
+  }
+}
+
+async function copyEmbed() {
+  try {
+    await navigator.clipboard.writeText(embedCode.value)
+    copiedEmbed.value = true
+    setTimeout(() => { copiedEmbed.value = false }, 2000)
+  } catch {
+    copiedEmbed.value = true
+    setTimeout(() => { copiedEmbed.value = false }, 2000)
   }
 }
 </script>
@@ -174,5 +203,34 @@ async function copyLink() {
 
 .open-link:hover {
   text-decoration: underline;
+}
+
+.embed-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(220, 180, 105, 0.15);
+}
+
+.embed-title {
+  margin: 0;
+  font-size: 12px;
+  color: #b3a890;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.embed-code-input {
+  font-size: 9.5px !important;
+}
+
+.embed-hint {
+  margin: 0;
+  font-size: 10.5px;
+  color: #7a6e5c;
+  font-family: var(--font-display);
+  line-height: 1.4;
 }
 </style>
