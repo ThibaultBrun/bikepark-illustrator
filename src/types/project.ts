@@ -1,6 +1,7 @@
 import type { MapSettings } from '../components/sidebar/map-settings'
 import type { GpxTrack } from './gpx'
 import type { MapSymbol, SymbolDefinition } from './symbol'
+import type { Module3D } from './module3d'
 
 export const PROJECT_ARCHIVE_NAME = 'bikepark-project.json'
 export const PROJECT_STORAGE_KEY = 'bikepark-illustrator/project'
@@ -28,4 +29,6 @@ export type BikeparkProject = {
   /** Métadonnées du spot proposé (région optionnelle, type) */
   spotRegion?: string
   spotType?: SpotType
+  /** Modules 3D illustrés posés sur la carte */
+  modules3d?: Module3D[]
 }

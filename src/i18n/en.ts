@@ -24,6 +24,7 @@ export default {
   sections: {
     track: { title: 'Trails', desc: 'Import and style GPX tracks.' },
     symbol: { title: 'Symbols', desc: 'Prepare icons and markers.' },
+    module3d: { title: '3D Features', desc: 'Place illustrated jumps, berms and north-shore.' },
     map: { title: 'Map', desc: 'Adjust the basemap and visual options.' },
     locate: { title: 'Locate', desc: 'Search for an address or place.' },
     export: { title: 'Export', desc: 'Prepare final outputs and exports.' },
@@ -160,6 +161,11 @@ export default {
   reposition: {
     add: '📍 Tap the map to add the symbol',
     move: '📍 Tap the map to move the symbol',
+  },
+
+  module3d: {
+    placeHint: '📍 Tap the map to place the feature',
+    moveHint: '📍 Tap the map to move the feature',
   },
 
   toast: {

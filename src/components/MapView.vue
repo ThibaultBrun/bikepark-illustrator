@@ -64,6 +64,7 @@ import type { GpxTrack } from '../types/gpx'
 import type { MapCameraState } from '../types/project'
 import type { MapLabelFont } from './sidebar/map-settings'
 import { getSymbolDefinition, getSymbolSvg, type MapSymbol, type SymbolDefinition, type SymbolId } from '../types/symbol'
+import { MODULE3D_SVG, type Module3D, type Module3DType } from '../types/module3d'
 import {
   illustratedLayers,
   OFM_GLYPHS,
@@ -96,11 +97,15 @@ const props = withDefaults(
     cameraRestoreKey?: number
     fitRequest?: { type: 'project' | 'track'; trackId?: string; nonce: number } | null
     renderSessionId?: number
+    modules3d?: Module3D[]
+    pendingModule3dType?: Module3DType | null
+    repositionModule3dId?: string | null
   }>(),
   {
     tracks: () => [],
     symbols: () => [],
     customSymbols: () => [],
+    modules3d: () => [],
     draggingSymbolType: null,
     dragPointer: () => ({ x: 0, y: 0 }),
     terrainExaggeration: 1.4,
@@ -112,6 +117,8 @@ const props = withDefaults(
     showOsmLabels: true,
     repositionSymbolId: null,
     pendingAddSymbolType: null,
+    pendingModule3dType: null,
+    repositionModule3dId: null,
     savedCamera: null,
     cameraRestoreKey: 0,
     fitRequest: null,
@@ -140,6 +147,9 @@ const emit = defineEmits<{
     loaded: number
     total: number
   }): void
+  (e: 'add-module3d', payload: { type: Module3DType; position: [number, number] }): void
+  (e: 'update-module3d-position', payload: { id: string; position: [number, number] }): void
+  (e: 'module3d-repositioned'): void
 }>()
 
 const mapContainer = ref<HTMLDivElement | null>(null)
@@ -176,6 +186,7 @@ let mapResizeObserver: ResizeObserver | null = null
 let resizeFrameId = 0
 const symbolImageIds = new Set<string>()
 const trailPinMarkers = new Map<string, maplibregl.Marker>()
+const module3dMarkers = new Map<string, maplibregl.Marker>()
 const symbolPositionOverrides = new Map<string, [number, number]>()
 const emittedRenderStages = new Set<string>()
 
@@ -1279,6 +1290,78 @@ function refreshTrailPins() {
   }
 }
 
+// ── Modules 3D illustrés ──────────────────────────────────────────────────────
+
+function buildModule3dEl(mod: Module3D): HTMLElement {
+  const BASE_W = 90
+  const BASE_H = 63
+  const w = Math.round(BASE_W * mod.scale)
+  const h = Math.round(BASE_H * mod.scale)
+  const el = document.createElement('div')
+  el.className = 'module3d-marker'
+  el.style.cssText = `
+    width:${w}px;height:${h}px;cursor:grab;
+    filter:drop-shadow(0 3px 6px rgba(20,30,70,0.38));
+    transform:rotate(${mod.rotation}deg);
+    transform-origin:center center;
+    transition:transform 0.1s;
+    pointer-events:auto;
+  `
+  el.innerHTML = MODULE3D_SVG[mod.type]
+  const svg = el.querySelector('svg')
+  if (svg) {
+    svg.style.width = `${w}px`
+    svg.style.height = `${h}px`
+    svg.style.display = 'block'
+  }
+  return el
+}
+
+function refreshModule3dMarkers() {
+  if (!map) return
+  const usedIds = new Set<string>()
+
+  for (const mod of props.modules3d) {
+    usedIds.add(mod.id)
+    const existing = module3dMarkers.get(mod.id)
+    if (existing) {
+      existing.setLngLat(mod.lngLat)
+      // Update element style (scale/rotation may have changed)
+      const el = existing.getElement()
+      const BASE_W = 90
+      const BASE_H = 63
+      const w = Math.round(BASE_W * mod.scale)
+      const h = Math.round(BASE_H * mod.scale)
+      el.style.width = `${w}px`
+      el.style.height = `${h}px`
+      el.style.transform = `rotate(${mod.rotation}deg)`
+      const svg = el.querySelector('svg')
+      if (svg) {
+        svg.style.width = `${w}px`
+        svg.style.height = `${h}px`
+      }
+    } else {
+      const el = buildModule3dEl(mod)
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center', draggable: true })
+        .setLngLat(mod.lngLat)
+        .addTo(map)
+      marker.on('dragend', () => {
+        const { lng, lat } = marker.getLngLat()
+        emit('update-module3d-position', { id: mod.id, position: [lng, lat] })
+      })
+      module3dMarkers.set(mod.id, marker)
+    }
+  }
+
+  // Remove deleted markers
+  for (const [id, marker] of module3dMarkers) {
+    if (!usedIds.has(id)) {
+      marker.remove()
+      module3dMarkers.delete(id)
+    }
+  }
+}
+
 function emitRenderStage(stage: 'tracks' | 'symbols') {
   if (props.renderSessionId <= 0) return
   const stageKey = `${props.renderSessionId}:${stage}`
@@ -1461,6 +1544,25 @@ function setupPlacedSymbolInteractions() {
         symbolId: props.pendingAddSymbolType,
         position: [e.lngLat.lng, e.lngLat.lat],
       })
+      return
+    }
+
+    // Mode ajout module 3D : le prochain clic pose le module ici.
+    if (props.pendingModule3dType) {
+      emit('add-module3d', {
+        type: props.pendingModule3dType,
+        position: [e.lngLat.lng, e.lngLat.lat],
+      })
+      return
+    }
+
+    // Mode repositionnement module 3D : le prochain clic déplace le module.
+    if (props.repositionModule3dId) {
+      emit('update-module3d-position', {
+        id: props.repositionModule3dId,
+        position: [e.lngLat.lng, e.lngLat.lat],
+      })
+      emit('module3d-repositioned')
       return
     }
 
@@ -2243,6 +2345,7 @@ onMounted(() => {
     setBaseLayer(baseLayer.value)
     refreshTracks()
     refreshSymbols()
+    refreshModule3dMarkers()
     setupPlacedSymbolInteractions()
     setupLabelDragging()
     setupCameraTracking()
@@ -2304,6 +2407,14 @@ watch(
   () => {
     refreshSymbols()
     queueMapRenderCompletion()
+  },
+  { deep: true, flush: 'post' },
+)
+
+watch(
+  () => props.modules3d,
+  () => {
+    refreshModule3dMarkers()
   },
   { deep: true, flush: 'post' },
 )
@@ -2555,6 +2666,9 @@ onBeforeUnmount(() => {
       map.dragPan.enable()
     }
   }
+
+  for (const marker of module3dMarkers.values()) marker.remove()
+  module3dMarkers.clear()
 
   map?.remove()
   map = null

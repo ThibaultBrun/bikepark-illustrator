@@ -24,6 +24,7 @@ export default {
   sections: {
     track: { title: 'Pistes', desc: 'Importer et styliser les traces GPX.' },
     symbol: { title: 'Symboles', desc: 'Préparer les icônes et marqueurs.' },
+    module3d: { title: 'Modules 3D', desc: 'Poser sauts, berms et north-shore illustrés.' },
     map: { title: 'Carte', desc: 'Régler le fond de carte et les options visuelles.' },
     locate: { title: 'Localiser', desc: 'Rechercher une adresse ou un lieu.' },
     export: { title: 'Export', desc: 'Préparer les sorties et exports finaux.' },
@@ -160,6 +161,11 @@ export default {
   reposition: {
     add: '📍 Touche la carte pour ajouter le symbole',
     move: '📍 Touche la carte pour déplacer le symbole',
+  },
+
+  module3d: {
+    placeHint: '📍 Touche la carte pour poser le module',
+    moveHint: '📍 Touche la carte pour déplacer le module',
   },
 
   toast: {

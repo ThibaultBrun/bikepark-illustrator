@@ -11,6 +11,8 @@
       :tracks="tracks"
       :symbols="symbols"
       :custom-symbols="customSymbols"
+      :modules3d="modules3d"
+      :pending-module3d-type="pendingModule3dType"
       :selected-symbol-id="selectedSymbolId"
       :predefined-colors="predefinedColors"
       :map-settings="mapSettings"
@@ -51,6 +53,11 @@
       @remove-symbol="onRemoveSymbol"
       @start-move-symbol="onStartMoveSymbol"
       @pick-symbol="onPickSymbol"
+      @pick-module3d="onPickModule3d"
+      @remove-module3d="onRemoveModule3d"
+      @move-module3d="onMoveModule3d"
+      @update-module3d-scale="onUpdateModule3dScale"
+      @update-module3d-rotation="onUpdateModule3dRotation"
       @upload-svg="onUploadSvg"
       @update-symbol-size="onUpdateSymbolSize"
       @update-symbol-transform="onUpdateSymbolTransform"
@@ -78,11 +85,17 @@
         :show-osm-labels="mapSettings.showOsmLabels"
         :reposition-symbol-id="repositionSymbolId"
         :pending-add-symbol-type="pendingAddSymbolType"
+        :modules3d="modules3d"
+        :pending-module3d-type="pendingModule3dType"
+        :reposition-module3d-id="repositionModule3dId"
         :saved-camera="mapCamera"
         :camera-restore-key="cameraRestoreKey"
         :fit-request="fitRequest"
         :render-session-id="activeProjectRenderSessionId"
         @add-symbol="onAddSymbol"
+        @add-module3d="onAddModule3d"
+        @update-module3d-position="onUpdateModule3dPosition"
+        @module3d-repositioned="onModule3dRepositioned"
         @complete-symbol-drag="onCompleteSymbolDrag"
         @project-render-progress="onProjectRenderProgress"
         @remove-symbol="onRemoveSymbol"
@@ -241,6 +254,19 @@
       </button>
     </div>
 
+    <div v-if="pendingModule3dType || repositionModule3dId" class="symbol-action-bar">
+      <span class="symbol-action-bar__label">
+        {{ pendingModule3dType ? t('module3d.placeHint') : t('module3d.moveHint') }}
+      </span>
+      <button
+        type="button"
+        class="symbol-action-bar__btn"
+        @click="pendingModule3dType = null; repositionModule3dId = null"
+      >
+        {{ t('common.cancel') }}
+      </button>
+    </div>
+
     <div
       v-if="draggingSymbolId && dragPreview"
       class="symbol-drag-preview"
@@ -293,6 +319,7 @@ import {
 } from './types/symbol'
 import { composePoster } from './lib/posterCompose'
 import type { PrintFormatId } from './lib/printFormats'
+import type { Module3D, Module3DType } from './types/module3d'
 
 const { t, locale } = useI18n()
 const { session: authSession, ready: authReady, user: authUser, isAdmin: authIsAdmin, signOut } = useAuth()
@@ -314,7 +341,7 @@ const predefinedColors = [
 ]
 
 const sidebarSections = computed<SidebarSection[]>(() =>
-  (['track', 'symbol', 'map', 'locate', 'print', 'export', 'help'] as const).map((id) => ({
+  (['track', 'symbol', 'module3d', 'map', 'locate', 'print', 'export', 'help'] as const).map((id) => ({
     id,
     icon: id.charAt(0).toUpperCase(),
     title: t(`sections.${id}.title`),
@@ -415,6 +442,9 @@ const draggingSymbolId = ref<SymbolId | null>(null)
 const selectedSymbolId = ref<string | null>(null)
 const repositionSymbolId = ref<string | null>(null)
 const pendingAddSymbolType = ref<SymbolId | null>(null)
+const modules3d = ref<Module3D[]>([])
+const pendingModule3dType = ref<Module3DType | null>(null)
+const repositionModule3dId = ref<string | null>(null)
 const dragPointer = ref({ x: 0, y: 0 })
 const fitRequest = ref<{ type: 'project' | 'track'; trackId?: string; nonce: number } | null>(null)
 const isSidebarOpen = ref(false)
@@ -853,6 +883,7 @@ function createProjectSnapshot(): BikeparkProject {
     tracks: JSON.parse(JSON.stringify(tracks.value)) as GpxTrack[],
     symbols: JSON.parse(JSON.stringify(symbols.value)) as MapSymbol[],
     customSymbols: JSON.parse(JSON.stringify(customSymbols.value)) as SymbolDefinition[],
+    modules3d: JSON.parse(JSON.stringify(modules3d.value)) as Module3D[],
     mapSettings: JSON.parse(JSON.stringify(mapSettings.value)) as MapSettings,
     mapCamera: JSON.parse(JSON.stringify(mapCamera.value)) as MapCameraState | null,
     spotRegion: spotRegion.value,
@@ -874,6 +905,7 @@ function normalizeProject(raw: Partial<BikeparkProject> | null | undefined): Bik
       : [],
     symbols: Array.isArray(raw?.symbols) ? raw.symbols : [],
     customSymbols: Array.isArray(raw?.customSymbols) ? raw.customSymbols : [],
+    modules3d: Array.isArray(raw?.modules3d) ? raw.modules3d : [],
     mapSettings: {
       terrain: Number(raw?.mapSettings?.terrain ?? 1.4),
       hillshade: Number(raw?.mapSettings?.hillshade ?? 100),
@@ -914,6 +946,7 @@ function applyProject(project: BikeparkProject) {
   updateProjectLoadStep('customSymbols', 'active')
   customSymbols.value = project.customSymbols
   updateProjectLoadStep('customSymbols', 'done')
+  modules3d.value = project.modules3d ?? []
   updateProjectLoadStep('settings', 'active')
   mapSettings.value = project.mapSettings
   updateProjectLoadStep('settings', 'done')
@@ -1042,6 +1075,7 @@ function resetToEmpty() {
   tracks.value = []
   symbols.value = []
   customSymbols.value = []
+  modules3d.value = []
   mapCamera.value = null
   projectName.value = 'Mon bikepark'
   spotRegion.value = ''
@@ -1078,6 +1112,7 @@ async function onNewProject() {
   tracks.value = []
   symbols.value = []
   customSymbols.value = []
+  modules3d.value = []
   mapCamera.value = null
   projectName.value = 'Mon bikepark'
   hasStartedWelcome.value = true
@@ -1332,6 +1367,56 @@ function onSymbolRepositioned() {
   repositionSymbolId.value = null
 }
 
+// ── Modules 3D ──────────────────────────────────────────────────────────────
+
+function onPickModule3d(type: Module3DType) {
+  pendingModule3dType.value = type
+  repositionModule3dId.value = null
+  pendingAddSymbolType.value = null
+  repositionSymbolId.value = null
+  if (isMobileViewport()) isSidebarOpen.value = false
+}
+
+function onAddModule3d(payload: { type: Module3DType; position: [number, number] }) {
+  modules3d.value.push({
+    id: uid(),
+    type: payload.type,
+    lngLat: payload.position,
+    rotation: 0,
+    scale: 1,
+  })
+  pendingModule3dType.value = null
+}
+
+function onRemoveModule3d(id: string) {
+  modules3d.value = modules3d.value.filter((m) => m.id !== id)
+}
+
+function onMoveModule3d(id: string) {
+  repositionModule3dId.value = id
+  pendingModule3dType.value = null
+  if (isMobileViewport()) isSidebarOpen.value = false
+}
+
+function onModule3dRepositioned() {
+  repositionModule3dId.value = null
+}
+
+function onUpdateModule3dPosition(payload: { id: string; position: [number, number] }) {
+  const mod = modules3d.value.find((m) => m.id === payload.id)
+  if (mod) mod.lngLat = payload.position
+}
+
+function onUpdateModule3dScale(payload: { id: string; scale: number }) {
+  const mod = modules3d.value.find((m) => m.id === payload.id)
+  if (mod) mod.scale = payload.scale
+}
+
+function onUpdateModule3dRotation(payload: { id: string; rotation: number }) {
+  const mod = modules3d.value.find((m) => m.id === payload.id)
+  if (mod) mod.rotation = payload.rotation
+}
+
 function onSelectSymbol(payload: { symbolId: string | null }) {
   selectedSymbolId.value = payload.symbolId
 
@@ -1510,7 +1595,7 @@ watch(
 )
 
 watch(
-  [tracks, symbols, customSymbols, mapSettings, hasStartedWelcome, projectName],
+  [tracks, symbols, customSymbols, modules3d, mapSettings, hasStartedWelcome, projectName],
   () => {
     queueProjectSave()
   },

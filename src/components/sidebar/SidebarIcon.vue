@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Blend, CircleHelp, Download, Map, Route, Shapes, Mountain, MapPin, Camera } from 'lucide-vue-next'
+import { Blend, CircleHelp, Download, Map, Route, Shapes, Mountain, MapPin, Camera, Layers } from 'lucide-vue-next'
 import type { SidebarSectionId } from './types'
 
 type SidebarIconName = SidebarSectionId | 'blend' | 'mountain'
@@ -16,6 +16,7 @@ const props = defineProps<{
 const iconMap = {
   track: Route,
   symbol: Shapes,
+  module3d: Layers,
   map: Map,
   export: Download,
   print: Camera,

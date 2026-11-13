@@ -100,6 +100,16 @@
         @start-move-symbol="$emit('start-move-symbol', $event)"
         @pick-symbol="$emit('pick-symbol', $event)"
       />
+      <Module3DPanel
+        v-else-if="activeSection === 'module3d'"
+        :placed-modules="modules3d ?? []"
+        :pending-type="pendingModule3dType"
+        @pick-module3d="$emit('pick-module3d', $event)"
+        @remove-module3d="$emit('remove-module3d', $event)"
+        @move-module3d="$emit('move-module3d', $event)"
+        @update-module3d-scale="$emit('update-module3d-scale', $event)"
+        @update-module3d-rotation="$emit('update-module3d-rotation', $event)"
+      />
       <MapPanel
         v-else-if="activeSection === 'map'"
         :settings="mapSettings"
@@ -161,11 +171,13 @@ import LocatePanel from './LocatePanel.vue'
 import PrintPanel from './PrintPanel.vue'
 import HelpPanel from './HelpPanel.vue'
 import MapPanel from './MapPanel.vue'
+import Module3DPanel from './Module3DPanel.vue'
 import type { MapSettings } from './map-settings'
 import SidebarIcon from './SidebarIcon.vue'
 import SymbolPanel from './SymbolPanel.vue'
 import TrackPanel from './TrackPanel.vue'
 import type { SidebarSection, SidebarSectionId } from './types'
+import type { Module3D, Module3DType } from '../../types/module3d'
 
 const props = defineProps<{
   isOpen: boolean
@@ -186,6 +198,8 @@ const props = defineProps<{
   projects: { id: string; title: string | null; spotId: string | null }[]
   currentProjectId: string | null
   isAdmin: boolean
+  modules3d?: Module3D[]
+  pendingModule3dType?: Module3DType | null
 }>()
 
 defineEmits<{
@@ -235,6 +249,11 @@ defineEmits<{
   (e: 'export-zip'): void
   (e: 'import-zip', file: File): void
   (e: 'start-tour'): void
+  (e: 'pick-module3d', type: Module3DType): void
+  (e: 'remove-module3d', id: string): void
+  (e: 'move-module3d', id: string): void
+  (e: 'update-module3d-scale', payload: { id: string; scale: number }): void
+  (e: 'update-module3d-rotation', payload: { id: string; rotation: number }): void
 }>()
 
 const activeSectionMeta = computed(() => {

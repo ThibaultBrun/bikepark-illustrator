@@ -25,6 +25,7 @@ export default {
   sections: {
     track: { title: 'Pistak', desc: 'Inportatu eta estilizatu GPX ibilbideak.' },
     symbol: { title: 'Sinboloak', desc: 'Prestatu ikonoak eta markatzaileak.' },
+    module3d: { title: '3D moduluak', desc: 'Jarri jauziak, berm-ak eta north-shore ilustratuak.' },
     map: { title: 'Mapa', desc: 'Doitu oinarri-mapa eta ikus-aukerak.' },
     locate: { title: 'Kokatu', desc: 'Bilatu helbide edo leku bat.' },
     export: { title: 'Esportatu', desc: 'Prestatu azken irteerak eta esportazioak.' },
@@ -161,6 +162,11 @@ export default {
   reposition: {
     add: '📍 Sakatu mapan sinboloa gehitzeko',
     move: '📍 Sakatu mapan sinboloa mugitzeko',
+  },
+
+  module3d: {
+    placeHint: '📍 Sakatu mapan modulua jartzeko',
+    moveHint: '📍 Sakatu mapan modulua mugitzeko',
   },
 
   toast: {
