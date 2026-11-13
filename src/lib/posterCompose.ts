@@ -1,6 +1,7 @@
 // Compositeur poster illustré : map blob → canvas A4-ish avec titre, légende, crédit.
 import type { GpxTrack } from '../types/gpx'
 import type { MapSymbol, SymbolDefinition } from '../types/symbol'
+import { applyPaperGrain } from './paperTexture'
 
 const PAPER = '#efe4cc'
 const BORDER = '#3a2d1c'
@@ -207,6 +208,9 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   ctx.restore()
 
   img.close()
+
+  // Texture grain papier en multiply — donne un toucher sérigraphie/print chaud.
+  await applyPaperGrain(ctx, W, H, 0.22)
 
   return new Promise<Blob | null>(resolve => {
     canvas.toBlob(blob => resolve(blob), 'image/png')

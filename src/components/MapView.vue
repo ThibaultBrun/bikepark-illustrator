@@ -19,6 +19,14 @@
       <Trash2 class="trash-dropzone-icon" aria-hidden="true" />
     </div>
 
+    <!-- Texture grain papier en mode Illustré : mix-blend-mode multiply, pointer-events none -->
+    <div
+      v-if="baseLayer === 'illustrated'"
+      class="paper-grain-overlay"
+      :style="{ backgroundImage: `url(${paperTileUrl})` }"
+      aria-hidden="true"
+    ></div>
+
     <div class="baselayer-switcher">
       <button
         type="button"
@@ -64,6 +72,9 @@ import {
   ILLUS_PREFIX,
 } from '../lib/illustratedBasemap'
 import { ensureTreeImages, scatterCanopy, setCanopyVisible } from '../lib/illustratedCanopy'
+import { getPaperTileUrl } from '../lib/paperTexture'
+
+const paperTileUrl = getPaperTileUrl()
 
 const props = withDefaults(
   defineProps<{
@@ -2523,6 +2534,17 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100%;
   height: 100%;
+}
+
+.paper-grain-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  mix-blend-mode: multiply;
+  opacity: 0.55;
 }
 
 .map {
