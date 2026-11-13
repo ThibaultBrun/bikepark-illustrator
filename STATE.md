@@ -22,7 +22,7 @@ Mockup north-star validé visuellement : /tmp/illus-test/poster.png (cadre+titre
 1. [x] **Export HD réel** : `exportImage()` → `setPixelRatio(3)` + attente `idle`+`areTilesLoaded` + `canvas.toBlob`. Toast "Rendu HD…" pendant le calcul. Prérequis de tout le print. ✅ 2026-11-13
 2. [x] **Mode Poster** : `posterCompose.ts` — canvas 1080px : header (nom park+région+badges stats), carte arrondie, légende diff+chips équipements, footer crédit. Bouton "🎨 Exporter Poster" dans PrintPanel. projectName/spotRegion auto-remplis depuis le projet. ✅ 2026-11-13
 3. [x] **Tracés peints** : casing blanc/liseré sous la ligne (2e addLayer dans ensureTrackLayers) + mode "couleur = difficulté" (PIN_COLORS). 80% de l'effet VMS, effort S. ✅ 2026-11-13
-4. [ ] **Canopée dense + ombres + variation** : plus d'arbres (densité adaptative au zoom), varier échelle/teinte par arbre, assombrir le fill forêt sous la canopée, ombre portée directionnelle alignée hillshade, 5-6 variantes de sprites. (illustratedCanopy.ts) — anti-sticker.
+4. [x] **Canopée dense + ombres + variation** : 6 espèces (round/dark/pine/spruce/autumn/cluster) × 3 teintes = 18 images ; densité adaptative zoom (25%→100%, grille 85→200, max 1200→5000 arbres) ; ombre portée directionnelle SE cohérente hillshade ; rotation ±9° anti-sticker ; bbox pré-filtre O(polys) pour perf. ✅ 2026-11-13
 5. [ ] **Déclutter labels OSM** : virer suburb/neighbourhood (Lotissement…), garder town/village, toggle MapPanel. (illustratedBasemap label-village)
 
 ### Visuel VMS
@@ -66,3 +66,4 @@ Mockup north-star validé visuellement : /tmp/illus-test/poster.png (cadre+titre
 - 2026-11-13 : **Export HD réel** (BACKLOG #1) — `setPixelRatio(3)` + idle/areTilesLoaded + toBlob + toast "Rendu HD…". Build OK, déployé préprod. PROCHAINE TÂCHE = BACKLOG TOP #2 Mode Poster.
 - 2026-11-13 : **Mode Poster** (BACKLOG #2) — `posterCompose.ts` canvas composé : header nom+région+badges stats, carte arrondie avec border, légende diff auto, chips équipements, footer crédit. PrintPanel bouton 🎨. Build OK, déployé préprod.
 - 2026-11-13 : **Tracés peints** (BACKLOG #3) — `lineCasingPaintForTrack()` (blanc/crème +3px sous la ligne) + `effectiveTrackColor()` (couleur difficulté en mode illustré via PIN_COLORS green/blue/red/black). Casing géré dans ensureTrackLayers, rebuildTrackLineLayer, setTrackLayersVisible, removeDeletedTrackLayers. Refresh auto couleur au switch basemap. Build OK, déployé préprod. PROCHAINE TÂCHE = BACKLOG TOP #4 Canopée dense.
+- 2026-11-13 : **Canopée dense + variation** (BACKLOG #4) — 6 espèces × 3 teintes = 18 images ; densité adaptative zoom ; ombre directionnelle SE ; rotation ±9° anti-sticker ; pré-filtre bbox polygones. Build OK, déployé préprod. PROCHAINE TÂCHE = BACKLOG #5 Déclutter labels OSM.
