@@ -96,6 +96,10 @@
       🎨 {{ t('print.exportPoster') }}
     </button>
 
+    <button type="button" class="action-button publish-btn" @click="onPublishPoster">
+      🌐 {{ t('print.publishPoster') }}
+    </button>
+
     <button type="button" class="action-button" @click="onExportPdf">
       📄 {{ t('print.exportPdf') }}
     </button>
@@ -126,6 +130,7 @@ const emit = defineEmits<{
   (e: 'export-image'): void
   (e: 'export-poster', formatId: PrintFormatId, branding: { posterName: string; region: string; accentColor: string; logoDataUrl: string }): void
   (e: 'export-pdf', formatId: PrintFormatId, branding: { posterName: string; region: string; accentColor: string; logoDataUrl: string }): void
+  (e: 'publish-poster', formatId: PrintFormatId, branding: { posterName: string; region: string; accentColor: string; logoDataUrl: string }): void
 }>()
 
 const selectedFormat = ref<PrintFormatId>('a4p')
@@ -164,6 +169,10 @@ function onExportPoster() {
 
 function onExportPdf() {
   emit('export-pdf', selectedFormat.value, getBranding())
+}
+
+function onPublishPoster() {
+  emit('publish-poster', selectedFormat.value, getBranding())
 }
 
 function triggerLogoUpload() {
@@ -463,5 +472,16 @@ function onLogoFileChange(e: Event) {
   border-color: rgba(220, 180, 105, 0.5);
   background: linear-gradient(135deg, rgba(205, 163, 90, 0.95), rgba(220, 180, 105, 0.95));
   color: #2a2118;
+}
+
+.publish-btn {
+  border-color: rgba(99, 180, 140, 0.4);
+  background: rgba(34, 100, 70, 0.18);
+  color: #72d9b0;
+}
+
+.publish-btn:hover {
+  background: rgba(34, 100, 70, 0.3);
+  border-color: rgba(99, 180, 140, 0.6);
 }
 </style>

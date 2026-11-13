@@ -154,6 +154,7 @@ export default {
     hint: 'Koka, zooma eta okertu mapa nahi duzun bezala, gero esportatu. Kontrolak eta edizio-markak ez dira sartzen.',
     format: 'Formatua',
     exportPoster: 'Poster esportatu',
+    publishPoster: 'Sarean argitaratu & QR kodea',
     exportPdf: '📄 Esportatu PDF (inprimatzen prest)',
     exportPng: '📷 Esportatu PNG gisa',
     branding: 'Poster pertsonalizazioa',
@@ -199,6 +200,9 @@ export default {
     exportPdfOk: 'PDF esportatuta ✅',
     exportImageFail: 'Ezin izan da irudia esportatu.',
     needTrails: 'Marraztu edo inportatu pista bat lehenik.',
+    posterUploading: 'Posterra sarean argitaratzen…',
+    posterUploadFail: 'Kargatzeak huts egin du ("illustrator-posters" Supabase bucket egiaztatu).',
+    saveFirst: 'Gorde proiektua lehenik.',
   },
 
   help: {

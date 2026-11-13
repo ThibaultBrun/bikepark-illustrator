@@ -153,6 +153,7 @@ export default {
     hint: 'Encuadra, amplía e inclina tu mapa como quieras, luego exporta. Los controles y marcadores de edición no se incluyen.',
     format: 'Formato',
     exportPoster: 'Exportar Póster',
+    publishPoster: 'Publicar en línea & código QR',
     exportPdf: '📄 Exportar PDF (listo para imprimir)',
     exportPng: '📷 Exportar en PNG',
     branding: 'Personalización del póster',
@@ -198,6 +199,9 @@ export default {
     exportPdfOk: 'PDF exportado ✅',
     exportImageFail: 'Error al exportar la imagen.',
     needTrails: 'Dibuja o importa al menos una pista primero.',
+    posterUploading: 'Publicando póster en línea…',
+    posterUploadFail: 'Error al subir (revisa el bucket Supabase "illustrator-posters").',
+    saveFirst: 'Guarda el proyecto primero.',
   },
 
   help: {

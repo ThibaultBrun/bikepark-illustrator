@@ -153,6 +153,7 @@ export default {
     hint: 'Cadre, zoome et incline ta carte comme tu veux, puis exporte. Les contrôles et repères d\'édition ne sont pas inclus.',
     format: 'Format',
     exportPoster: 'Exporter Poster',
+    publishPoster: 'Publier en ligne & QR code',
     exportPdf: '📄 Exporter en PDF print-ready',
     exportPng: '📷 Exporter en PNG',
     branding: 'Personnalisation poster',
@@ -198,6 +199,9 @@ export default {
     exportPdfOk: 'PDF exporté ✅',
     exportImageFail: 'Échec de l\'export de l\'image.',
     needTrails: 'Dessine ou importe au moins une piste d\'abord.',
+    posterUploading: 'Publication du poster en ligne…',
+    posterUploadFail: 'Échec de la publication (vérifier le bucket Supabase "illustrator-posters").',
+    saveFirst: 'Sauvegarde le projet d\'abord.',
   },
 
   help: {

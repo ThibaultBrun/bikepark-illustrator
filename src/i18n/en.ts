@@ -153,6 +153,7 @@ export default {
     hint: 'Frame, zoom and tilt your map as you like, then export. Controls and editing handles are not included.',
     format: 'Format',
     exportPoster: 'Export Poster',
+    publishPoster: 'Publish online & QR code',
     exportPdf: '📄 Export PDF (print-ready)',
     exportPng: '📷 Export as PNG',
     branding: 'Poster customization',
@@ -198,6 +199,9 @@ export default {
     exportPdfOk: 'PDF exported ✅',
     exportImageFail: 'Image export failed.',
     needTrails: 'Draw or import at least one trail first.',
+    posterUploading: 'Publishing poster online…',
+    posterUploadFail: 'Upload failed (check Supabase bucket "illustrator-posters").',
+    saveFirst: 'Please save the project first.',
   },
 
   help: {

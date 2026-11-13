@@ -1,4 +1,8 @@
 <template>
+  <!-- Public poster view — no auth required -->
+  <PosterPublicView v-if="publicPosterId" :project-id="publicPosterId" />
+
+  <template v-else>
   <div v-if="!authReady" class="auth-loading">{{ t('loading') }}</div>
 
   <LoginView v-else-if="!authSession" />
@@ -47,6 +51,7 @@
       @export-image="onExportImage"
       @export-poster="onExportPoster"
       @export-pdf="onExportPdf"
+      @publish-poster="onPublishPoster"
       @update:spot-region="spotRegion = $event"
       @update:spot-type="spotType = $event"
       @locate="onLocate"
@@ -242,6 +247,13 @@
 
     <div v-if="submitToast" class="submit-toast">{{ submitToast }}</div>
 
+    <!-- QR modal après publication poster -->
+    <PosterQrModal
+      v-if="posterQrUrl"
+      :url="posterQrUrl"
+      @close="posterQrUrl = null"
+    />
+
     <div v-if="repositionSymbolId || pendingAddSymbolType" class="symbol-action-bar">
       <span class="symbol-action-bar__label">
         {{ pendingAddSymbolType ? t('reposition.add') : t('reposition.move') }}
@@ -283,6 +295,7 @@
       ></span>
     </div>
   </div>
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -293,6 +306,8 @@ import JSZip from 'jszip'
 import localforage from 'localforage'
 import MapView from './components/MapView.vue'
 import LoginView from './components/LoginView.vue'
+import PosterPublicView from './components/PosterPublicView.vue'
+import PosterQrModal from './components/PosterQrModal.vue'
 import { useAuth } from './lib/useAuth'
 import { loadUserProject, saveUserProject, submitProject, requestPublication, cancelPublication, getSpotStatus, getSpotSlug, setSpotVisibility, listUserProjects, loadProjectById, createProject, deleteUserProject, proposeTrailsToSpot, type ProjectListItem, type SubmitTrail, type VisibilityLevel } from './lib/projectsStore'
 import { hasSeenTour, startTour } from './lib/useTour'
@@ -321,10 +336,18 @@ import {
 import { composePoster } from './lib/posterCompose'
 import type { PrintFormatId } from './lib/printFormats'
 import { exportPosterAsPdf } from './lib/pdfExport'
+import { uploadPoster } from './lib/posterPublish'
 import type { Module3D, Module3DType } from './types/module3d'
 
 const { t, locale } = useI18n()
 const { session: authSession, ready: authReady, user: authUser, isAdmin: authIsAdmin, signOut } = useAuth()
+
+// Public poster routing: /poster/:id → no-auth viewer
+const _pathParts = window.location.pathname.match(/^\/poster\/([^/?#]+)/)
+const publicPosterId = _pathParts ? _pathParts[1] : null
+
+// QR modal après publication d'un poster en ligne
+const posterQrUrl = ref<string | null>(null)
 
 async function onSignOut() {
   await signOut()
@@ -422,6 +445,37 @@ async function onExportPoster(formatId: PrintFormatId = 'a4p', branding?: Poster
   a.remove()
   URL.revokeObjectURL(url)
   showToast(t('toast.exportImageOk'))
+}
+
+// Publication poster en ligne : compose → upload storage → QR modal.
+async function onPublishPoster(formatId: PrintFormatId = 'a4p', branding?: PosterBranding) {
+  if (!currentProjectId.value) {
+    showToast(t('toast.saveFirst'))
+    return
+  }
+  showToast(t('toast.posterUploading'))
+  const mapBlob = await mapViewRef.value?.exportImage()
+  if (!mapBlob) { showToast(t('toast.exportImageFail')); return }
+  const allDefs = [...defaultSymbolLibrary, ...customSymbols.value]
+  const blob = await composePoster({
+    mapBlob,
+    parkName: branding?.posterName || projectName.value || 'Mon Bikepark',
+    region: branding?.region ?? spotRegion.value,
+    tracks: tracks.value,
+    symbols: symbols.value,
+    symbolDefs: allDefs,
+    formatId,
+    accentColor: branding?.accentColor,
+    logoDataUrl: branding?.logoDataUrl,
+  })
+  if (!blob) { showToast(t('toast.exportImageFail')); return }
+  const publicUrl = await uploadPoster(currentProjectId.value, blob)
+  if (!publicUrl) {
+    showToast(t('toast.posterUploadFail'))
+    return
+  }
+  const pageUrl = `${window.location.origin}/poster/${currentProjectId.value}`
+  posterQrUrl.value = pageUrl
 }
 
 // Export PDF print-ready : compose le poster PNG puis l'encapsule dans un PDF au bon format.
