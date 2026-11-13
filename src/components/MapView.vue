@@ -64,7 +64,7 @@ import type { GpxTrack } from '../types/gpx'
 import type { MapCameraState } from '../types/project'
 import type { MapLabelFont } from './sidebar/map-settings'
 import { getSymbolDefinition, getSymbolSvg, type MapSymbol, type SymbolDefinition, type SymbolId } from '../types/symbol'
-import { MODULE3D_SVG, type Module3D, type Module3DType } from '../types/module3d'
+import { MODULE3D_IMG, type Module3D, type Module3DType } from '../types/module3d'
 import {
   illustratedLayers,
   OFM_GLYPHS,
@@ -1292,34 +1292,25 @@ function refreshTrailPins() {
 
 // ── Modules 3D illustrés ──────────────────────────────────────────────────────
 
-// Contact-sol du sprite : l'ombre est à ~88% de la hauteur du viewBox.
-// anchor='bottom' + offset relève le sprite pour poser l'ombre sur le lngLat,
-// et transform-origin sur ce point garde la base fixe quand on tourne.
-const MODULE3D_GROUND_RATIO = 0.88
-const module3dOffset = (h: number): [number, number] => [0, Math.round(h * (1 - MODULE3D_GROUND_RATIO))]
+// Sprites 3D (PNG Blender) : le contact-sol est au CENTRE de l'image
+// (caméra visée sur z=0) → marker ancré 'center', rotation autour du centre.
+// Ratio image 700x490 ≈ 1.428.
+const MOD_BASE_W = 96
+const MOD_BASE_H = 67
 
 function buildModule3dEl(mod: Module3D): HTMLElement {
-  const BASE_W = 90
-  const BASE_H = 63
-  const w = Math.round(BASE_W * mod.scale)
-  const h = Math.round(BASE_H * mod.scale)
+  const w = Math.round(MOD_BASE_W * mod.scale)
+  const h = Math.round(MOD_BASE_H * mod.scale)
   const el = document.createElement('div')
   el.className = 'module3d-marker'
   el.style.cssText = `
     width:${w}px;height:${h}px;cursor:grab;
-    filter:drop-shadow(0 3px 6px rgba(20,30,70,0.38));
     transform:rotate(${mod.rotation}deg);
-    transform-origin:50% ${MODULE3D_GROUND_RATIO * 100}%;
+    transform-origin:50% 50%;
     transition:transform 0.1s;
     pointer-events:auto;
   `
-  el.innerHTML = MODULE3D_SVG[mod.type]
-  const svg = el.querySelector('svg')
-  if (svg) {
-    svg.style.width = `${w}px`
-    svg.style.height = `${h}px`
-    svg.style.display = 'block'
-  }
+  el.innerHTML = `<img src="${MODULE3D_IMG[mod.type]}" draggable="false" style="width:${w}px;height:${h}px;display:block;user-select:none;" />`
   return el
 }
 
@@ -1334,22 +1325,19 @@ function refreshModule3dMarkers() {
       existing.setLngLat(mod.lngLat)
       // Update element style (scale/rotation may have changed)
       const el = existing.getElement()
-      const BASE_W = 90
-      const BASE_H = 63
-      const w = Math.round(BASE_W * mod.scale)
-      const h = Math.round(BASE_H * mod.scale)
+      const w = Math.round(MOD_BASE_W * mod.scale)
+      const h = Math.round(MOD_BASE_H * mod.scale)
       el.style.width = `${w}px`
       el.style.height = `${h}px`
       el.style.transform = `rotate(${mod.rotation}deg)`
-      existing.setOffset(module3dOffset(h))
-      const svg = el.querySelector('svg')
-      if (svg) {
-        svg.style.width = `${w}px`
-        svg.style.height = `${h}px`
+      const img = el.querySelector('img')
+      if (img) {
+        img.style.width = `${w}px`
+        img.style.height = `${h}px`
       }
     } else {
       const el = buildModule3dEl(mod)
-      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: module3dOffset(Math.round(63 * mod.scale)), draggable: true })
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center', draggable: true })
         .setLngLat(mod.lngLat)
         .addTo(map)
       marker.on('dragend', () => {

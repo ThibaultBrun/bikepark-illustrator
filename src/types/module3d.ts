@@ -17,6 +17,24 @@ export const MODULE3D_LABELS: Record<Module3DType, string> = {
   northshore: 'North Shore',
 }
 
+// Sprites 3D (rendus Blender, golden hour). Le contact-sol est centré dans
+// l'image (caméra visée sur z=0) → marker ancré 'center' = posé au sol.
+import jumpUrl from '../assets/modules3d/jump.png'
+import doubleUrl from '../assets/modules3d/double.png'
+import tableUrl from '../assets/modules3d/table.png'
+import bermUrl from '../assets/modules3d/berm.png'
+import pumptrackUrl from '../assets/modules3d/pumptrack.png'
+import northshoreUrl from '../assets/modules3d/northshore.png'
+
+export const MODULE3D_IMG: Record<Module3DType, string> = {
+  jump: jumpUrl,
+  double: doubleUrl,
+  table: tableUrl,
+  berm: bermUrl,
+  pumptrack: pumptrackUrl,
+  northshore: northshoreUrl,
+}
+
 // Palette commune
 // Lumière: NW (haut-gauche). Ombre: SE (bas-droite).
 // Faces lit (NW): +40% brightness. Faces shadow (SE): -40%.

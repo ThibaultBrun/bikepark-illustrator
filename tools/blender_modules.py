@@ -197,16 +197,19 @@ def setup_world_and_light():
 def setup_camera(center, size):
     cam_data = bpy.data.cameras.new("Cam")
     cam_data.type = 'ORTHO'
-    cam_data.ortho_scale = size * 1.5
+    cam_data.ortho_scale = size * 1.7
     cam = bpy.data.objects.new("Cam", cam_data)
     bpy.context.collection.objects.link(cam)
     bpy.context.scene.camera = cam
     # vue 3/4 iso : depuis l'avant-droite en hauteur
     d = Vector((1.0, -1.15, 0.92)).normalized()
     cam.location = center + d * 60
-    # viser le centre
+    # Viser le CONTACT-SOL (z=0) → ce point se projette au centre de l'image,
+    # donc dans l'app un marker ancré 'center' pose le module pile au sol.
+    aim = Vector((center.x, center.y, 0.0))
+    cam.location = aim + d * 60
     empt = bpy.data.objects.new("Aim", None); bpy.context.collection.objects.link(empt)
-    empt.location = center
+    empt.location = aim
     c = cam.constraints.new('TRACK_TO'); c.target = empt
     c.track_axis='TRACK_NEGATIVE_Z'; c.up_axis='UP_Y'
 

@@ -14,7 +14,7 @@
         :title="`Placer : ${MODULE3D_LABELS[type]}`"
         @click="$emit('pick-module3d', type)"
       >
-        <span class="module3d-card__preview" v-html="MODULE3D_SVG[type]" />
+        <span class="module3d-card__preview"><img :src="MODULE3D_IMG[type]" :alt="MODULE3D_LABELS[type]" /></span>
         <span class="module3d-card__label">{{ MODULE3D_LABELS[type] }}</span>
       </button>
     </div>
@@ -26,7 +26,7 @@
         :key="mod.id"
         class="module3d-placed__item"
       >
-        <span class="module3d-placed__icon" v-html="MODULE3D_SVG[mod.type]" />
+        <span class="module3d-placed__icon"><img :src="MODULE3D_IMG[mod.type]" :alt="MODULE3D_LABELS[mod.type]" /></span>
         <span class="module3d-placed__name">{{ MODULE3D_LABELS[mod.type] }}</span>
         <div class="module3d-placed__controls">
           <label class="module3d-placed__scale-label">
@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { MODULE3D_SVG, MODULE3D_LABELS, type Module3D, type Module3DType } from '../../types/module3d'
+import { MODULE3D_IMG, MODULE3D_LABELS, type Module3D, type Module3DType } from '../../types/module3d'
 
 const moduleTypes: Module3DType[] = ['jump', 'double', 'table', 'berm', 'pumptrack', 'northshore']
 
@@ -141,9 +141,11 @@ defineEmits<{
   height: 42px;
 }
 
-.module3d-card__preview :deep(svg) {
+.module3d-card__preview :deep(svg),
+.module3d-card__preview img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 .module3d-card__label {
@@ -188,9 +190,11 @@ defineEmits<{
   flex-shrink: 0;
 }
 
-.module3d-placed__icon :deep(svg) {
+.module3d-placed__icon :deep(svg),
+.module3d-placed__icon img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 .module3d-placed__name {
