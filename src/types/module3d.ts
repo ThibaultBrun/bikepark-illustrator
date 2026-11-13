@@ -1,4 +1,4 @@
-export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride' | 'hip'
+export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride' | 'hip' | 'gap'
 
 export type Module3D = {
   id: string
@@ -19,6 +19,7 @@ export const MODULE3D_LABELS: Record<Module3DType, string> = {
   stepup: 'Step-Up',
   wallride: 'Wallride',
   hip: 'Hip',
+  gap: 'Gap',
 }
 
 // Sprites 3D (rendus Blender, golden hour). Le contact-sol est centré dans
@@ -132,6 +133,27 @@ const _HIP_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
 </svg>`
 const _hipDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_HIP_SVG)
 
+// Gap : deux kickers face-à-face avec un large gap visible + chemin qui passe en dessous
+// Distinct du double : gap plus large, trail visible au sol dans le gap, prises asymétriques
+const _GAP_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="61" rx="45" ry="5.5" fill="rgba(30,42,90,0.22)"/>
+  <path d="M 40,55 L 60,55 L 58,62 L 42,62 Z" fill="#6B4820" opacity="0.5"/>
+  <path d="M 36,59 L 64,59" stroke="#A07840" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <path d="M 6,57 Q 22,56 30,46 Q 36,38 40,27 L 42,57 Z" fill="#A07840"/>
+  <path d="M 6,57 Q 22,56 30,46 Q 36,38 40,27 L 46,22 Q 41,34 34,44 Q 25,53 12,55 Z" fill="#D0A85A"/>
+  <path d="M 11,55 Q 24,53 32,45 Q 38,38 41,32" stroke="#6B4820" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <path d="M 40,27 L 42,57" stroke="#6B4820" stroke-width="0.9" fill="none" opacity="0.4"/>
+  <path d="M 12,55 Q 25,53 34,44 Q 41,34 46,22" stroke="#E8C050" stroke-width="2.1" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 40,27 L 46,22" stroke="#E8C050" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M 94,57 Q 78,56 70,46 Q 64,38 60,27 L 58,57 Z" fill="#A07840"/>
+  <path d="M 94,57 Q 78,56 70,46 Q 64,38 60,27 L 54,22 Q 59,34 66,44 Q 75,53 88,55 Z" fill="#D0A85A"/>
+  <path d="M 89,55 Q 76,53 68,45 Q 62,38 59,32" stroke="#6B4820" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <path d="M 60,27 L 58,57" stroke="#6B4820" stroke-width="0.9" fill="none" opacity="0.4"/>
+  <path d="M 88,55 Q 75,53 66,44 Q 59,34 54,22" stroke="#E8C050" stroke-width="2.1" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 60,27 L 54,22" stroke="#E8C050" stroke-width="2.4" stroke-linecap="round"/>
+</svg>`
+const _gapDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_GAP_SVG)
+
 export const MODULE3D_IMG: Record<Module3DType, string> = {
   jump: jumpUrl,
   double: doubleUrl,
@@ -143,6 +165,7 @@ export const MODULE3D_IMG: Record<Module3DType, string> = {
   stepup: _stepupDataUrl,
   wallride: _wallrideDataUrl,
   hip: _hipDataUrl,
+  gap: _gapDataUrl,
 }
 
 // Palette commune
@@ -386,5 +409,28 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   <rect x="13" y="58" width="11" height="3" rx="1" fill="${W_MID}" opacity="0.6"/>
   <rect x="44" y="58" width="11" height="3" rx="1" fill="${W_MID}" opacity="0.6"/>
   <rect x="75" y="58" width="11" height="3" rx="1" fill="${W_MID}" opacity="0.6"/>
+</svg>`,
+
+  // ── GAP : deux kickers face à face séparés par un VRAI vide (plus large ─
+  // que le double), avec un chemin/trail visible au sol qui passe dessous. ─
+  gap: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="61" rx="46" ry="5.5" fill="${SHAD}"/>
+  <!-- trail au sol dans le gap (passe entre les deux lèvres) -->
+  <path d="M 39,54 L 61,54 L 59,62 L 41,62 Z" fill="${D_SHD}" opacity="0.5"/>
+  <path d="M 35,58 L 65,58" stroke="${D_LIT}" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <!-- kicker gauche (takeoff) -->
+  <path d="M 5,57 Q 20,56 28,46 Q 35,37 39,26 L 42,57 Z" fill="${D_MID}"/>
+  <path d="M 5,57 Q 20,56 28,46 Q 35,37 39,26 L 45,21 Q 40,33 32,44 Q 23,53 10,55 Z" fill="${D_LIT}"/>
+  <path d="M 11,55 Q 24,53 32,45 Q 38,38 41,32" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.32"/>
+  <path d="M 39,26 L 42,57" stroke="${D_SHD}" stroke-width="1" fill="none" opacity="0.4"/>
+  <path d="M 10,55 Q 23,53 32,44 Q 40,33 45,21" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.92"/>
+  <path d="M 39,26 L 45,21" stroke="${GOLD}" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- kicker droit (landing) -->
+  <path d="M 95,57 Q 80,56 72,46 Q 65,37 61,26 L 58,57 Z" fill="${D_MID}"/>
+  <path d="M 95,57 Q 80,56 72,46 Q 65,37 61,26 L 55,21 Q 60,33 68,44 Q 77,53 90,55 Z" fill="${D_LIT}"/>
+  <path d="M 89,55 Q 76,53 68,45 Q 62,38 59,32" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.32"/>
+  <path d="M 61,26 L 58,57" stroke="${D_SHD}" stroke-width="1" fill="none" opacity="0.4"/>
+  <path d="M 90,55 Q 77,53 68,44 Q 60,33 55,21" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.78"/>
+  <path d="M 61,26 L 55,21" stroke="${GOLD}" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
 </svg>`,
 }
