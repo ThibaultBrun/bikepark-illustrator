@@ -38,39 +38,69 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   // ── JUMP : rampe kicker, montée sud→nord ──────────────────────────────
   jump: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
   <!-- shadow -->
-  <ellipse cx="52" cy="63" rx="34" ry="7" fill="${SHAD}"/>
-  <!-- Left face lit (NW) -->
-  <path d="M 18,58 L 32,58 L 44,22 L 28,24 Z" fill="${D_LIT}"/>
-  <!-- Ramp surface (main face, mid-tone) -->
-  <path d="M 32,58 L 72,60 L 62,22 L 44,22 Z" fill="${D_MID}"/>
-  <!-- Right face shadow (NE) -->
-  <path d="M 72,60 L 72,56 L 64,20 L 62,22 Z" fill="${D_SHD}"/>
+  <ellipse cx="50" cy="63" rx="30" ry="5" fill="${SHAD}"/>
+  <!-- Left face lit (NW) — narrow sliver, converges toward top -->
+  <path d="M 16,60 L 24,60 L 30,16 L 22,18 Z" fill="${D_LIT}"/>
+  <!-- Ramp face (viewer-facing) — dominant surface -->
+  <path d="M 24,60 L 76,62 L 66,16 L 30,16 Z" fill="${D_MID}"/>
+  <!-- Upper lit band near lip (sky light) -->
+  <path d="M 30,16 L 66,16 L 56,28 L 36,30 Z" fill="${D_LIT}" opacity="0.42"/>
+  <!-- Right shadow face -->
+  <path d="M 76,62 L 78,58 L 68,14 L 66,16 Z" fill="${D_SHD}"/>
   <!-- Base front strip -->
-  <path d="M 18,58 L 72,60 L 72,64 L 18,62 Z" fill="${D_SHD}"/>
-  <!-- Lip highlight -->
-  <path d="M 28,24 L 64,20" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
-  <!-- Curved lip underside -->
-  <path d="M 28,24 Q 46,19 64,20" stroke="${D_LIT}" stroke-width="1.2" fill="none" opacity="0.5"/>
+  <path d="M 16,60 L 76,62 L 76,66 L 16,64 Z" fill="${D_SHD}"/>
+  <!-- Packed-dirt compaction lines (horizontal, follow ramp slope) -->
+  <path d="M 25,54 Q 50,55 74,57" stroke="${D_SHD}" stroke-width="0.9" fill="none" opacity="0.5"/>
+  <path d="M 27,44 Q 50,45 72,46" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <path d="M 30,34 Q 50,34 70,35" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <!-- Curved lip — golden, prominent -->
+  <path d="M 22,18 Q 46,9 68,14" stroke="${GOLD}" stroke-width="2.8" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <!-- Lip bevel underside (subtle curve) -->
+  <path d="M 22,18 Q 46,21 68,16" stroke="${D_LIT}" stroke-width="1.4" fill="none" opacity="0.5"/>
 </svg>`,
 
   // ── DOUBLE : deux rampes / gap jump ──────────────────────────────────
   double: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
   <!-- shadow -->
-  <ellipse cx="50" cy="64" rx="40" ry="7" fill="${SHAD}"/>
-  <!-- Kicker 1 (left) -->
-  <path d="M 6,58 L 18,58 L 26,26 L 12,28 Z" fill="${D_LIT}"/>
-  <path d="M 18,58 L 38,60 L 32,26 L 26,26 Z" fill="${D_MID}"/>
-  <path d="M 38,60 L 38,56 L 33,24 L 32,26 Z" fill="${D_SHD}"/>
-  <path d="M 6,58 L 38,60 L 38,63 L 6,61 Z" fill="${D_SHD}"/>
-  <path d="M 12,28 L 33,24" stroke="${GOLD}" stroke-width="1.9" stroke-linecap="round" opacity="0.8"/>
-  <!-- Gap (ground) -->
-  <path d="M 38,62 L 62,62 L 62,65 L 38,65 Z" fill="${D_MID}" opacity="0.4"/>
-  <!-- Kicker 2 (right) mirror: facing opponent → flipped, faces viewer from right -->
-  <path d="M 62,60 L 82,58 L 88,58 L 74,28 Z" fill="${D_LIT}"/>
-  <path d="M 62,60 L 68,26 L 74,28 L 82,58 Z" fill="${D_MID}"/>
-  <path d="M 62,56 L 62,60 L 67,24 L 68,26 Z" fill="${D_SHD}"/>
-  <path d="M 62,60 L 94,58 L 94,63 L 62,63 Z" fill="${D_SHD}"/>
-  <path d="M 67,24 L 88,28" stroke="${GOLD}" stroke-width="1.9" stroke-linecap="round" opacity="0.8"/>
+  <ellipse cx="50" cy="64" rx="42" ry="5.5" fill="${SHAD}"/>
+  <!-- === KICKER 1 (left, takeoff) === -->
+  <!-- Left face lit (NW) — narrow -->
+  <path d="M 4,58 L 12,58 L 16,16 L 8,18 Z" fill="${D_LIT}"/>
+  <!-- Ramp face viewer-facing -->
+  <path d="M 12,58 L 42,60 L 36,16 L 16,16 Z" fill="${D_MID}"/>
+  <!-- Upper lit zone -->
+  <path d="M 16,16 L 36,16 L 30,26 L 20,28 Z" fill="${D_LIT}" opacity="0.42"/>
+  <!-- Right shadow strip K1 -->
+  <path d="M 42,60 L 44,56 L 38,14 L 36,16 Z" fill="${D_SHD}"/>
+  <!-- Base K1 -->
+  <path d="M 4,58 L 42,60 L 42,64 L 4,62 Z" fill="${D_SHD}"/>
+  <!-- Dirt lines K1 -->
+  <path d="M 13,52 Q 28,53 41,55" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.45"/>
+  <path d="M 15,40 Q 28,41 39,42" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.35"/>
+  <path d="M 17,28 Q 28,28 37,29" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.28"/>
+  <!-- Lip K1 (curved, golden) -->
+  <path d="M 8,18 Q 22,9 38,14" stroke="${GOLD}" stroke-width="2.4" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 8,18 Q 22,21 38,16" stroke="${D_LIT}" stroke-width="1.2" fill="none" opacity="0.5"/>
+  <!-- === GAP (visible ground) === -->
+  <path d="M 44,61 L 56,61 L 56,65 L 44,65 Z" fill="${D_MID}" opacity="0.3"/>
+  <!-- === KICKER 2 (right, landing — mirrored) === -->
+  <!-- Left shadow strip K2 -->
+  <path d="M 56,60 L 58,56 L 62,14 L 60,16 Z" fill="${D_SHD}"/>
+  <!-- Ramp face viewer-facing (mirrored) -->
+  <path d="M 58,60 L 62,16 L 84,16 L 88,58 Z" fill="${D_MID}"/>
+  <!-- Upper lit zone mirrored -->
+  <path d="M 62,16 L 84,16 L 80,28 L 68,26 Z" fill="${D_LIT}" opacity="0.42"/>
+  <!-- Right face lit (NW = right side of K2) -->
+  <path d="M 88,58 L 96,58 L 92,18 L 84,16 Z" fill="${D_LIT}"/>
+  <!-- Base K2 -->
+  <path d="M 56,60 L 96,58 L 96,62 L 56,64 Z" fill="${D_SHD}"/>
+  <!-- Dirt lines K2 -->
+  <path d="M 59,54 Q 72,53 87,52" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.45"/>
+  <path d="M 61,42 Q 72,41 85,40" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.35"/>
+  <path d="M 63,28 Q 72,28 83,27" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.28"/>
+  <!-- Lip K2 (mirrored golden lip) -->
+  <path d="M 62,14 Q 72,9 92,18" stroke="${GOLD}" stroke-width="2.4" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 62,16 Q 72,19 92,18" stroke="${D_LIT}" stroke-width="1.2" fill="none" opacity="0.5"/>
 </svg>`,
 
   // ── TABLE : table top ─────────────────────────────────────────────────
@@ -98,21 +128,23 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   // ── BERM : virage relevé ──────────────────────────────────────────────
   berm: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
   <!-- shadow -->
-  <ellipse cx="50" cy="64" rx="40" ry="6" fill="${SHAD}"/>
-  <!-- Outer bank (low, ground level) -->
-  <path d="M 12,58 Q 50,54 88,56 Q 88,62 50,64 Q 12,62 12,58 Z" fill="${D_MID}"/>
-  <!-- Inner raised bank (the berm wall, lit) -->
-  <path d="M 22,46 Q 50,36 78,44 Q 78,50 50,42 Q 22,52 22,46 Z" fill="${D_LIT}"/>
-  <!-- The berm surface (the tilted riding surface, connecting inner/outer) -->
-  <path d="M 12,58 Q 50,54 88,56 L 78,44 Q 50,36 22,46 Z" fill="${D_MID}" opacity="0.9"/>
-  <!-- Inner wall shadow strip (shaded inner face, far from viewer) -->
-  <path d="M 22,46 Q 50,38 78,44 L 76,40 Q 50,32 24,42 Z" fill="${D_SHD}" opacity="0.75"/>
-  <!-- Inner edge lip highlight -->
-  <path d="M 22,46 Q 50,36 78,44" stroke="${GOLD}" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.8"/>
-  <!-- Left side face (lit, entering the berm) -->
-  <path d="M 12,58 L 12,52 L 22,46 L 22,52 Z" fill="${D_LIT}" opacity="0.7"/>
-  <!-- Right side face (shadow) -->
-  <path d="M 88,56 L 88,50 L 78,44 L 78,50 Z" fill="${D_SHD}" opacity="0.7"/>
+  <ellipse cx="52" cy="62" rx="38" ry="6" fill="${SHAD}"/>
+  <!-- Banked wall = crescent sweeping left→right, inner (low) edge near viewer,
+       outer (high) rim banks away. Built from a bottom curve + top rim curve. -->
+  <!-- Base dirt mass (the whole banked turn body) -->
+  <path d="M 12,56 Q 30,66 54,64 Q 80,62 90,38 Q 86,28 74,30 Q 60,48 38,50 Q 22,51 14,50 Z" fill="${D_MID}"/>
+  <!-- Riding surface (tilted lit face, catches NW light) -->
+  <path d="M 14,50 Q 28,52 40,50 Q 62,47 76,30 Q 84,30 88,38 Q 78,56 56,59 Q 34,61 16,54 Z" fill="${D_LIT}"/>
+  <!-- Inner trough shadow (low near edge, far from light) -->
+  <path d="M 12,56 Q 30,64 52,62 Q 40,56 26,55 Q 18,55 12,56 Z" fill="${D_SHD}" opacity="0.7"/>
+  <!-- Compaction arcs following the bank curve (volume read) -->
+  <path d="M 18,52 Q 42,52 62,38 Q 70,32 78,31" stroke="${D_SHD}" stroke-width="0.9" fill="none" opacity="0.4"/>
+  <path d="M 20,55 Q 44,55 64,42 Q 73,36 82,35" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.32"/>
+  <path d="M 24,58 Q 46,58 66,46 Q 76,40 85,40" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.26"/>
+  <!-- Outer rim highlight (golden lip along the top of the bank) -->
+  <path d="M 14,50 Q 40,51 58,47 Q 74,42 88,38" stroke="${GOLD}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <!-- Rim bevel under-curve -->
+  <path d="M 16,52 Q 40,53 58,49 Q 74,44 86,41" stroke="${D_LIT}" stroke-width="1.1" fill="none" opacity="0.5"/>
 </svg>`,
 
   // ── PUMPTRACK : série de rollers ──────────────────────────────────────
