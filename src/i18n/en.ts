@@ -98,6 +98,14 @@ export default {
     sunTitle: 'Golden hour light',
     sunDesc: 'Sun azimuth — golden highlights, cool shadows (illustrated mode).',
     sunAngle: 'Sun azimuth',
+    presetsTitle: 'Style presets',
+    presetsDesc: 'Apply a style in one click.',
+    presetWarm: 'Warm poster',
+    presetWarmDesc: 'Golden hour SW, illustrated map',
+    presetForest: 'Forest',
+    presetForestDesc: 'Dense canopy, soft NW light',
+    presetAlpin: 'Alpine',
+    presetAlpinDesc: 'Marked terrain, rising sun',
   },
 
   exportPanel: {

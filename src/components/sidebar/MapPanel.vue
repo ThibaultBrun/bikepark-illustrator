@@ -2,6 +2,35 @@
   <section class="panel">
     <div class="panel-header">
       <div class="placeholder-icon" aria-hidden="true">
+        <SidebarIcon name="blend" />
+      </div>
+      <div class="panel-header-copy">
+        <h2>{{ t('map.presetsTitle') }}</h2>
+        <p>{{ t('map.presetsDesc') }}</p>
+      </div>
+    </div>
+
+    <div class="presets-grid">
+      <button
+        v-for="preset in PRESETS"
+        :key="preset.id"
+        type="button"
+        class="preset-btn"
+        :class="{ active: activePresetId === preset.id }"
+        @click="applyPreset(preset)"
+      >
+        <span class="preset-emoji">{{ preset.emoji }}</span>
+        <span class="preset-copy">
+          <span class="preset-name">{{ t(preset.nameKey) }}</span>
+          <span class="preset-desc">{{ t(preset.descKey) }}</span>
+        </span>
+      </button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div class="placeholder-icon" aria-hidden="true">
         <SidebarIcon name="mountain" />
       </div>
       <div class="panel-header-copy">
@@ -205,8 +234,46 @@ import SidebarIcon from './SidebarIcon.vue'
 import { useAuth } from '../../lib/useAuth'
 
 const { t } = useI18n()
-// Accès heatmap découplé du statut admin (admin OU flag heatmap_access).
 const { canViewHeatmap } = useAuth()
+
+type BaseLayer = 'cyclosm' | 'esri' | 'illustrated'
+type StylePreset = {
+  id: string
+  emoji: string
+  nameKey: string
+  descKey: string
+  baseLayer: BaseLayer
+  settings: Partial<MapSettings>
+}
+
+const PRESETS: StylePreset[] = [
+  {
+    id: 'warm',
+    emoji: '🌄',
+    nameKey: 'map.presetWarm',
+    descKey: 'map.presetWarmDesc',
+    baseLayer: 'illustrated',
+    settings: { sunAzimuth: 225, terrain: 1.4, hillshade: 85, showOsmLabels: false },
+  },
+  {
+    id: 'forest',
+    emoji: '🌲',
+    nameKey: 'map.presetForest',
+    descKey: 'map.presetForestDesc',
+    baseLayer: 'illustrated',
+    settings: { sunAzimuth: 315, terrain: 1.0, hillshade: 65, showOsmLabels: false },
+  },
+  {
+    id: 'alpin',
+    emoji: '🏔️',
+    nameKey: 'map.presetAlpin',
+    descKey: 'map.presetAlpinDesc',
+    baseLayer: 'illustrated',
+    settings: { sunAzimuth: 60, terrain: 2.5, hillshade: 100, showOsmLabels: true },
+  },
+]
+
+const activePresetId = ref<string | null>(null)
 
 const azimuthLabel = computed(() => {
   const a = ((props.settings.sunAzimuth % 360) + 360) % 360
@@ -227,6 +294,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:settings', value: MapSettings): void
+  (e: 'apply-preset', value: { settings: MapSettings; baseLayer: BaseLayer }): void
 }>()
 
 const isFontMenuOpen = ref(false)
@@ -291,6 +359,12 @@ function selectFont(labelFont: MapLabelFont) {
   })
   isFontMenuOpen.value = false
 }
+
+function applyPreset(preset: StylePreset) {
+  activePresetId.value = preset.id
+  const merged: MapSettings = { ...props.settings, ...preset.settings }
+  emit('apply-preset', { settings: merged, baseLayer: preset.baseLayer })
+}
 </script>
 
 <style scoped>
@@ -325,6 +399,67 @@ function selectFont(labelFont: MapLabelFont) {
   color: #b3a890;
   line-height: 1.5;
   font-size: 13px;
+}
+
+.presets-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 13px;
+  border: 1px solid rgba(220, 180, 105, 0.18);
+  border-radius: 13px;
+  background: rgba(220, 180, 105, 0.07);
+  color: #d8ccb6;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+
+.preset-btn:hover {
+  border-color: rgba(220, 180, 105, 0.42);
+  background: rgba(220, 180, 105, 0.14);
+  transform: translateY(-1px);
+}
+
+.preset-btn.active {
+  border-color: #dcb469;
+  background: rgba(220, 180, 105, 0.22);
+}
+
+.preset-emoji {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.preset-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.preset-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f0e8d4;
+}
+
+.preset-desc {
+  font-size: 11px;
+  color: #9a8f7a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .placeholder-icon {

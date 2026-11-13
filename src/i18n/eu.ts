@@ -99,6 +99,14 @@ export default {
     sunTitle: 'Golden hour argia',
     sunDesc: 'Eguzkiaren azimuta — urre-koloreko argiak, hotz-itzalak (mapa ilustratua).',
     sunAngle: 'Eguzki azimuta',
+    presetsTitle: 'Estilo aurretiaztuak',
+    presetsDesc: 'Aplikatu estilo bat klik batez.',
+    presetWarm: 'Poster beroa',
+    presetWarmDesc: 'Golden hour HM, mapa ilustratua',
+    presetForest: 'Basoa',
+    presetForestDesc: 'Zuhaitz-estaldura trinkoa, argi leuna',
+    presetAlpin: 'Alpinoa',
+    presetAlpinDesc: 'Lur nabarmendu, eguzkia altxatzen',
   },
 
   exportPanel: {

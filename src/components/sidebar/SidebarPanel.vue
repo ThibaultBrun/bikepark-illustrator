@@ -115,6 +115,7 @@
         :settings="mapSettings"
         :is-admin="isAdmin"
         @update:settings="$emit('update:map-settings', $event)"
+        @apply-preset="$emit('apply-preset', $event)"
       />
       <ExportPanel
         v-else-if="activeSection === 'export'"
@@ -252,6 +253,7 @@ defineEmits<{
   (e: 'pick-symbol', symbolId: import('../../types/symbol').SymbolId): void
   (e: 'track-width-change', track: GpxTrack): void
   (e: 'update:map-settings', value: MapSettings): void
+  (e: 'apply-preset', value: { settings: MapSettings; baseLayer: 'cyclosm' | 'esri' | 'illustrated' }): void
   (e: 'export-zip'): void
   (e: 'import-zip', file: File): void
   (e: 'start-tour'): void

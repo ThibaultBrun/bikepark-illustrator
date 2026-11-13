@@ -69,6 +69,7 @@
       @update-symbol-transform="onUpdateSymbolTransform"
       @track-width-change="onWidthChange"
       @update:map-settings="mapSettings = $event"
+      @apply-preset="onApplyPreset"
       @export-zip="exportProjectZip"
       @import-zip="importProjectZip"
       @start-tour="launchTour"
@@ -389,6 +390,11 @@ const mapViewRef = ref<{
 
 function onLocate(payload: { lng: number; lat: number; label: string }) {
   mapViewRef.value?.flyTo(payload.lng, payload.lat, 14)
+}
+
+function onApplyPreset(payload: { settings: MapSettings; baseLayer: 'cyclosm' | 'esri' | 'illustrated' }) {
+  mapSettings.value = payload.settings
+  mapViewRef.value?.setBaseLayer(payload.baseLayer)
 }
 
 // Export HD : setPixelRatio×3 → idle → toBlob → téléchargement.

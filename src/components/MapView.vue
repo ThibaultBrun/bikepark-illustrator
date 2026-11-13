@@ -2270,6 +2270,7 @@ defineExpose({
   editorUndo,
   flyTo,
   exportImage,
+  setBaseLayer,
 })
 
 onMounted(() => {

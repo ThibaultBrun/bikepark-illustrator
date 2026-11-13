@@ -98,6 +98,14 @@ export default {
     sunTitle: 'Lumière golden hour',
     sunDesc: 'Azimut du soleil — highlights dorés, ombres froides (fond illustré).',
     sunAngle: 'Azimut soleil',
+    presetsTitle: 'Presets de style',
+    presetsDesc: 'Applique un style d\'un clic.',
+    presetWarm: 'Poster chaud',
+    presetWarmDesc: 'Golden hour SO, fond illustré',
+    presetForest: 'Forêt',
+    presetForestDesc: 'Canopée dense, lumière douce NO',
+    presetAlpin: 'Alpin',
+    presetAlpinDesc: 'Terrain marqué, soleil levant',
   },
 
   exportPanel: {
