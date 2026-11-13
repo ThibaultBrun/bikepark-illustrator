@@ -1,4 +1,4 @@
-export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride' | 'hip' | 'gap' | 'rockgarden'
+export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride' | 'hip' | 'gap' | 'rockgarden' | 'rainbowrail'
 
 export type Module3D = {
   id: string
@@ -21,6 +21,7 @@ export const MODULE3D_LABELS: Record<Module3DType, string> = {
   hip: 'Hip',
   gap: 'Gap',
   rockgarden: 'Rock Garden',
+  rainbowrail: 'Rainbow Rail',
 }
 
 // Sprites 3D (rendus Blender, golden hour). Le contact-sol est centré dans
@@ -194,6 +195,42 @@ const _ROCKGARDEN_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000
 </svg>`
 const _rockgardenDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_ROCKGARDEN_SVG)
 
+// Rainbow Rail : arche en bois courbe (arc rainbow), deux poteaux supports, joints transversaux.
+// ISO 3/4 NW lit. Rider roule en équilibre sur l'arche depuis la base gauche jusqu'à la base droite.
+// Face gauche (montée NW) : éclairée. Face droite (descente SE) : mi-ton. Dessous : ombre.
+// PNG Blender à générer via build_rainbowrail() dans tools/blender_modules.py quand TITOUS dispo.
+const _RAINBOWRAIL_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="63" rx="42" ry="4.5" fill="rgba(30,42,90,0.22)"/>
+  <!-- === POTEAU GAUCHE === -->
+  <path d="M 12,55 L 16,54 L 16,63 L 12,62 Z" fill="#C8982A" opacity="0.78"/>
+  <path d="M 16,54 L 22,54 L 22,63 L 16,63 Z" fill="#B08020"/>
+  <path d="M 22,54 L 25,55 L 25,63 L 22,63 Z" fill="#4E3208"/>
+  <path d="M 10,62 L 27,63 L 27,66 L 10,65 Z" fill="#4E3208"/>
+  <!-- === POTEAU DROIT === -->
+  <path d="M 75,54 L 80,54 L 80,63 L 75,63 Z" fill="#B08020"/>
+  <path d="M 80,54 L 84,55 L 84,63 L 80,63 Z" fill="#4E3208"/>
+  <path d="M 73,63 L 86,63 L 86,66 L 73,65 Z" fill="#4E3208"/>
+  <!-- === ARCHE RAINBOW === -->
+  <!-- sous-face (ombre SE) -->
+  <path d="M 16,57 Q 50,24 84,57 L 82,60 Q 50,28 18,60 Z" fill="#4E3208" opacity="0.70"/>
+  <!-- face gauche (NW lit) : moitié montante -->
+  <path d="M 16,54 Q 33,28 50,14 L 50,18 Q 33,32 18,57 Z" fill="#C8982A" opacity="0.80"/>
+  <!-- face droite (SE mi-ton) : moitié descendante -->
+  <path d="M 50,14 Q 67,28 84,54 L 82,57 Q 66,32 50,18 Z" fill="#8B6514" opacity="0.65"/>
+  <!-- surface dessus (couronnement) -->
+  <path d="M 16,54 Q 50,11 84,54 L 84,52 Q 50,8 16,52 Z" fill="#B08020"/>
+  <!-- joints planches transversaux (arcs concentriques) -->
+  <path d="M 22,52 Q 50,16 78,52" stroke="#4E3208" stroke-width="1.1" fill="none" opacity="0.38"/>
+  <path d="M 28,51 Q 50,20 72,51" stroke="#4E3208" stroke-width="1.0" fill="none" opacity="0.30"/>
+  <path d="M 36,50 Q 50,25 64,50" stroke="#4E3208" stroke-width="0.9" fill="none" opacity="0.25"/>
+  <!-- arête dorée golden hour (rim de roulage) -->
+  <path d="M 16,52 Q 50,8 84,52" stroke="#E8C050" stroke-width="2.6" fill="none" stroke-linecap="round" opacity="0.93"/>
+  <!-- brackets de connexion poteau/arche -->
+  <path d="M 16,54 L 20,52" stroke="#E8C050" stroke-width="1.6" stroke-linecap="round" opacity="0.75"/>
+  <path d="M 80,52 L 84,54" stroke="#D0B050" stroke-width="1.3" stroke-linecap="round" opacity="0.65"/>
+</svg>`
+const _rainbowrailDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_RAINBOWRAIL_SVG)
+
 export const MODULE3D_IMG: Record<Module3DType, string> = {
   jump: jumpUrl,
   double: doubleUrl,
@@ -207,6 +244,7 @@ export const MODULE3D_IMG: Record<Module3DType, string> = {
   hip: _hipDataUrl,
   gap: _gapDataUrl,
   rockgarden: _rockgardenDataUrl,
+  rainbowrail: _rainbowrailDataUrl,
 }
 
 // Palette commune
@@ -510,5 +548,40 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   <!-- micro-cailloux au sol -->
   <ellipse cx="38" cy="58" rx="4" ry="1.8" fill="#A8987A" opacity="0.65"/>
   <ellipse cx="57" cy="61" rx="3" ry="1.4" fill="#A8987A" opacity="0.55"/>
+</svg>`,
+
+  // ── RAINBOW RAIL : arche en bois courbe, deux poteaux supports ──────────
+  // ISO 3/4 NW lit. Face gauche montante (NW) : ${W_LIT}. Face droite descendante (SE) : ${W_MID}.
+  // Dessous : ${W_SHD}. Couronnement (planches transversales) : ${W_PLANK}.
+  // Arête de roulage : ${GOLD}. Poteaux : bois golden hour.
+  rainbowrail: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="63" rx="42" ry="4.5" fill="${SHAD}"/>
+  <!-- === POTEAU GAUCHE === -->
+  <path d="M 12,55 L 16,54 L 16,63 L 12,62 Z" fill="${W_LIT}" opacity="0.78"/>
+  <path d="M 16,54 L 22,54 L 22,63 L 16,63 Z" fill="${W_PLANK}"/>
+  <path d="M 22,54 L 25,55 L 25,63 L 22,63 Z" fill="${W_SHD}"/>
+  <path d="M 10,62 L 27,63 L 27,66 L 10,65 Z" fill="${W_SHD}"/>
+  <!-- === POTEAU DROIT === -->
+  <path d="M 75,54 L 80,54 L 80,63 L 75,63 Z" fill="${W_PLANK}"/>
+  <path d="M 80,54 L 84,55 L 84,63 L 80,63 Z" fill="${W_SHD}"/>
+  <path d="M 73,63 L 86,63 L 86,66 L 73,65 Z" fill="${W_SHD}"/>
+  <!-- === ARCHE RAINBOW === -->
+  <!-- sous-face (ombre SE) -->
+  <path d="M 16,57 Q 50,24 84,57 L 82,60 Q 50,28 18,60 Z" fill="${W_SHD}" opacity="0.70"/>
+  <!-- face gauche (NW lit) : moitié montante -->
+  <path d="M 16,54 Q 33,28 50,14 L 50,18 Q 33,32 18,57 Z" fill="${W_LIT}" opacity="0.80"/>
+  <!-- face droite (SE mi-ton) : moitié descendante -->
+  <path d="M 50,14 Q 67,28 84,54 L 82,57 Q 66,32 50,18 Z" fill="${W_MID}" opacity="0.65"/>
+  <!-- surface dessus (couronnement) -->
+  <path d="M 16,54 Q 50,11 84,54 L 84,52 Q 50,8 16,52 Z" fill="${W_PLANK}"/>
+  <!-- joints planches transversaux (arcs concentriques) -->
+  <path d="M 22,52 Q 50,16 78,52" stroke="${W_SHD}" stroke-width="1.1" fill="none" opacity="0.38"/>
+  <path d="M 28,51 Q 50,20 72,51" stroke="${W_SHD}" stroke-width="1.0" fill="none" opacity="0.30"/>
+  <path d="M 36,50 Q 50,25 64,50" stroke="${W_SHD}" stroke-width="0.9" fill="none" opacity="0.25"/>
+  <!-- arête dorée golden hour (rim de roulage) -->
+  <path d="M 16,52 Q 50,8 84,52" stroke="${GOLD}" stroke-width="2.6" fill="none" stroke-linecap="round" opacity="0.93"/>
+  <!-- brackets de connexion poteau/arche -->
+  <path d="M 16,54 L 20,52" stroke="${GOLD}" stroke-width="1.6" stroke-linecap="round" opacity="0.75"/>
+  <path d="M 80,52 L 84,54" stroke="#D0B050" stroke-width="1.3" stroke-linecap="round" opacity="0.65"/>
 </svg>`,
 }
