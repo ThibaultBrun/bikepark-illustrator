@@ -175,6 +175,7 @@ let symbolSyncRetryQueued = false
 let mapResizeObserver: ResizeObserver | null = null
 let resizeFrameId = 0
 const symbolImageIds = new Set<string>()
+const trailPinMarkers = new Map<string, maplibregl.Marker>()
 const symbolPositionOverrides = new Map<string, [number, number]>()
 const emittedRenderStages = new Set<string>()
 
@@ -1175,7 +1176,6 @@ function refreshTracks() {
 }
 
 // --- Pastilles numérotées par difficulté (départs de piste) ------------------
-const PIN_SOURCE = 'trail-pins'
 const PIN_COLORS: Record<GpxTrack['difficulty'], string> = {
   green: '#16a34a',
   blue: '#2563eb',
@@ -1200,72 +1200,83 @@ function trackStartCoord(track: GpxTrack): [number, number] | null {
   return null
 }
 
-function ensureTrailPinLayers() {
-  if (!map) return
-  if (!map.getSource(PIN_SOURCE)) {
-    map.addSource(PIN_SOURCE, {
-      type: 'geojson',
-      data: { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection,
-    })
-  }
-  if (!map.getLayer('trail-pin-circle')) {
-    map.addLayer({
-      id: 'trail-pin-circle',
-      type: 'circle',
-      source: PIN_SOURCE,
-      paint: {
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 9, 16, 13, 18, 16],
-        'circle-color': ['get', 'color'],
-        'circle-stroke-color': '#ffffff',
-        'circle-stroke-width': 2.4,
-        'circle-pitch-alignment': 'viewport',
-        'circle-pitch-scale': 'viewport',
-      },
-    })
-  }
-  if (!map.getLayer('trail-pin-label')) {
-    map.addLayer({
-      id: 'trail-pin-label',
-      type: 'symbol',
-      source: PIN_SOURCE,
-      layout: {
-        'text-field': ['get', 'label'],
-        'text-font': ['Noto Sans Bold'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 12, 11, 16, 14, 18, 17],
-        'text-allow-overlap': true,
-        'text-ignore-placement': true,
-        'text-pitch-alignment': 'viewport',
-      },
-      paint: {
-        'text-color': '#ffffff',
-        'text-halo-color': 'rgba(0,0,0,0.25)',
-        'text-halo-width': 0.6,
-      },
-    })
-  }
+function tearDropEl(label: string, color: string): HTMLElement {
+  const el = document.createElement('div')
+  el.className = 'trail-pin-marker'
+  // Teardrop SVG : cercle en haut + pointe vers le bas (anchor='bottom' = la pointe pointe le départ)
+  el.innerHTML = `<svg width="30" height="40" viewBox="0 0 30 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <filter id="pin-shadow" x="-40%" y="-20%" width="180%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.35)"/>
+    </filter>
+    <path d="M15 38 C15 38 2 25 2 14 A13 13 0 0 1 28 14 C28 25 15 38 15 38Z"
+      fill="${color}" stroke="white" stroke-width="2.5" filter="url(#pin-shadow)"/>
+    <text x="15" y="14" text-anchor="middle" dominant-baseline="middle"
+      fill="white" font-size="11" font-family="system-ui,sans-serif" font-weight="700"
+      style="text-shadow:0 1px 2px rgba(0,0,0,0.3)">${label}</text>
+  </svg>`
+  el.style.cssText = 'cursor:default;pointer-events:none;line-height:0'
+  return el
 }
 
 function refreshTrailPins() {
   if (!map) return
-  ensureTrailPinLayers()
-  const features: GeoJSON.Feature[] = []
+  const usedKeys = new Set<string>()
   let n = 0
+
   for (const track of props.tracks) {
     if (!track.visible) continue
-    const start = trackStartCoord(track)
-    if (!start) continue
     n += 1
-    features.push({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: start },
-      properties: {
-        label: String(n),
-        color: PIN_COLORS[track.difficulty] ?? '#2563eb',
-      },
+    const color = PIN_COLORS[track.difficulty] ?? '#2563eb'
+
+    // Segments de ce tracé (MultiLineString = plusieurs sous-segments)
+    const lines = (track.geojson?.features ?? []).filter((f) => {
+      const t = f.geometry?.type
+      return t === 'LineString' || t === 'MultiLineString'
     })
+
+    const subPins: Array<{ key: string; coord: [number, number]; label: string }> = []
+
+    if (lines.length <= 1) {
+      const start = trackStartCoord(track)
+      if (start) subPins.push({ key: `${track.id}:0`, coord: start, label: String(n) })
+    } else {
+      const letters = 'abcdefghijklmnopqrstuvwxyz'
+      lines.forEach((feat, i) => {
+        const g = feat.geometry
+        let start: [number, number] | null = null
+        if (g.type === 'LineString' && g.coordinates.length) {
+          start = [g.coordinates[0][0], g.coordinates[0][1]]
+        } else if (g.type === 'MultiLineString' && g.coordinates[0]?.length) {
+          start = [g.coordinates[0][0][0], g.coordinates[0][0][1]]
+        }
+        if (start) subPins.push({ key: `${track.id}:${i}`, coord: start, label: `${n}${letters[i] ?? i}` })
+      })
+    }
+
+    for (const { key, coord, label } of subPins) {
+      usedKeys.add(key)
+      if (trailPinMarkers.has(key)) {
+        const m = trailPinMarkers.get(key)!
+        m.setLngLat(coord)
+        const txt = m.getElement().querySelector('text')
+        if (txt) txt.textContent = label
+      } else {
+        const el = tearDropEl(label, color)
+        const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat(coord)
+          .addTo(map)
+        trailPinMarkers.set(key, marker)
+      }
+    }
   }
-  const src = map.getSource(PIN_SOURCE) as maplibregl.GeoJSONSource | undefined
-  src?.setData({ type: 'FeatureCollection', features })
+
+  // Supprimer les marqueurs obsolètes
+  for (const [key, marker] of trailPinMarkers) {
+    if (!usedKeys.has(key)) {
+      marker.remove()
+      trailPinMarkers.delete(key)
+    }
+  }
 }
 
 function emitRenderStage(stage: 'tracks' | 'symbols') {
@@ -2563,6 +2574,8 @@ onBeforeUnmount(() => {
   emittedRenderStages.clear()
   symbolPositionOverrides.clear()
   symbolImageIds.clear()
+  for (const marker of trailPinMarkers.values()) marker.remove()
+  trailPinMarkers.clear()
 })
 </script>
 
