@@ -2247,11 +2247,35 @@ watch(projectName, (name) => {
 @media (max-width: 960px) {
   .symbol-action-bar {
     bottom: 16px;
+    max-width: calc(100% - 24px);
+  }
+
+  .symbol-action-bar__btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 14px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .submit-fab {
     bottom: 16px;
     left: 16px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .track-editor-bar__btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .track-editor-bar__mode {
+    min-height: 44px;
+    padding: 10px 16px;
+    touch-action: manipulation;
   }
 }
 

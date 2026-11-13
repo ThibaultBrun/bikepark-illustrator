@@ -498,7 +498,7 @@ const activeSectionMeta = computed(() => {
     bottom: 0;
     width: 100%;
     max-width: 100%;
-    height: min(78vh, 720px);
+    height: min(82vh, 740px);
     padding: 14px 14px calc(18px + env(safe-area-inset-bottom));
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
@@ -515,6 +515,17 @@ const activeSectionMeta = computed(() => {
   .mobile-drawer-handle {
     display: inline-flex;
     bottom: calc(14px + env(safe-area-inset-bottom));
+    min-width: 72px;
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Very small phones: shorter sheet to leave map visible */
+  @media (max-width: 480px) and (max-height: 700px) {
+    .sidebar {
+      height: min(72vh, 580px);
+    }
   }
 
   .sidebar-backdrop {
@@ -535,7 +546,7 @@ const activeSectionMeta = computed(() => {
   .mobile-section-nav {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 14px;
     position: sticky;
     top: 62px;
@@ -549,16 +560,19 @@ const activeSectionMeta = computed(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 10px 6px;
+    gap: 5px;
+    padding: 11px 4px 9px;
+    min-height: 60px;
     border: 1px solid rgba(30, 41, 59, 0.9);
     border-radius: 14px;
     background: rgba(17, 24, 39, 0.9);
     color: #d8ccb6;
     font: inherit;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-section-button.active {
@@ -568,12 +582,41 @@ const activeSectionMeta = computed(() => {
   }
 
   .mobile-section-icon {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
   }
 
   .mobile-section-label {
     line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* Very small screens: scroll nav horizontally */
+  @media (max-width: 480px) {
+    .mobile-section-nav {
+      display: flex;
+      overflow-x: auto;
+      gap: 6px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-left: 2px;
+      padding-right: 2px;
+    }
+
+    .mobile-section-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .mobile-section-button {
+      flex-shrink: 0;
+      width: 68px;
+      min-height: 64px;
+      font-size: 10px;
+    }
   }
 }
 </style>

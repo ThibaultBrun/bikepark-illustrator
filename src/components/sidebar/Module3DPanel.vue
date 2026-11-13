@@ -230,16 +230,66 @@ defineEmits<{
 
 .module3d-placed__move,
 .module3d-placed__remove {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.12s;
+  touch-action: manipulation;
+}
+
+@media (max-width: 960px) {
+  .module3d-placed__move,
+  .module3d-placed__remove {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 18px;
+  }
+
+  .module3d-placed__item {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 10px;
+  }
+
+  .module3d-placed__controls {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .module3d-placed__scale,
+  .module3d-placed__rot {
+    width: 80px;
+  }
+
+  .module3d-placed__scale-label,
+  .module3d-placed__rot-label {
+    font-size: 11px;
+  }
+
+  .module3d-card {
+    padding: 14px 10px 10px;
+    min-height: 90px;
+  }
+
+  .module3d-card__preview {
+    width: 72px;
+    height: 52px;
+  }
+
+  .module3d-card__label {
+    font-size: 12px;
+  }
+
+  .module3d-panel__hint {
+    font-size: 13px;
+  }
 }
 
 .module3d-placed__move {
