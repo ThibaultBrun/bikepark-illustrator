@@ -46,6 +46,7 @@
       @copy-link="onCopyLink"
       @export-image="onExportImage"
       @export-poster="onExportPoster"
+      @export-pdf="onExportPdf"
       @update:spot-region="spotRegion = $event"
       @update:spot-type="spotType = $event"
       @locate="onLocate"
@@ -319,6 +320,7 @@ import {
 } from './types/symbol'
 import { composePoster } from './lib/posterCompose'
 import type { PrintFormatId } from './lib/printFormats'
+import { exportPosterAsPdf } from './lib/pdfExport'
 import type { Module3D, Module3DType } from './types/module3d'
 
 const { t, locale } = useI18n()
@@ -416,6 +418,36 @@ async function onExportPoster(formatId: PrintFormatId = 'a4p') {
   a.remove()
   URL.revokeObjectURL(url)
   showToast(t('toast.exportImageOk'))
+}
+
+// Export PDF print-ready : compose le poster PNG puis l'encapsule dans un PDF au bon format.
+async function onExportPdf(formatId: PrintFormatId = 'a4p') {
+  showToast(t('toast.exportRendering'))
+  const mapBlob = await mapViewRef.value?.exportImage()
+  if (!mapBlob) {
+    showToast(t('toast.exportImageFail'))
+    return
+  }
+  const allDefs = [...defaultSymbolLibrary, ...customSymbols.value]
+  const posterBlob = await composePoster({
+    mapBlob,
+    parkName: projectName.value || 'Mon Bikepark',
+    region: spotRegion.value,
+    tracks: tracks.value,
+    symbols: symbols.value,
+    symbolDefs: allDefs,
+    formatId,
+  })
+  if (!posterBlob) {
+    showToast(t('toast.exportImageFail'))
+    return
+  }
+  try {
+    await exportPosterAsPdf(posterBlob, formatId, sanitizeProjectName(projectName.value) || 'bikepark')
+    showToast(t('toast.exportPdfOk'))
+  } catch {
+    showToast(t('toast.exportImageFail'))
+  }
 }
 const editorMode = ref<'idle' | 'draw' | 'edit'>('idle')
 const editorPointCount = ref(0)

@@ -153,6 +153,7 @@ export default {
     hint: 'Cadre, zoome et incline ta carte comme tu veux, puis exporte. Les contrôles et repères d\'édition ne sont pas inclus.',
     format: 'Format',
     exportPoster: 'Exporter Poster',
+    exportPdf: '📄 Exporter en PDF print-ready',
     exportPng: '📷 Exporter en PNG',
   },
 
@@ -186,6 +187,7 @@ export default {
     linkCopied: 'Lien copié ✅',
     exportRendering: 'Rendu HD en cours…',
     exportImageOk: 'Image exportée ✅',
+    exportPdfOk: 'PDF exporté ✅',
     exportImageFail: 'Échec de l\'export de l\'image.',
     needTrails: 'Dessine ou importe au moins une piste d\'abord.',
   },

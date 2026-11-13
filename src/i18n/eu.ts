@@ -154,6 +154,7 @@ export default {
     hint: 'Koka, zooma eta okertu mapa nahi duzun bezala, gero esportatu. Kontrolak eta edizio-markak ez dira sartzen.',
     format: 'Formatua',
     exportPoster: 'Poster esportatu',
+    exportPdf: '📄 Esportatu PDF (inprimatzen prest)',
     exportPng: '📷 Esportatu PNG gisa',
   },
 
@@ -187,6 +188,7 @@ export default {
     linkCopied: 'Esteka kopiatu da ✅',
     exportRendering: 'HD errendatzen…',
     exportImageOk: 'Irudia esportatuta ✅',
+    exportPdfOk: 'PDF esportatuta ✅',
     exportImageFail: 'Ezin izan da irudia esportatu.',
     needTrails: 'Marraztu edo inportatu pista bat lehenik.',
   },

@@ -153,6 +153,7 @@ export default {
     hint: 'Encuadra, amplía e inclina tu mapa como quieras, luego exporta. Los controles y marcadores de edición no se incluyen.',
     format: 'Formato',
     exportPoster: 'Exportar Póster',
+    exportPdf: '📄 Exportar PDF (listo para imprimir)',
     exportPng: '📷 Exportar en PNG',
   },
 
@@ -186,6 +187,7 @@ export default {
     linkCopied: 'Enlace copiado ✅',
     exportRendering: 'Renderizado HD en curso…',
     exportImageOk: 'Imagen exportada ✅',
+    exportPdfOk: 'PDF exportado ✅',
     exportImageFail: 'Error al exportar la imagen.',
     needTrails: 'Dibuja o importa al menos una pista primero.',
   },

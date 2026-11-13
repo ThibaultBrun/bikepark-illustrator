@@ -34,6 +34,10 @@
       🎨 {{ t('print.exportPoster') }}
     </button>
 
+    <button type="button" class="action-button" @click="$emit('export-pdf', selectedFormat)">
+      📄 {{ t('print.exportPdf') }}
+    </button>
+
     <button type="button" class="action-button" @click="$emit('export-image')">
       {{ t('print.exportPng') }}
     </button>
@@ -53,6 +57,7 @@ const selectedFormat = ref<PrintFormatId>('a4p')
 defineEmits<{
   (e: 'export-image'): void
   (e: 'export-poster', formatId: PrintFormatId): void
+  (e: 'export-pdf', formatId: PrintFormatId): void
 }>()
 </script>
 
