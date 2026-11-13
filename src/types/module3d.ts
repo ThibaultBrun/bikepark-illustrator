@@ -98,35 +98,26 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   // Viewer SW. Light NW. Le berm = mur de terre courbe qu'on longe penché.
   // On voit la FACE AVANT du mur (quasi-verticale, face viewer) + la surface
   // de roulage inclinée au-dessus. Rim doré trace le bord extérieur haut.
+  // Berm = virage relevé : MUR HAUT banqué, concave. Surface de roulage
+  // éclairée en haut (rim doré), gorge en ombre en bas. Hauteur marquée.
   berm: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
-  <!-- ground shadow -->
-  <ellipse cx="52" cy="63" rx="38" ry="5" fill="${SHAD}"/>
-  <!-- === BASE ARRIÈRE du mur (sol derrière, ombre) === -->
-  <path d="M 20,55 Q 42,46 68,42 Q 80,42 88,54 L 88,62 Q 72,60 42,60 Z"
-        fill="${D_SHD}" opacity="0.55"/>
-  <!-- === FACE GAUCHE du mur (face viewer côté NW = éclairée D_LIT) === -->
-  <path d="M 10,60 Q 14,44 18,30 Q 26,16 44,14 Q 44,30 38,44 Q 30,52 18,56 Z"
-        fill="${D_LIT}"/>
-  <!-- === FACE DROITE du mur (tourne vers exit, D_MID) === -->
-  <path d="M 44,14 Q 62,16 76,30 Q 84,42 88,54 Q 72,48 56,46 Q 46,44 38,44 Q 44,30 44,14 Z"
-        fill="${D_MID}"/>
-  <!-- === SURFACE DE ROULAGE (dessus incliné, entre rim et gorge intérieure) === -->
-  <path d="M 18,56 Q 30,52 38,44 Q 46,44 56,46 Q 72,48 88,54 Q 82,46 72,38 Q 58,30 44,28 Q 30,30 20,40 Z"
-        fill="${D_LIT}" opacity="0.78"/>
-  <!-- Lignes de compaction terre sur la face du mur -->
-  <path d="M 22,46 Q 34,36 44,28 Q 56,32 68,38 Q 76,42 82,48"
-        stroke="${D_SHD}" stroke-width="0.9" fill="none" opacity="0.36"/>
-  <path d="M 18,52 Q 32,44 42,36 Q 54,38 66,42 Q 76,46 84,52"
-        stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.28"/>
-  <!-- Gorge intérieure : le bas de la zone de roulage -->
-  <path d="M 18,56 Q 36,52 56,50 Q 72,50 86,54"
-        stroke="${D_MID}" stroke-width="1.4" fill="none" opacity="0.5"/>
-  <!-- RIM DORÉ : lèvre extérieure haut du mur (trace tout le bord) -->
-  <path d="M 10,60 Q 14,42 18,28 Q 28,12 44,12 Q 62,12 76,28 Q 84,40 88,53"
-        stroke="${GOLD}" stroke-width="2.7" fill="none" stroke-linecap="round" opacity="0.93"/>
-  <!-- Highlight lit côté entrée (NW fort sur la face gauche) -->
-  <path d="M 10,60 Q 14,42 18,28 Q 26,16 40,13"
-        stroke="${D_LIT}" stroke-width="1.6" fill="none" opacity="0.52" stroke-linecap="round"/>
+  <ellipse cx="54" cy="59" rx="40" ry="5.5" fill="${SHAD}"/>
+  <!-- dos du mur derrière le rim (ombre) -->
+  <path d="M 24,26 Q 50,16 82,24 L 84,29 Q 52,21 26,31 Z" fill="${D_SHD}" opacity="0.6"/>
+  <!-- surface de roulage banquée (concave, haute, éclairée) -->
+  <path d="M 24,27 Q 50,17 82,25 L 88,47 Q 56,56 22,50 Z" fill="${D_LIT}"/>
+  <!-- bande mid mi-hauteur (galbe) -->
+  <path d="M 23,44 Q 54,49 85,41 Q 54,45 23,44 Z" fill="${D_MID}" opacity="0.35"/>
+  <!-- gorge en ombre (bas du banking) -->
+  <path d="M 22,50 Q 56,56 88,47 Q 60,52 40,52 Q 28,52 22,50 Z" fill="${D_SHD}" opacity="0.42"/>
+  <!-- compaction qui suit le virage -->
+  <path d="M 28,36 Q 52,30 80,35" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.32"/>
+  <path d="M 26,42 Q 54,38 84,40" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.3"/>
+  <path d="M 24,48 Q 54,52 86,45" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.24"/>
+  <!-- end-cap gauche (épaisseur du mur) -->
+  <path d="M 24,27 Q 22,40 22,50 L 24,49 Q 25,38 27,29 Z" fill="${D_SHD}" opacity="0.45"/>
+  <!-- rim doré (lèvre haute) -->
+  <path d="M 24,27 Q 50,17 82,25" stroke="${GOLD}" stroke-width="2.6" fill="none" stroke-linecap="round" opacity="0.93"/>
 </svg>`,
 
   // ── PUMPTRACK : série de rollers ──────────────────────────────────────
