@@ -18,6 +18,10 @@ Build : `cd /home/debian/repos/bikepark-illustrator && npm run build`.
 ## EN COURS / BACKLOG (priorisé par la revue 2026-11-13, du + rentable au -)
 Mockup north-star validé visuellement : /tmp/illus-test/poster.png (cadre+titre+stats+légende+logos+pistes casing+pins). On construit vers ça.
 
+### 🧹 Polish modules 3D (revue directe 2026-11-14, bas ROI)
+- [ ] **Lisibilité détails sprites** : échelons du `ladder` un peu trop discrets (monter opacité/épaisseur ou espacer) ; pivot du `teeter` petit (agrandir légèrement le bloc fulcrum pour mieux lire la bascule). À trancher au vu des sprites sur carte réelle avant de toucher.
+- [ ] **Rendus PNG Blender des 13 types SVG-inline** (ladder/teeter/skinny/gap/hip/drop/stepup/wallride/rainbowrail/rockgarden…) : ajouter `build_*()` manquants dans `tools/blender_modules.py` + batch sur TITOUS quand up → remplacer les data-URL SVG par les PNG golden hour. Chantier Blender piloté en direct, PAS la boucle.
+
 ### 🔝 PRIORITÉ EXPRESSE THIBAULT (2026-11-13, à faire AVANT le reste)
 0. [x] **Modules 3D sur la carte** ✅ 2026-11-13 — 6 sprites iso 2.5D golden hour (`src/types/module3d.ts`) + palette catalogue (`Module3DPanel.vue`, section sidebar "Modules 3D" icône Layers) + pose au clic carte + déplacement (markers MapLibre draggable + mode repositionnement) + sliders échelle/rotation + persistance projet (save/load/reset/autosave) + i18n 4 langues. Build OK + déployé préprod. Sprites validés au screenshot (north-shore/pumptrack/table excellents ; jump/double/berm corrects — à raffiner, cf. backlog 0bis).
 0bis. [x] **Polish sprites modules 3D** ✅ 2026-11-13 — jump (sliver lit étroit + bandes de compaction terre + lip galbé doré), double (2 kickers symétriques mêmes détails + gap), berm (crescent banqué : masse terre + surface inclinée lit + arcs de compaction suivant la courbe + rim doré → vraie lecture de volume). Screenshot validé /tmp/illus-test/sprites.png. Build OK + déployé préprod. (Catalogue de base déjà en place via Module3DPanel.)
