@@ -1,4 +1,4 @@
-export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride' | 'hip' | 'gap' | 'rockgarden' | 'rainbowrail'
+export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride' | 'hip' | 'gap' | 'rockgarden' | 'rainbowrail' | 'ladder' | 'teeter' | 'skinny'
 
 export type Module3D = {
   id: string
@@ -22,6 +22,9 @@ export const MODULE3D_LABELS: Record<Module3DType, string> = {
   gap: 'Gap',
   rockgarden: 'Rock Garden',
   rainbowrail: 'Rainbow Rail',
+  ladder: 'Ladder Bridge',
+  teeter: 'Teeter',
+  skinny: 'Skinny',
 }
 
 // Sprites 3D (rendus Blender, golden hour). Le contact-sol est centré dans
@@ -231,6 +234,108 @@ const _RAINBOWRAIL_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/200
 </svg>`
 const _rainbowrailDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_RAINBOWRAIL_SVG)
 
+// Ladder Bridge : passerelle montante en bois avec échelons transversaux, 2 poteaux supports.
+// Vue ISO 3/4 NW lit. Le pont monte de gauche (bas) vers droite (haut). Rungs visibles sur le dessus.
+// PNG Blender à générer via build_ladder() dans tools/blender_modules.py quand TITOUS dispo.
+const _LADDER_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="63" rx="38" ry="4.5" fill="${SHAD}"/>
+  <!-- === POTEAU BAS-GAUCHE === -->
+  <path d="M 18,56 L 22,55 L 22,63 L 18,63 Z" fill="${W_SHD}"/>
+  <path d="M 22,55 L 28,55 L 28,63 L 22,63 Z" fill="${W_MID}"/>
+  <path d="M 16,63 L 30,63 L 30,66 L 16,65 Z" fill="${W_SHD}"/>
+  <!-- === POTEAU HAUT-DROIT === -->
+  <path d="M 62,38 L 66,37 L 66,45 L 62,45 Z" fill="${W_SHD}"/>
+  <path d="M 66,37 L 72,37 L 72,45 L 66,45 Z" fill="${W_MID}"/>
+  <path d="M 60,45 L 74,45 L 74,48 L 60,47 Z" fill="${W_SHD}"/>
+  <!-- === PONT === -->
+  <!-- Face avant (visible par viewer, mi-ton) -->
+  <path d="M 8,57 L 86,23 L 86,29 L 8,63 Z" fill="${W_MID}"/>
+  <!-- Surface du pont (dessus, NW lit, W_PLANK) -->
+  <path d="M 8,52 L 86,18 L 86,23 L 8,57 Z" fill="${W_PLANK}"/>
+  <!-- Échelons transversaux (rungs, perpendiculaires à la direction de roulage) -->
+  <line x1="20" y1="47" x2="20" y2="52" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="32" y1="42" x2="32" y2="47" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="44" y1="37" x2="44" y2="42" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="56" y1="32" x2="56" y2="37" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="68" y1="27" x2="68" y2="32" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="80" y1="22" x2="80" y2="27" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <!-- Grain longitudinal (direction de roulage) -->
+  <line x1="8" y1="55" x2="86" y2="21" stroke="${W_SHD}" stroke-width="0.7" opacity="0.20"/>
+  <!-- Face gauche (NW lit) -->
+  <path d="M 8,52 L 8,57 L 4,59 L 4,54 Z" fill="${W_LIT}" opacity="0.78"/>
+  <!-- Face droite haut (SE shadow) -->
+  <path d="M 86,18 L 86,23 L 90,25 L 90,20 Z" fill="${W_SHD}" opacity="0.6"/>
+  <!-- Rim doré (arête de roulage, haut) -->
+  <path d="M 8,52 Q 47,35 86,18" stroke="${GOLD}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.92"/>
+  <!-- Rim avant bas (arête basse du pont) -->
+  <path d="M 8,57 Q 47,40 86,23" stroke="${W_LIT}" stroke-width="1.0" fill="none" stroke-linecap="round" opacity="0.35"/>
+</svg>`
+const _ladderDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_LADDER_SVG)
+
+// Teeter (Bascule) : planche en équilibre sur un pivot central. Gauche légèrement bas, droite haute.
+// Pivot = small rectangular block en bois sous le centre. Vue ISO 3/4 NW lit.
+// PNG Blender à générer via build_teeter() dans tools/blender_modules.py quand TITOUS dispo.
+const _TEETER_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="63" rx="42" ry="4.5" fill="${SHAD}"/>
+  <!-- === PIVOT / FULCRUM (bloc bois central) === -->
+  <!-- Top face du pivot -->
+  <path d="M 43,54 L 57,50 L 57,54 L 43,58 Z" fill="${W_PLANK}"/>
+  <!-- Face avant du pivot -->
+  <path d="M 43,58 L 57,54 L 57,60 L 43,64 Z" fill="${W_MID}"/>
+  <!-- Face NW lit du pivot -->
+  <path d="M 43,54 L 43,64 L 39,65 L 39,55 Z" fill="${W_LIT}" opacity="0.80"/>
+  <!-- Face SE shadow du pivot -->
+  <path d="M 57,50 L 57,60 L 61,61 L 61,51 Z" fill="${W_SHD}" opacity="0.65"/>
+  <!-- === PLANCHE / BOARD === -->
+  <!-- Planche légèrement inclinée gauche-bas / droite-haut -->
+  <!-- Surface dessus (W_PLANK, NW éclairée) : gauche y=52, droite y=28 -->
+  <path d="M 6,52 L 92,26 L 92,32 L 6,58 Z" fill="${W_PLANK}"/>
+  <!-- Face avant (bottom, faces viewer) -->
+  <path d="M 6,58 L 92,32 L 92,36 L 6,62 Z" fill="${W_MID}"/>
+  <!-- Bout gauche (NW lit, end cap) -->
+  <path d="M 6,52 L 6,62 L 2,64 L 2,54 Z" fill="${W_LIT}" opacity="0.78"/>
+  <!-- Bout droit (SE shadow, end cap) -->
+  <path d="M 92,26 L 92,36 L 96,38 L 96,28 Z" fill="${W_SHD}" opacity="0.65"/>
+  <!-- Grain bois longitudinal sur la planche -->
+  <line x1="6" y1="55" x2="92" y2="29" stroke="${W_SHD}" stroke-width="0.8" opacity="0.22"/>
+  <line x1="6" y1="57" x2="92" y2="31" stroke="${W_SHD}" stroke-width="0.6" opacity="0.15"/>
+  <!-- Rim doré (arête supérieure, brillance golden hour) -->
+  <path d="M 6,52 Q 49,39 92,26" stroke="${GOLD}" stroke-width="2.3" fill="none" stroke-linecap="round" opacity="0.90"/>
+</svg>`
+const _teeterDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_TEETER_SVG)
+
+// Skinny : planche très étroite surélevée entre 2 hauts poteaux — impose l'équilibre.
+// Planche thin (3-4px en vue ISO) sur 2 poteaux élancés. Vue ISO 3/4 NW lit.
+// PNG Blender à générer via build_skinny() dans tools/blender_modules.py quand TITOUS dispo.
+const _SKINNY_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="64" rx="40" ry="4.5" fill="${SHAD}"/>
+  <!-- === POTEAU GAUCHE (haut, élancé) === -->
+  <path d="M 14,34 L 14,60 L 10,62 L 10,36 Z" fill="${W_LIT}" opacity="0.80"/>
+  <path d="M 14,34 L 24,34 L 24,60 L 14,60 Z" fill="${W_MID}"/>
+  <path d="M 24,34 L 28,36 L 28,62 L 24,60 Z" fill="${W_SHD}" opacity="0.70"/>
+  <!-- Pied gauche -->
+  <path d="M 10,60 L 28,60 L 28,64 L 10,63 Z" fill="${W_SHD}"/>
+  <!-- === POTEAU DROIT (haut, élancé) === -->
+  <path d="M 73,34 L 83,34 L 83,60 L 73,60 Z" fill="${W_MID}"/>
+  <path d="M 83,34 L 87,36 L 87,62 L 83,60 Z" fill="${W_SHD}" opacity="0.70"/>
+  <!-- Pied droit -->
+  <path d="M 73,60 L 87,60 L 87,64 L 73,63 Z" fill="${W_SHD}"/>
+  <!-- === PLANCHE ÉTROITE (skinny) === -->
+  <!-- Surface dessus (3px, très étroite = caractère skinny) -->
+  <path d="M 10,30 L 90,30 L 90,33 L 10,33 Z" fill="${W_PLANK}"/>
+  <!-- Face avant (4px, faces viewer) -->
+  <path d="M 10,33 L 90,33 L 90,37 L 10,37 Z" fill="${W_MID}"/>
+  <!-- Bout gauche (NW lit) -->
+  <path d="M 10,30 L 10,37 L 6,39 L 6,32 Z" fill="${W_LIT}" opacity="0.80"/>
+  <!-- Bout droit (SE shadow) -->
+  <path d="M 90,30 L 90,37 L 94,39 L 94,32 Z" fill="${W_SHD}" opacity="0.65"/>
+  <!-- Rim doré (top edge) -->
+  <line x1="10" y1="30" x2="90" y2="30" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" opacity="0.92"/>
+  <!-- Grain bois longitudinal sur la planche -->
+  <line x1="10" y1="32" x2="90" y2="32" stroke="${W_SHD}" stroke-width="0.7" opacity="0.25"/>
+</svg>`
+const _skinnyDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_SKINNY_SVG)
+
 export const MODULE3D_IMG: Record<Module3DType, string> = {
   jump: jumpUrl,
   double: doubleUrl,
@@ -245,6 +350,9 @@ export const MODULE3D_IMG: Record<Module3DType, string> = {
   gap: _gapDataUrl,
   rockgarden: _rockgardenDataUrl,
   rainbowrail: _rainbowrailDataUrl,
+  ladder: _ladderDataUrl,
+  teeter: _teeterDataUrl,
+  skinny: _skinnyDataUrl,
 }
 
 // Palette commune
@@ -548,6 +656,63 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   <!-- micro-cailloux au sol -->
   <ellipse cx="38" cy="58" rx="4" ry="1.8" fill="#A8987A" opacity="0.65"/>
   <ellipse cx="57" cy="61" rx="3" ry="1.4" fill="#A8987A" opacity="0.55"/>
+</svg>`,
+
+  // ── LADDER BRIDGE : passerelle montante en bois avec échelons ───────────
+  ladder: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="63" rx="38" ry="4.5" fill="${SHAD}"/>
+  <path d="M 18,56 L 22,55 L 22,63 L 18,63 Z" fill="${W_SHD}"/>
+  <path d="M 22,55 L 28,55 L 28,63 L 22,63 Z" fill="${W_MID}"/>
+  <path d="M 16,63 L 30,63 L 30,66 L 16,65 Z" fill="${W_SHD}"/>
+  <path d="M 62,38 L 66,37 L 66,45 L 62,45 Z" fill="${W_SHD}"/>
+  <path d="M 66,37 L 72,37 L 72,45 L 66,45 Z" fill="${W_MID}"/>
+  <path d="M 60,45 L 74,45 L 74,48 L 60,47 Z" fill="${W_SHD}"/>
+  <path d="M 8,57 L 86,23 L 86,29 L 8,63 Z" fill="${W_MID}"/>
+  <path d="M 8,52 L 86,18 L 86,23 L 8,57 Z" fill="${W_PLANK}"/>
+  <line x1="20" y1="47" x2="20" y2="52" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="32" y1="42" x2="32" y2="47" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="44" y1="37" x2="44" y2="42" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="56" y1="32" x2="56" y2="37" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="68" y1="27" x2="68" y2="32" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="80" y1="22" x2="80" y2="27" stroke="${W_SHD}" stroke-width="1.4" opacity="0.60"/>
+  <line x1="8" y1="55" x2="86" y2="21" stroke="${W_SHD}" stroke-width="0.7" opacity="0.20"/>
+  <path d="M 8,52 L 8,57 L 4,59 L 4,54 Z" fill="${W_LIT}" opacity="0.78"/>
+  <path d="M 86,18 L 86,23 L 90,25 L 90,20 Z" fill="${W_SHD}" opacity="0.6"/>
+  <path d="M 8,52 Q 47,35 86,18" stroke="${GOLD}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.92"/>
+</svg>`,
+
+  // ── TEETER (Bascule) : planche basculante sur pivot central ─────────────
+  teeter: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="63" rx="42" ry="4.5" fill="${SHAD}"/>
+  <path d="M 43,54 L 57,50 L 57,54 L 43,58 Z" fill="${W_PLANK}"/>
+  <path d="M 43,58 L 57,54 L 57,60 L 43,64 Z" fill="${W_MID}"/>
+  <path d="M 43,54 L 43,64 L 39,65 L 39,55 Z" fill="${W_LIT}" opacity="0.80"/>
+  <path d="M 57,50 L 57,60 L 61,61 L 61,51 Z" fill="${W_SHD}" opacity="0.65"/>
+  <path d="M 6,52 L 92,26 L 92,32 L 6,58 Z" fill="${W_PLANK}"/>
+  <path d="M 6,58 L 92,32 L 92,36 L 6,62 Z" fill="${W_MID}"/>
+  <path d="M 6,52 L 6,62 L 2,64 L 2,54 Z" fill="${W_LIT}" opacity="0.78"/>
+  <path d="M 92,26 L 92,36 L 96,38 L 96,28 Z" fill="${W_SHD}" opacity="0.65"/>
+  <line x1="6" y1="55" x2="92" y2="29" stroke="${W_SHD}" stroke-width="0.8" opacity="0.22"/>
+  <line x1="6" y1="57" x2="92" y2="31" stroke="${W_SHD}" stroke-width="0.6" opacity="0.15"/>
+  <path d="M 6,52 Q 49,39 92,26" stroke="${GOLD}" stroke-width="2.3" fill="none" stroke-linecap="round" opacity="0.90"/>
+</svg>`,
+
+  // ── SKINNY : planche très étroite surélevée — impose l'équilibre ─────────
+  skinny: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="64" rx="40" ry="4.5" fill="${SHAD}"/>
+  <path d="M 14,34 L 14,60 L 10,62 L 10,36 Z" fill="${W_LIT}" opacity="0.80"/>
+  <path d="M 14,34 L 24,34 L 24,60 L 14,60 Z" fill="${W_MID}"/>
+  <path d="M 24,34 L 28,36 L 28,62 L 24,60 Z" fill="${W_SHD}" opacity="0.70"/>
+  <path d="M 10,60 L 28,60 L 28,64 L 10,63 Z" fill="${W_SHD}"/>
+  <path d="M 73,34 L 83,34 L 83,60 L 73,60 Z" fill="${W_MID}"/>
+  <path d="M 83,34 L 87,36 L 87,62 L 83,60 Z" fill="${W_SHD}" opacity="0.70"/>
+  <path d="M 73,60 L 87,60 L 87,64 L 73,63 Z" fill="${W_SHD}"/>
+  <path d="M 10,30 L 90,30 L 90,33 L 10,33 Z" fill="${W_PLANK}"/>
+  <path d="M 10,33 L 90,33 L 90,37 L 10,37 Z" fill="${W_MID}"/>
+  <path d="M 10,30 L 10,37 L 6,39 L 6,32 Z" fill="${W_LIT}" opacity="0.80"/>
+  <path d="M 90,30 L 90,37 L 94,39 L 94,32 Z" fill="${W_SHD}" opacity="0.65"/>
+  <line x1="10" y1="30" x2="90" y2="30" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" opacity="0.92"/>
+  <line x1="10" y1="32" x2="90" y2="32" stroke="${W_SHD}" stroke-width="0.7" opacity="0.25"/>
 </svg>`,
 
   // ── RAINBOW RAIL : arche en bois courbe, deux poteaux supports ──────────
