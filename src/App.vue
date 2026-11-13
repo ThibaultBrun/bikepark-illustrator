@@ -74,6 +74,7 @@
         :label-font="mapSettings.labelFont"
         :show-pista-trails="mapSettings.showPistaTrails"
         :show-heatmap="mapSettings.showHeatmap"
+        :show-osm-labels="mapSettings.showOsmLabels"
         :reposition-symbol-id="repositionSymbolId"
         :pending-add-symbol-type="pendingAddSymbolType"
         :saved-camera="mapCamera"
@@ -437,6 +438,7 @@ const mapSettings = ref<MapSettings>({
   labelFont: 'segoe',
   showPistaTrails: true,
   showHeatmap: false,
+  showOsmLabels: true,
 })
 const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 const saveStatusMessage = ref('')
@@ -874,6 +876,7 @@ function normalizeProject(raw: Partial<BikeparkProject> | null | undefined): Bik
       labelFont: raw?.mapSettings?.labelFont ?? 'segoe',
       showPistaTrails: raw?.mapSettings?.showPistaTrails ?? true,
       showHeatmap: raw?.mapSettings?.showHeatmap ?? false,
+      showOsmLabels: raw?.mapSettings?.showOsmLabels ?? true,
     },
     mapCamera:
       raw?.mapCamera &&

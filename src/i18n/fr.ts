@@ -91,6 +91,9 @@ export default {
     heatmapTitle: 'Heatmap Strava',
     heatmapDesc: 'Calque de chaleur Strava (réservé aux admins).',
     showHeatmap: 'Afficher la heatmap Strava',
+    osmLabelsTitle: 'Labels OSM',
+    osmLabelsDesc: 'Villages et cours d\'eau contextuels (fond illustré).',
+    showOsmLabels: 'Afficher les labels OSM',
   },
 
   exportPanel: {

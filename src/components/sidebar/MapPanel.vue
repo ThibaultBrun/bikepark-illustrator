@@ -131,6 +131,27 @@
     </label>
   </section>
 
+  <section class="panel">
+    <div class="panel-header">
+      <div class="placeholder-icon" aria-hidden="true">
+        <SidebarIcon name="symbol" />
+      </div>
+      <div class="panel-header-copy">
+        <h2>{{ t('map.osmLabelsTitle') }}</h2>
+        <p>{{ t('map.osmLabelsDesc') }}</p>
+      </div>
+    </div>
+
+    <label class="toggle-row">
+      <input
+        type="checkbox"
+        :checked="settings.showOsmLabels"
+        @change="updateShowOsmLabels"
+      />
+      <span>{{ t('map.showOsmLabels') }}</span>
+    </label>
+  </section>
+
   <section v-if="canViewHeatmap" class="panel">
     <div class="panel-header">
       <div class="placeholder-icon" aria-hidden="true">
@@ -203,6 +224,13 @@ function updateShowHeatmap(event: Event) {
   emit('update:settings', {
     ...props.settings,
     showHeatmap: (event.target as HTMLInputElement).checked,
+  })
+}
+
+function updateShowOsmLabels(event: Event) {
+  emit('update:settings', {
+    ...props.settings,
+    showOsmLabels: (event.target as HTMLInputElement).checked,
   })
 }
 

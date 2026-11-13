@@ -16,6 +16,7 @@ export type MapSettings = {
   labelFont: MapLabelFont
   showPistaTrails: boolean
   showHeatmap: boolean
+  showOsmLabels: boolean
 }
 
 export const mapLabelFontOptions: {

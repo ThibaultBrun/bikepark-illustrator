@@ -92,6 +92,9 @@ export default {
     heatmapTitle: 'Strava heatmap',
     heatmapDesc: 'Stravako bero-geruza (administrarientzat soilik).',
     showHeatmap: 'Erakutsi Stravako heatmap-a',
+    osmLabelsTitle: 'OSM etiketak',
+    osmLabelsDesc: 'Herriak eta ur-bideak (mapa ilustratua).',
+    showOsmLabels: 'Erakutsi OSM etiketak',
   },
 
   exportPanel: {

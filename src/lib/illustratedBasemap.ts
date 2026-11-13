@@ -254,7 +254,7 @@ export function illustratedLayers(): AnyLayer[] {
       type: 'symbol',
       source: SRC,
       'source-layer': 'place',
-      filter: ['in', ['get', 'class'], ['literal', ['village', 'hamlet', 'suburb', 'neighbourhood', 'town']]],
+      filter: ['in', ['get', 'class'], ['literal', ['village', 'hamlet', 'town']]],
       minzoom: 11,
       layout: {
         'text-field': ['coalesce', ['get', 'name:fr'], ['get', 'name']],

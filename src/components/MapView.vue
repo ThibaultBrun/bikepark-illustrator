@@ -77,6 +77,7 @@ const props = withDefaults(
     labelFont?: MapLabelFont
     showPistaTrails?: boolean
     showHeatmap?: boolean
+    showOsmLabels?: boolean
     repositionSymbolId?: string | null
     pendingAddSymbolType?: SymbolId | null
     savedCamera?: MapCameraState | null
@@ -95,6 +96,7 @@ const props = withDefaults(
     labelFont: 'segoe',
     showPistaTrails: true,
     showHeatmap: false,
+    showOsmLabels: true,
     repositionSymbolId: null,
     pendingAddSymbolType: null,
     savedCamera: null,
@@ -2377,6 +2379,17 @@ watch(
       setHeatmapVisible(true)
     } else {
       setHeatmapVisible(false)
+    }
+  },
+)
+
+watch(
+  () => props.showOsmLabels,
+  (visible) => {
+    if (!map) return
+    const vis = visible ? 'visible' : 'none'
+    for (const id of ['illus-label-village', 'illus-label-peak', 'illus-label-water']) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis)
     }
   },
 )
