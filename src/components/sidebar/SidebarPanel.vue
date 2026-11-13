@@ -141,8 +141,11 @@
       />
       <PrintPanel
         v-else-if="activeSection === 'print'"
+        :default-park-name="projectName"
+        :default-region="spotRegion"
         @export-image="$emit('export-image')"
-        @export-poster="$emit('export-poster')"
+        @export-poster="(fmt, branding) => $emit('export-poster', fmt, branding)"
+        @export-pdf="(fmt, branding) => $emit('export-pdf', fmt, branding)"
       />
       <HelpPanel
         v-else
@@ -218,7 +221,8 @@ defineEmits<{
   (e: 'propose-to-spot', payload: { id: string; name: string }): void
   (e: 'preview-in-pista'): void
   (e: 'export-image'): void
-  (e: 'export-poster'): void
+  (e: 'export-poster', fmt: string, branding: { posterName: string; region: string; accentColor: string; logoDataUrl: string }): void
+  (e: 'export-pdf', fmt: string, branding: { posterName: string; region: string; accentColor: string; logoDataUrl: string }): void
   (e: 'update:spot-region', value: string): void
   (e: 'update:spot-type', value: 'bikepark' | 'zone_enduro' | 'secteur' | 'skills_park'): void
   (e: 'set-visibility', level: 'private' | 'unlisted' | 'public'): void

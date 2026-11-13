@@ -387,8 +387,10 @@ async function onExportImage() {
   showToast(t('toast.exportImageOk'))
 }
 
+type PosterBranding = { posterName: string; region: string; accentColor: string; logoDataUrl: string }
+
 // Mode Poster : map blob → posterCompose → téléchargement PNG composé.
-async function onExportPoster(formatId: PrintFormatId = 'a4p') {
+async function onExportPoster(formatId: PrintFormatId = 'a4p', branding?: PosterBranding) {
   showToast(t('toast.exportRendering'))
   const mapBlob = await mapViewRef.value?.exportImage()
   if (!mapBlob) {
@@ -398,12 +400,14 @@ async function onExportPoster(formatId: PrintFormatId = 'a4p') {
   const allDefs = [...defaultSymbolLibrary, ...customSymbols.value]
   const blob = await composePoster({
     mapBlob,
-    parkName: projectName.value || 'Mon Bikepark',
-    region: spotRegion.value,
+    parkName: branding?.posterName || projectName.value || 'Mon Bikepark',
+    region: branding?.region ?? spotRegion.value,
     tracks: tracks.value,
     symbols: symbols.value,
     symbolDefs: allDefs,
     formatId,
+    accentColor: branding?.accentColor,
+    logoDataUrl: branding?.logoDataUrl,
   })
   if (!blob) {
     showToast(t('toast.exportImageFail'))
@@ -421,7 +425,7 @@ async function onExportPoster(formatId: PrintFormatId = 'a4p') {
 }
 
 // Export PDF print-ready : compose le poster PNG puis l'encapsule dans un PDF au bon format.
-async function onExportPdf(formatId: PrintFormatId = 'a4p') {
+async function onExportPdf(formatId: PrintFormatId = 'a4p', branding?: PosterBranding) {
   showToast(t('toast.exportRendering'))
   const mapBlob = await mapViewRef.value?.exportImage()
   if (!mapBlob) {
@@ -431,12 +435,14 @@ async function onExportPdf(formatId: PrintFormatId = 'a4p') {
   const allDefs = [...defaultSymbolLibrary, ...customSymbols.value]
   const posterBlob = await composePoster({
     mapBlob,
-    parkName: projectName.value || 'Mon Bikepark',
-    region: spotRegion.value,
+    parkName: branding?.posterName || projectName.value || 'Mon Bikepark',
+    region: branding?.region ?? spotRegion.value,
     tracks: tracks.value,
     symbols: symbols.value,
     symbolDefs: allDefs,
     formatId,
+    accentColor: branding?.accentColor,
+    logoDataUrl: branding?.logoDataUrl,
   })
   if (!posterBlob) {
     showToast(t('toast.exportImageFail'))

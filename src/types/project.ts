@@ -16,6 +16,12 @@ export type MapCameraState = {
 
 export type SpotType = 'bikepark' | 'zone_enduro' | 'secteur' | 'skills_park'
 
+export type ParkBranding = {
+  posterName: string
+  accentColor: string
+  logoDataUrl: string
+}
+
 export type BikeparkProject = {
   version: number
   savedAt: string
@@ -31,4 +37,6 @@ export type BikeparkProject = {
   spotType?: SpotType
   /** Modules 3D illustrés posés sur la carte */
   modules3d?: Module3D[]
+  /** Branding poster (nom affiché, couleur d'accent, logo club) */
+  branding?: ParkBranding
 }

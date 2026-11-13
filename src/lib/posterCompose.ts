@@ -26,6 +26,15 @@ const DIFF_LABELS: Record<string, string> = {
   black: 'Expert',
 }
 
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = reject
+    img.src = src
+  })
+}
+
 function rrPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
   ctx.roundRect(x, y, w, h, r)
@@ -61,6 +70,8 @@ export type PosterInput = {
   symbols: MapSymbol[]
   symbolDefs: SymbolDefinition[]
   formatId?: PrintFormatId
+  accentColor?: string
+  logoDataUrl?: string
 }
 
 export async function composePoster(opts: PosterInput): Promise<Blob | null> {
@@ -71,6 +82,7 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   const INNER_W = W - 2 * PAD
   const FRAME_BORDER = 3
   const FRAME_RAD = 14
+  const ACCENT_OVERRIDE = opts.accentColor || null
 
   const HEADER_H = isLandscape ? 60 : 94
   const LEGEND_H = isLandscape ? 48 : 60
@@ -93,13 +105,40 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   // ---- HEADER ----
   let y = PAD
 
+  const accentCol = ACCENT_OVERRIDE ?? ACCENT
+
+  // Logo parc (optionnel) — carré arrondi en haut à gauche, avant le nom
+  let logoDrawnWidth = 0
+  if (opts.logoDataUrl) {
+    try {
+      const logoImg = await loadImage(opts.logoDataUrl)
+      const logoSz = isLandscape ? 46 : 60
+      const logoX = PAD
+      const logoY = y
+      ctx.save()
+      ctx.beginPath()
+      ctx.roundRect(logoX, logoY, logoSz, logoSz, 10)
+      ctx.clip()
+      // cover-fit carré
+      const lr = logoImg.width / logoImg.height
+      let lsx = 0, lsy = 0, lsw = logoImg.width, lsh = logoImg.height
+      if (lr > 1) { lsw = logoImg.height; lsx = (logoImg.width - lsw) / 2 }
+      else { lsh = logoImg.width; lsy = (logoImg.height - lsh) / 2 }
+      ctx.drawImage(logoImg, lsx, lsy, lsw, lsh, logoX, logoY, logoSz, logoSz)
+      ctx.restore()
+      logoDrawnWidth = logoSz + 12
+    } catch { /* logo invalide → on ignore */ }
+  }
+
+  const headerX = PAD + logoDrawnWidth
+
   // Région (petite ligne au-dessus)
   if (opts.region && !isLandscape) {
     ctx.save()
-    ctx.fillStyle = ACCENT
+    ctx.fillStyle = accentCol
     ctx.font = '600 11px "Poppins", system-ui, sans-serif'
     ctx.letterSpacing = '3px'
-    ctx.fillText(opts.region.toUpperCase(), PAD, y + 15)
+    ctx.fillText(opts.region.toUpperCase(), headerX, y + 15)
     ctx.restore()
   }
 
@@ -110,16 +149,16 @@ export async function composePoster(opts: PosterInput): Promise<Blob | null> {
   ctx.font = `800 ${nameSize}px "Poppins", system-ui, sans-serif`
   const rawName = opts.parkName || 'Mon Bikepark'
   const nameY = isLandscape ? y + 38 : y + (opts.region ? 56 : 46)
-  ctx.fillText(rawName.toUpperCase(), PAD, nameY)
+  ctx.fillText(rawName.toUpperCase(), headerX, nameY)
   ctx.restore()
 
   // Région inline (paysage)
   if (opts.region && isLandscape) {
     ctx.save()
-    ctx.fillStyle = ACCENT
+    ctx.fillStyle = accentCol
     ctx.font = '600 10px "Poppins", system-ui, sans-serif'
     ctx.letterSpacing = '2px'
-    ctx.fillText(opts.region.toUpperCase(), PAD, nameY - nameSize - 4)
+    ctx.fillText(opts.region.toUpperCase(), headerX, nameY - nameSize - 4)
     ctx.restore()
   }
 
