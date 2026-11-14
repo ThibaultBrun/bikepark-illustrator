@@ -128,10 +128,13 @@ export const defaultSymbolLibrary: SymbolDefinition[] = [
     description: 'Remontee mecanique / telesiege.',
     svg: `
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M2 4.2h20v2H2z" />
-        <circle cx="8.5" cy="5.2" r="2" />
-        <path d="M8.5 7v2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
-        <path d="M5.2 9.4h8.4a1 1 0 0 1 1 1v4.2a1 1 0 0 1-1 1H5.2a1 1 0 0 1-1-1v-4.2a1 1 0 0 1 1-1Z" />
+        <rect x="3" y="4" width="2.2" height="17" rx="1"/>
+        <rect x="18.8" y="4" width="2.2" height="17" rx="1"/>
+        <path d="M5 5 Q12 10 19 5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+        <path d="M12 10 V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        <rect x="8.5" y="13" width="7" height="5" rx="1.5"/>
+        <circle cx="11" cy="15.5" r="1.3" fill="white"/>
+        <circle cx="13.5" cy="15.5" r="1.3" fill="white"/>
       </svg>
     `,
   },
@@ -263,6 +266,67 @@ export const defaultSymbolLibrary: SymbolDefinition[] = [
     svg: `
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M8 7.2V6a4 4 0 0 1 8 0v1.2h3.1l1.1 13.3H3.8L4.9 7.2H8Zm2.1 0h3.8V6a1.9 1.9 0 0 0-3.8 0v1.2Z" />
+      </svg>
+    `,
+  },
+  {
+    id: 'bikewash',
+    kind: 'default',
+    label: 'Lavage velo',
+    color: '#0ea5e9',
+    description: 'Station de lavage velo.',
+    svg: `
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <circle cx="10" cy="15" r="5.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <circle cx="10" cy="15" r="1.5"/>
+        <path d="M18 2 C17 3.5 15.5 5.5 15.5 7.5 C15.5 9.8 17 10.8 18 10.8 C19 10.8 20.5 9.8 20.5 7.5 C20.5 5.5 19 3.5 18 2 Z"/>
+        <path d="M21.5 8 C20.7 9 19.5 10.5 19.5 12 C19.5 13.8 20.5 14.5 21.5 14.5 C22.5 14.5 23.5 13.8 23.5 12 C23.5 10.5 22.3 9 21.5 8 Z"/>
+      </svg>
+    `,
+  },
+  {
+    id: 'kids',
+    kind: 'default',
+    label: 'Famille',
+    color: '#f97316',
+    description: 'Zone famille / enfants / debutants.',
+    svg: `
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 4.5 C12 2 8 2 8 5.5 Q8 9 12 12 Q16 9 16 5.5 C16 2 12 2 12 4.5 Z"/>
+        <circle cx="7" cy="21" r="2.8" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="17" cy="21" r="2.8" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M7 21 L10.5 16 L17 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10.5 16 L14 14.5 L17 15.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    `,
+  },
+  {
+    id: 'shelter',
+    kind: 'default',
+    label: 'Abri',
+    color: '#78716c',
+    description: 'Abri couvert / zone de repos abritee.',
+    svg: `
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2 L22 11 H2 Z"/>
+        <rect x="2" y="11" width="2.5" height="11"/>
+        <rect x="19.5" y="11" width="2.5" height="11"/>
+        <rect x="2" y="20" width="20" height="2.5"/>
+      </svg>
+    `,
+  },
+  {
+    id: 'school',
+    kind: 'default',
+    label: 'Ecole de velo',
+    color: '#7c3aed',
+    description: 'Ecole de velo / cours initiation.',
+    svg: `
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 3 L22 8 L12 13 L2 8 Z"/>
+        <path d="M22 8 V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <circle cx="22" cy="16.5" r="1.6"/>
+        <path d="M6 10 V17 Q6 21 12 21 Q18 21 18 17 V10 L12 13 Z"/>
       </svg>
     `,
   },
