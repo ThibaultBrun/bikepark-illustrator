@@ -148,29 +148,59 @@ function pointInPoly(pt: number[], poly: Poly): boolean {
   return true
 }
 
-// Génère la canopée pour la vue courante. Densité adaptative au zoom.
-// Utilise un pré-filtre bbox par polygone pour éviter le O(N² × polys) naïf.
-export function scatterCanopy(map: maplibregl.Map) {
-  if (!map.getLayer(ILLUS_PREFIX + 'wood')) return
+// Cache des polygones bornés pour éviter de re-querier querySourceFeatures à chaque
+// micro-déplacement. Invalidé quand la vue change de plus de ~25 %.
+let _polyCache: BoundedPoly[] | null = null
+let _polyCacheBounds: [number, number, number, number] | null = null
+
+function boundsOverlapRatio(
+  a: [number, number, number, number],
+  b: [number, number, number, number],
+): number {
+  const iw = Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0]))
+  const ih = Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]))
+  const ia = iw * ih
+  const aA = (a[2] - a[0]) * (a[3] - a[1])
+  return aA > 0 ? ia / aA : 0
+}
+
+function queryBoundedPolys(map: maplibregl.Map): BoundedPoly[] {
+  const b = map.getBounds()
+  const cur: [number, number, number, number] = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
+
+  // Réutiliser le cache si la vue actuelle est >75 % couverte par le cache précédent
+  if (_polyCache && _polyCacheBounds && boundsOverlapRatio(_polyCacheBounds, cur) > 0.75) {
+    return _polyCache
+  }
+
   const feats = map.querySourceFeatures('openmaptiles', {
     sourceLayer: 'landcover',
     filter: ['in', ['get', 'class'], ['literal', ['wood', 'forest']]],
   })
-
   const bounded: BoundedPoly[] = []
   for (const f of feats) {
     const g = f.geometry
     if (!g) continue
     if (g.type === 'Polygon') {
-      const poly = g.coordinates as Poly
-      bounded.push({ poly, bbox: polyBbox(poly) })
+      bounded.push({ poly: g.coordinates as Poly, bbox: polyBbox(g.coordinates as Poly) })
     } else if (g.type === 'MultiPolygon') {
       for (const p of g.coordinates) {
-        const poly = p as Poly
-        bounded.push({ poly, bbox: polyBbox(poly) })
+        bounded.push({ poly: p as Poly, bbox: polyBbox(p as Poly) })
       }
     }
   }
+  _polyCache = bounded
+  _polyCacheBounds = cur
+  return bounded
+}
+
+export function invalidateCanopyCache() { _polyCache = null; _polyCacheBounds = null }
+
+// Génère la canopée pour la vue courante. Densité adaptative au zoom.
+// Utilise un pré-filtre bbox par polygone + cache polygones pour perf.
+export function scatterCanopy(map: maplibregl.Map) {
+  if (!map.getLayer(ILLUS_PREFIX + 'wood')) return
+  const bounded = queryBoundedPolys(map)
 
   const features: GeoJSON.Feature[] = []
   if (bounded.length) {

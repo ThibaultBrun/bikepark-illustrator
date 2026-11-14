@@ -72,7 +72,7 @@ import {
   OFM_VECTOR_URL,
   ILLUS_PREFIX,
 } from '../lib/illustratedBasemap'
-import { ensureTreeImages, scatterCanopy, setCanopyVisible } from '../lib/illustratedCanopy'
+import { ensureTreeImages, invalidateCanopyCache, scatterCanopy, setCanopyVisible } from '../lib/illustratedCanopy'
 import { getPaperTileUrl } from '../lib/paperTexture'
 
 const paperTileUrl = getPaperTileUrl()
@@ -275,6 +275,7 @@ function buildStyle(): maplibregl.StyleSpecification {
 function setBaseLayer(layer: 'cyclosm' | 'esri' | 'illustrated') {
   if (!map) return
 
+  invalidateCanopyCache()
   baseLayer.value = layer
 
   if (map.getLayer('cyclosm')) {
