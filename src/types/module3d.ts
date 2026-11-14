@@ -1,4 +1,4 @@
-export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride' | 'hip' | 'gap'
+export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride' | 'hip' | 'gap' | 'rockgarden'
 
 export type Module3D = {
   id: string
@@ -20,6 +20,7 @@ export const MODULE3D_LABELS: Record<Module3DType, string> = {
   wallride: 'Wallride',
   hip: 'Hip',
   gap: 'Gap',
+  rockgarden: 'Rock Garden',
 }
 
 // Sprites 3D (rendus Blender, golden hour). Le contact-sol est centré dans
@@ -154,6 +155,45 @@ const _GAP_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
 </svg>`
 const _gapDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_GAP_SVG)
 
+// Rock Garden : cluster de 4 rochers calcaires, vue iso 3/4, golden hour NW.
+// 3 faces par rocher : top (#CABB9A éclairé), face gauche lit (#A8987A), face droite shadow (#5A4836).
+// Disposition diagonale SW→NE (direction de déplacement). PNG Blender à générer via TITOUS.
+const _ROCKGARDEN_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="61" rx="43" ry="5.5" fill="${SHAD}"/>
+  <!-- Rocher AV gauche (petit) -->
+  <ellipse cx="22" cy="56" rx="10" ry="3" fill="${SHAD}" opacity="0.7"/>
+  <path d="M 13,49 L 22,45 L 31,49 L 22,53 Z" fill="#CABB9A"/>
+  <path d="M 13,49 L 22,53 L 22,57 L 13,53 Z" fill="#A8987A"/>
+  <path d="M 22,53 L 31,49 L 31,53 L 22,57 Z" fill="#5A4836"/>
+  <path d="M 13,49 L 22,45" stroke="${GOLD}" stroke-width="1.5" stroke-linecap="round" opacity="0.80"/>
+  <!-- Rocher AV droit (moyen) -->
+  <ellipse cx="68" cy="52" rx="11" ry="3.5" fill="${SHAD}" opacity="0.7"/>
+  <path d="M 58,43 L 68,38 L 78,43 L 68,48 Z" fill="#CABB9A"/>
+  <path d="M 58,43 L 68,48 L 68,54 L 58,49 Z" fill="#A8987A"/>
+  <path d="M 68,48 L 78,43 L 78,49 L 68,54 Z" fill="#5A4836"/>
+  <path d="M 58,43 L 68,38" stroke="${GOLD}" stroke-width="1.5" stroke-linecap="round" opacity="0.80"/>
+  <path d="M 68,38 L 78,43" stroke="#D0B050" stroke-width="1.0" stroke-linecap="round" opacity="0.55"/>
+  <!-- Gros rocher central (dominant) -->
+  <ellipse cx="47" cy="47" rx="17" ry="4.5" fill="${SHAD}" opacity="0.75"/>
+  <path d="M 33,30 L 48,24 L 63,31 L 48,37 Z" fill="#CABB9A"/>
+  <path d="M 33,30 L 48,37 L 48,51 L 33,44 Z" fill="#A8987A"/>
+  <path d="M 48,37 L 63,31 L 63,45 L 48,51 Z" fill="#5A4836"/>
+  <path d="M 38,32 Q 44,30 50,33" stroke="#8A7A5A" stroke-width="0.8" fill="none" opacity="0.5"/>
+  <path d="M 48,24 L 63,31" stroke="#D0B050" stroke-width="1.0" stroke-linecap="round" opacity="0.55"/>
+  <path d="M 33,30 L 48,24" stroke="${GOLD}" stroke-width="2.0" stroke-linecap="round" opacity="0.88"/>
+  <path d="M 33,30 L 33,44" stroke="#A8987A" stroke-width="0.9" fill="none" opacity="0.45"/>
+  <!-- Rocher AR (haut-droit, partiellement visible) -->
+  <ellipse cx="74" cy="36" rx="10" ry="2.5" fill="${SHAD}" opacity="0.5"/>
+  <path d="M 66,24 L 75,20 L 83,24 L 74,28 Z" fill="#CABB9A"/>
+  <path d="M 66,24 L 74,28 L 74,37 L 66,33 Z" fill="#A8987A"/>
+  <path d="M 74,28 L 83,24 L 83,33 L 74,37 Z" fill="#5A4836"/>
+  <path d="M 66,24 L 75,20" stroke="${GOLD}" stroke-width="1.4" stroke-linecap="round" opacity="0.78"/>
+  <!-- micro-cailloux au sol -->
+  <ellipse cx="38" cy="58" rx="4" ry="1.8" fill="#A8987A" opacity="0.65"/>
+  <ellipse cx="57" cy="61" rx="3" ry="1.4" fill="#A8987A" opacity="0.55"/>
+</svg>`
+const _rockgardenDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_ROCKGARDEN_SVG)
+
 export const MODULE3D_IMG: Record<Module3DType, string> = {
   jump: jumpUrl,
   double: doubleUrl,
@@ -166,6 +206,7 @@ export const MODULE3D_IMG: Record<Module3DType, string> = {
   wallride: _wallrideDataUrl,
   hip: _hipDataUrl,
   gap: _gapDataUrl,
+  rockgarden: _rockgardenDataUrl,
 }
 
 // Palette commune
@@ -432,5 +473,42 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   <path d="M 61,26 L 58,57" stroke="${D_SHD}" stroke-width="1" fill="none" opacity="0.4"/>
   <path d="M 90,55 Q 77,53 68,44 Q 60,33 55,21" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.78"/>
   <path d="M 61,26 L 55,21" stroke="${GOLD}" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+</svg>`,
+
+  // ── ROCK GARDEN : cluster 4 rochers calcaires, vue iso 3/4, golden hour NW ─
+  // Disposition diagonale SW→NE. 3 faces / rocher : top (#CABB9A), lit (#A8987A), shadow (#5A4836).
+  rockgarden: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="61" rx="43" ry="5.5" fill="${SHAD}"/>
+  <!-- Rocher AV gauche (petit) -->
+  <ellipse cx="22" cy="56" rx="10" ry="3" fill="${SHAD}" opacity="0.7"/>
+  <path d="M 13,49 L 22,45 L 31,49 L 22,53 Z" fill="#CABB9A"/>
+  <path d="M 13,49 L 22,53 L 22,57 L 13,53 Z" fill="#A8987A"/>
+  <path d="M 22,53 L 31,49 L 31,53 L 22,57 Z" fill="#5A4836"/>
+  <path d="M 13,49 L 22,45" stroke="${GOLD}" stroke-width="1.5" stroke-linecap="round" opacity="0.80"/>
+  <!-- Rocher AV droit (moyen) -->
+  <ellipse cx="68" cy="52" rx="11" ry="3.5" fill="${SHAD}" opacity="0.7"/>
+  <path d="M 58,43 L 68,38 L 78,43 L 68,48 Z" fill="#CABB9A"/>
+  <path d="M 58,43 L 68,48 L 68,54 L 58,49 Z" fill="#A8987A"/>
+  <path d="M 68,48 L 78,43 L 78,49 L 68,54 Z" fill="#5A4836"/>
+  <path d="M 58,43 L 68,38" stroke="${GOLD}" stroke-width="1.5" stroke-linecap="round" opacity="0.80"/>
+  <path d="M 68,38 L 78,43" stroke="#D0B050" stroke-width="1.0" stroke-linecap="round" opacity="0.55"/>
+  <!-- Gros rocher central (dominant) -->
+  <ellipse cx="47" cy="47" rx="17" ry="4.5" fill="${SHAD}" opacity="0.75"/>
+  <path d="M 33,30 L 48,24 L 63,31 L 48,37 Z" fill="#CABB9A"/>
+  <path d="M 33,30 L 48,37 L 48,51 L 33,44 Z" fill="#A8987A"/>
+  <path d="M 48,37 L 63,31 L 63,45 L 48,51 Z" fill="#5A4836"/>
+  <path d="M 38,32 Q 44,30 50,33" stroke="#8A7A5A" stroke-width="0.8" fill="none" opacity="0.5"/>
+  <path d="M 48,24 L 63,31" stroke="#D0B050" stroke-width="1.0" stroke-linecap="round" opacity="0.55"/>
+  <path d="M 33,30 L 48,24" stroke="${GOLD}" stroke-width="2.0" stroke-linecap="round" opacity="0.88"/>
+  <path d="M 33,30 L 33,44" stroke="#A8987A" stroke-width="0.9" fill="none" opacity="0.45"/>
+  <!-- Rocher AR (haut-droit, partiellement visible) -->
+  <ellipse cx="74" cy="36" rx="10" ry="2.5" fill="${SHAD}" opacity="0.5"/>
+  <path d="M 66,24 L 75,20 L 83,24 L 74,28 Z" fill="#CABB9A"/>
+  <path d="M 66,24 L 74,28 L 74,37 L 66,33 Z" fill="#A8987A"/>
+  <path d="M 74,28 L 83,24 L 83,33 L 74,37 Z" fill="#5A4836"/>
+  <path d="M 66,24 L 75,20" stroke="${GOLD}" stroke-width="1.4" stroke-linecap="round" opacity="0.78"/>
+  <!-- micro-cailloux au sol -->
+  <ellipse cx="38" cy="58" rx="4" ry="1.8" fill="#A8987A" opacity="0.65"/>
+  <ellipse cx="57" cy="61" rx="3" ry="1.4" fill="#A8987A" opacity="0.55"/>
 </svg>`,
 }
