@@ -166,9 +166,42 @@ def build_northshore():
             p.data.materials.append(woodd); objs.append(p)
     return objs
 
+def build_drop():
+    """Drop/step-down : rampe d'accès + plateau plat + face verticale du cliff (en ombre).
+    Profil : approche au sol → ramp → plateau → drop vertical → base."""
+    m_dirt = mat("dirt_drop", DIRT)
+    m_wood = mat("wood_lip", WOOD, rough=0.65)
+
+    # Corps principal : mesa avec rampe d'accès et face verticale du drop
+    # Profil (x, z) fermé : approche bas → rampe → plateau → cliff → base
+    prof = [(0, 0), (3.0, 0.0), (5.6, 2.6), (9.8, 2.6), (9.8, 0)]
+    body = extruded_profile("drop_body", prof, 4.2, m_dirt)
+
+    # Planche de lip en bois sur le bord du drop (marqueur visuel de la lèvre)
+    bm = bmesh.new()
+    W2 = 4.2 / 2.0
+    # Planche plate au bord du plateau (z=2.6, x≈9.8), épaisseur 0.25, hauteur 0.35
+    verts = [
+        bm.verts.new((9.5, -W2, 2.6)),  bm.verts.new((9.8, -W2, 2.6)),
+        bm.verts.new((9.8,  W2, 2.6)),  bm.verts.new((9.5,  W2, 2.6)),
+        bm.verts.new((9.5, -W2, 2.25)), bm.verts.new((9.8, -W2, 2.25)),
+        bm.verts.new((9.8,  W2, 2.25)), bm.verts.new((9.5,  W2, 2.25)),
+    ]
+    bm.faces.new([verts[0], verts[1], verts[2], verts[3]])
+    bm.faces.new([verts[4], verts[7], verts[6], verts[5]])
+    bm.faces.new([verts[0], verts[4], verts[5], verts[1]])
+    bm.faces.new([verts[2], verts[6], verts[7], verts[3]])
+    bm.faces.new([verts[0], verts[3], verts[7], verts[4]])
+    bm.faces.new([verts[1], verts[5], verts[6], verts[2]])
+    bm.normal_update()
+    lip = obj_from_bm(bm, "drop_lip", m_wood)
+
+    return [body, lip]
+
 BUILDERS = {
     "jump": build_jump, "double": build_double, "table": build_table,
     "berm": build_berm, "pumptrack": build_pumptrack, "northshore": build_northshore,
+    "drop": build_drop,
 }
 
 # ---------------------------------------------------------------- render setup

@@ -1,4 +1,4 @@
-export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore'
+export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop'
 
 export type Module3D = {
   id: string
@@ -15,6 +15,7 @@ export const MODULE3D_LABELS: Record<Module3DType, string> = {
   berm: 'Berm',
   pumptrack: 'Pump Track',
   northshore: 'North Shore',
+  drop: 'Drop',
 }
 
 // Sprites 3D (rendus Blender, golden hour). Le contact-sol est centré dans
@@ -26,6 +27,10 @@ import bermUrl from '../assets/modules3d/berm.png'
 import pumptrackUrl from '../assets/modules3d/pumptrack.png'
 import northshoreUrl from '../assets/modules3d/northshore.png'
 
+// Drop : SVG inline (PNG Blender à générer via TITOUS quand disponible)
+const _DROP_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg"><ellipse cx="52" cy="62" rx="40" ry="5" fill="rgba(30,42,90,0.22)"/><path d="M 10,58 Q 30,56 36,38 L 68,38 L 72,58 Z" fill="#A07840"/><path d="M 36,38 L 68,38 L 76,30 L 44,30 Z" fill="#D0A85A"/><path d="M 10,58 Q 30,56 36,38 L 44,30 Q 28,46 16,54 Z" fill="#D0A85A" opacity="0.88"/><path d="M 68,38 L 76,30 L 80,58 L 72,58 Z" fill="#6B4820"/><path d="M 69,42 L 77,36" stroke="#A07840" stroke-width="0.7" fill="none" opacity="0.5"/><path d="M 70,48 L 78,43" stroke="#A07840" stroke-width="0.7" fill="none" opacity="0.4"/><path d="M 71,54 L 79,50" stroke="#A07840" stroke-width="0.6" fill="none" opacity="0.35"/><path d="M 20,53 Q 32,46 37,36" stroke="#6B4820" stroke-width="0.7" fill="none" opacity="0.28"/><path d="M 44,30 L 76,30" stroke="#E8C050" stroke-width="2.4" stroke-linecap="round" opacity="0.92"/><path d="M 36,38 L 44,30" stroke="#E8C050" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/></svg>`
+const _dropDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_DROP_SVG)
+
 export const MODULE3D_IMG: Record<Module3DType, string> = {
   jump: jumpUrl,
   double: doubleUrl,
@@ -33,6 +38,7 @@ export const MODULE3D_IMG: Record<Module3DType, string> = {
   berm: bermUrl,
   pumptrack: pumptrackUrl,
   northshore: northshoreUrl,
+  drop: _dropDataUrl,
 }
 
 // Palette commune
@@ -161,6 +167,28 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   <path d="M 64,47 L 68,46" stroke="${GOLD}" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
   <!-- Landing after last roller -->
   <path d="M 76,58 Q 84,56 92,58" stroke="${D_MID}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+</svg>`,
+
+  // ── DROP : ledge/marche descendante, face cliff en ombre ─────────────
+  drop: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="52" cy="62" rx="40" ry="5" fill="${SHAD}"/>
+  <!-- corps principal front face, mi-ton -->
+  <path d="M 10,58 Q 30,56 36,38 L 68,38 L 72,58 Z" fill="${D_MID}"/>
+  <!-- top plateau (éclairé) -->
+  <path d="M 36,38 L 68,38 L 76,30 L 44,30 Z" fill="${D_LIT}"/>
+  <!-- rampe approche gauche (lit NW) -->
+  <path d="M 10,58 Q 30,56 36,38 L 44,30 Q 28,46 16,54 Z" fill="${D_LIT}" opacity="0.88"/>
+  <!-- face du drop — cliff vertical (ombre profonde) -->
+  <path d="M 68,38 L 76,30 L 80,58 L 72,58 Z" fill="${D_SHD}"/>
+  <!-- strates rocheuses dans la face du cliff -->
+  <path d="M 69,42 L 77,36" stroke="${D_MID}" stroke-width="0.7" fill="none" opacity="0.5"/>
+  <path d="M 70,48 L 78,43" stroke="${D_MID}" stroke-width="0.7" fill="none" opacity="0.4"/>
+  <path d="M 71,54 L 79,50" stroke="${D_MID}" stroke-width="0.6" fill="none" opacity="0.35"/>
+  <!-- compaction sur la rampe -->
+  <path d="M 20,53 Q 32,46 37,36" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.28"/>
+  <!-- lip doré (arête du drop) -->
+  <path d="M 44,30 L 76,30" stroke="${GOLD}" stroke-width="2.4" stroke-linecap="round" opacity="0.92"/>
+  <path d="M 36,38 L 44,30" stroke="${GOLD}" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
 </svg>`,
 
   // ── NORTHSHORE : passerelle en lattes de bois ─────────────────────────
