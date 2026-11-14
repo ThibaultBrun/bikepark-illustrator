@@ -2238,8 +2238,18 @@ async function exportImage(scale = 3): Promise<Blob | null> {
       map!.once('idle', check)
       map!.triggerRepaint()
     })
+    // Copie synchrone dans un canvas 2D pendant le render (avant compositing)
+    // → fonctionne sans preserveDrawingBuffer.
     return new Promise<Blob | null>((resolve) => {
-      map!.getCanvas().toBlob((blob) => resolve(blob), 'image/png')
+      map!.once('render', () => {
+        const src = map!.getCanvas()
+        const off = document.createElement('canvas')
+        off.width = src.width
+        off.height = src.height
+        off.getContext('2d')!.drawImage(src, 0, 0)
+        off.toBlob((blob) => resolve(blob), 'image/png')
+      })
+      map!.triggerRepaint()
     })
   } catch (e) {
     console.error('[export] image HD', e)
@@ -2286,8 +2296,9 @@ onMounted(() => {
     maxPitch: 85,
     maxTileCacheSize: 100,
     maxZoom: 20,
-    // Permet de capturer le canvas WebGL (export image du bikepark).
-    preserveDrawingBuffer: true,
+    // false = pas de coût perf constant ; l'export copie le canvas via drawImage
+    // dans le callback render (avant compositing browser) → cf. exportImage().
+    preserveDrawingBuffer: false,
   })
 
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right')
