@@ -198,10 +198,75 @@ def build_drop():
 
     return [body, lip]
 
+def build_stepup():
+    """Step-up : takeoff kicker bas à gauche + landing mound haute à droite (asymétrique).
+    Profil landing (droite) : mur de terre haut. Profil takeoff (gauche) : kicker mi-hauteur."""
+    m_dirt = mat("dirt_stepup", DIRT)
+    m_wood = mat("wood_lip_stepup", WOOD, rough=0.65)
+    # Takeoff kicker (gauche, hauteur ~2.6, longueur 5)
+    prof_take = [(0, 0), (0.4, 0), (5.5, 0), (5.5, 0.1), (1.5, 2.6), (0, 2.6)]
+    takeoff = extruded_profile("stepup_takeoff", prof_take, 3.6, m_dirt)
+    takeoff.location = (-5.0, 0, 0)
+    # Landing mound (droite, hauteur ~4.5, longueur 4)
+    prof_land = [(0, 0), (4.0, 0), (4.0, 4.5), (3.5, 4.5), (0, 0.5)]
+    landing = extruded_profile("stepup_landing", prof_land, 3.6, m_dirt)
+    landing.location = (1.0, 0, 0)
+    # Lip doré sur le landing
+    bm = bmesh.new()
+    W2 = 3.6 / 2.0
+    verts = [bm.verts.new((v[0], -W2, v[1])) for v in [(3.3, 4.5), (4.0, 4.5), (4.0, 4.3), (3.3, 4.3)]]
+    bm.verts.new((3.3, W2, 4.5)); bm.verts.new((4.0, W2, 4.5))
+    bm.verts.new((4.0, W2, 4.3)); bm.verts.new((3.3, W2, 4.3))
+    bm.faces.new([bm.verts[0], bm.verts[1], bm.verts[5], bm.verts[4]])
+    bm.faces.new([bm.verts[0], bm.verts[4], bm.verts[7], bm.verts[3]])
+    bm.normal_update()
+    lip = obj_from_bm(bm, "stepup_lip", m_wood)
+    lip.location = (1.0, 0, 0)
+    return [takeoff, landing, lip]
+
+
+def build_wallride():
+    """Wallride : paroi bois verticale (tall wall, planches horizontales).
+    La caméra la voit de face+gauche. Mur ~6u de haut, 10u de large."""
+    m_wood = mat("wood_wall", WOOD, rough=0.72)
+    m_post = mat("wood_post", WOOD, rough=0.78)
+    # Corps du mur (boîte plate = 10 large, 6 haut, 0.4 profond)
+    bm = bmesh.new()
+    W, H, D = 10.0, 6.0, 0.4
+    verts_coords = [
+        (0, -D/2, 0), (W, -D/2, 0), (W, D/2, 0), (0, D/2, 0),
+        (0, -D/2, H), (W, -D/2, H), (W, D/2, H), (0, D/2, H),
+    ]
+    vs = [bm.verts.new(co) for co in verts_coords]
+    bm.faces.new([vs[0], vs[1], vs[5], vs[4]])  # face avant
+    bm.faces.new([vs[2], vs[3], vs[7], vs[6]])  # face arrière
+    bm.faces.new([vs[1], vs[2], vs[6], vs[5]])  # face droite
+    bm.faces.new([vs[3], vs[0], vs[4], vs[7]])  # face gauche
+    bm.faces.new([vs[4], vs[5], vs[6], vs[7]])  # dessus
+    bm.faces.new([vs[0], vs[3], vs[2], vs[1]])  # dessous
+    bm.normal_update()
+    wall = obj_from_bm(bm, "wall_body", m_wood)
+    wall.location = (0, 0, 0)
+    # Poteaux porteurs (gauche et droite)
+    for px in [0.3, W - 0.3]:
+        bm2 = bmesh.new()
+        pv = [bm2.verts.new(co) for co in [
+            (px-0.25, -0.5, -0.5), (px+0.25, -0.5, -0.5), (px+0.25, 0.5, -0.5), (px-0.25, 0.5, -0.5),
+            (px-0.25, -0.5,  H+0.3), (px+0.25, -0.5,  H+0.3), (px+0.25, 0.5,  H+0.3), (px-0.25, 0.5,  H+0.3),
+        ]]
+        bm2.faces.new([pv[0], pv[1], pv[2], pv[3]])
+        bm2.faces.new([pv[4], pv[7], pv[6], pv[5]])
+        for fi in [(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]:
+            bm2.faces.new([pv[i] for i in fi])
+        bm2.normal_update()
+        obj_from_bm(bm2, f"post_{int(px)}", m_post)
+    return [wall]
+
+
 BUILDERS = {
     "jump": build_jump, "double": build_double, "table": build_table,
     "berm": build_berm, "pumptrack": build_pumptrack, "northshore": build_northshore,
-    "drop": build_drop,
+    "drop": build_drop, "stepup": build_stepup, "wallride": build_wallride,
 }
 
 # ---------------------------------------------------------------- render setup

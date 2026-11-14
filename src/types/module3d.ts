@@ -1,4 +1,4 @@
-export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop'
+export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride'
 
 export type Module3D = {
   id: string
@@ -16,6 +16,8 @@ export const MODULE3D_LABELS: Record<Module3DType, string> = {
   pumptrack: 'Pump Track',
   northshore: 'North Shore',
   drop: 'Drop',
+  stepup: 'Step-Up',
+  wallride: 'Wallride',
 }
 
 // Sprites 3D (rendus Blender, golden hour). Le contact-sol est centré dans
@@ -27,9 +29,77 @@ import bermUrl from '../assets/modules3d/berm.png'
 import pumptrackUrl from '../assets/modules3d/pumptrack.png'
 import northshoreUrl from '../assets/modules3d/northshore.png'
 
-// Drop : SVG inline (PNG Blender à générer via TITOUS quand disponible)
+// Drop, Step-Up, Wallride : SVG inline (PNG Blender à générer via TITOUS quand disponible)
 const _DROP_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg"><ellipse cx="52" cy="62" rx="40" ry="5" fill="rgba(30,42,90,0.22)"/><path d="M 10,58 Q 30,56 36,38 L 68,38 L 72,58 Z" fill="#A07840"/><path d="M 36,38 L 68,38 L 76,30 L 44,30 Z" fill="#D0A85A"/><path d="M 10,58 Q 30,56 36,38 L 44,30 Q 28,46 16,54 Z" fill="#D0A85A" opacity="0.88"/><path d="M 68,38 L 76,30 L 80,58 L 72,58 Z" fill="#6B4820"/><path d="M 69,42 L 77,36" stroke="#A07840" stroke-width="0.7" fill="none" opacity="0.5"/><path d="M 70,48 L 78,43" stroke="#A07840" stroke-width="0.7" fill="none" opacity="0.4"/><path d="M 71,54 L 79,50" stroke="#A07840" stroke-width="0.6" fill="none" opacity="0.35"/><path d="M 20,53 Q 32,46 37,36" stroke="#6B4820" stroke-width="0.7" fill="none" opacity="0.28"/><path d="M 44,30 L 76,30" stroke="#E8C050" stroke-width="2.4" stroke-linecap="round" opacity="0.92"/><path d="M 36,38 L 44,30" stroke="#E8C050" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/></svg>`
 const _dropDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_DROP_SVG)
+
+// Step-Up : kicker bas à gauche (takeoff ~y=32) + butte haute à droite (landing ~y=18)
+// Le step-up se distingue du double par la hauteur asymétrique (landing plus haut que le lip)
+const _STEPUP_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="61" rx="45" ry="5.5" fill="${SHAD}"/>
+  <!-- === LANDING MOUND (droite, haute) === -->
+  <!-- face droite ombre -->
+  <path d="M 76,18 L 82,14 L 86,58 L 80,58 Z" fill="${D_SHD}"/>
+  <!-- face avant (mid) -->
+  <path d="M 50,58 L 80,58 L 76,18 L 56,21 Z" fill="${D_MID}"/>
+  <!-- surface dessus (éclairée) -->
+  <path d="M 56,21 L 76,18 L 82,14 L 62,17 Z" fill="${D_LIT}"/>
+  <!-- compaction face avant -->
+  <path d="M 52,50 Q 65,44 76,40" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <path d="M 51,38 Q 62,32 76,28" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.26"/>
+  <!-- rim avant doré -->
+  <path d="M 56,21 Q 66,19 76,18" stroke="${GOLD}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.93"/>
+  <!-- rim dessus (arrière) -->
+  <path d="M 62,17 L 82,14" stroke="${GOLD}" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <!-- === TAKEOFF KICKER (gauche, medium) === -->
+  <!-- flanc profil (mid) -->
+  <path d="M 6,58 Q 20,57 30,47 Q 36,40 38,32 L 42,58 Z" fill="${D_MID}"/>
+  <!-- surface dessus (éclairée) -->
+  <path d="M 6,58 Q 20,57 30,47 Q 36,40 38,32 L 44,28 Q 40,37 32,44 Q 20,54 12,56 Z" fill="${D_LIT}"/>
+  <!-- compaction -->
+  <path d="M 12,55 Q 26,50 34,42 Q 38,37 39,35" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <!-- lip doré -->
+  <path d="M 12,56 Q 32,44 38,32 L 44,28" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 38,32 L 44,28" stroke="${GOLD}" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- gap air (sol entre les deux) -->
+  <path d="M 42,58 L 50,58 L 50,60 L 42,60 Z" fill="${D_SHD}" opacity="0.18"/>
+</svg>`
+const _stepupDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_STEPUP_SVG)
+
+// Wallride : paroi bois verticale légèrement courbe, planches horizontales, rim doré
+// Représente un mur planché qu'on longe en dérapant latéralement
+const _WALLRIDE_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <!-- ombre portée fine au pied du mur -->
+  <ellipse cx="50" cy="66" rx="44" ry="4" fill="${SHAD}"/>
+  <!-- sol/base de terre sous le mur -->
+  <path d="M 6,62 Q 50,58 94,62 L 94,66 Q 50,64 6,66 Z" fill="${D_MID}" opacity="0.6"/>
+  <!-- poteaux porteurs derrière (ombre) -->
+  <rect x="13" y="30" width="5" height="34" rx="1.5" fill="${W_SHD}" opacity="0.55"/>
+  <rect x="79" y="30" width="5" height="34" rx="1.5" fill="${W_SHD}" opacity="0.55"/>
+  <!-- face droite du mur (ombre) -->
+  <path d="M 88,20 L 94,23 L 94,64 L 88,62 Z" fill="${W_SHD}"/>
+  <!-- face principale du mur (planches) -->
+  <path d="M 8,22 L 88,20 L 88,62 L 8,64 Z" fill="${W_PLANK}"/>
+  <!-- joints entre planches horizontales -->
+  <line x1="8" y1="29" x2="88" y2="28" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <line x1="8" y1="36" x2="88" y2="35" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <line x1="8" y1="43" x2="88" y2="42" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <line x1="8" y1="50" x2="88" y2="49" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <line x1="8" y1="57" x2="88" y2="56" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <!-- fil de bois (grain vertical) -->
+  <line x1="30" y1="22" x2="30" y2="63" stroke="${W_SHD}" stroke-width="0.7" opacity="0.22"/>
+  <line x1="50" y1="22" x2="50" y2="63" stroke="${W_SHD}" stroke-width="0.7" opacity="0.22"/>
+  <line x1="70" y1="21" x2="70" y2="63" stroke="${W_SHD}" stroke-width="0.7" opacity="0.22"/>
+  <!-- face gauche éclairée (NW) -->
+  <path d="M 8,22 L 8,64 L 4,65 L 4,23 Z" fill="${W_LIT}" opacity="0.78"/>
+  <!-- éclairage diagonal sur les planches du haut (reflet golden hour) -->
+  <path d="M 8,22 Q 50,16 88,20" fill="${W_LIT}" opacity="0.12"/>
+  <!-- rim courbe doré (arête de roulage) -->
+  <path d="M 8,22 Q 48,16 88,20" stroke="${GOLD}" stroke-width="2.6" fill="none" stroke-linecap="round" opacity="0.92"/>
+  <!-- rim arrière (profondeur) -->
+  <path d="M 88,20 L 94,23" stroke="${GOLD}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.6"/>
+</svg>`
+const _wallrideDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_WALLRIDE_SVG)
 
 export const MODULE3D_IMG: Record<Module3DType, string> = {
   jump: jumpUrl,
@@ -39,6 +109,8 @@ export const MODULE3D_IMG: Record<Module3DType, string> = {
   pumptrack: pumptrackUrl,
   northshore: northshoreUrl,
   drop: _dropDataUrl,
+  stepup: _stepupDataUrl,
+  wallride: _wallrideDataUrl,
 }
 
 // Palette commune
@@ -189,6 +261,47 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   <!-- lip doré (arête du drop) -->
   <path d="M 44,30 L 76,30" stroke="${GOLD}" stroke-width="2.4" stroke-linecap="round" opacity="0.92"/>
   <path d="M 36,38 L 44,30" stroke="${GOLD}" stroke-width="1.8" stroke-linecap="round" opacity="0.7"/>
+</svg>`,
+
+  // ── STEP-UP : takeoff medium-gauche + landing haute-droite ───────────
+  stepup: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="61" rx="45" ry="5.5" fill="${SHAD}"/>
+  <!-- === LANDING MOUND (droite, haute) === -->
+  <path d="M 76,18 L 82,14 L 86,58 L 80,58 Z" fill="${D_SHD}"/>
+  <path d="M 50,58 L 80,58 L 76,18 L 56,21 Z" fill="${D_MID}"/>
+  <path d="M 56,21 L 76,18 L 82,14 L 62,17 Z" fill="${D_LIT}"/>
+  <path d="M 52,50 Q 65,44 76,40" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <path d="M 51,38 Q 62,32 76,28" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.26"/>
+  <path d="M 56,21 Q 66,19 76,18" stroke="${GOLD}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.93"/>
+  <path d="M 62,17 L 82,14" stroke="${GOLD}" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <!-- === TAKEOFF KICKER (gauche, medium) === -->
+  <path d="M 6,58 Q 20,57 30,47 Q 36,40 38,32 L 42,58 Z" fill="${D_MID}"/>
+  <path d="M 6,58 Q 20,57 30,47 Q 36,40 38,32 L 44,28 Q 40,37 32,44 Q 20,54 12,56 Z" fill="${D_LIT}"/>
+  <path d="M 12,55 Q 26,50 34,42 Q 38,37 39,35" stroke="${D_SHD}" stroke-width="0.7" fill="none" opacity="0.3"/>
+  <path d="M 12,56 Q 32,44 38,32 L 44,28" stroke="${GOLD}" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 38,32 L 44,28" stroke="${GOLD}" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M 42,58 L 50,58 L 50,60 L 42,60 Z" fill="${D_SHD}" opacity="0.18"/>
+</svg>`,
+
+  // ── WALLRIDE : paroi bois verticale légèrement courbe, planches horiz ──
+  wallride: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="66" rx="44" ry="4" fill="${SHAD}"/>
+  <path d="M 6,62 Q 50,58 94,62 L 94,66 Q 50,64 6,66 Z" fill="${D_MID}" opacity="0.6"/>
+  <rect x="13" y="30" width="5" height="34" rx="1.5" fill="${W_SHD}" opacity="0.55"/>
+  <rect x="79" y="30" width="5" height="34" rx="1.5" fill="${W_SHD}" opacity="0.55"/>
+  <path d="M 88,20 L 94,23 L 94,64 L 88,62 Z" fill="${W_SHD}"/>
+  <path d="M 8,22 L 88,20 L 88,62 L 8,64 Z" fill="${W_PLANK}"/>
+  <line x1="8" y1="29" x2="88" y2="28" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <line x1="8" y1="36" x2="88" y2="35" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <line x1="8" y1="43" x2="88" y2="42" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <line x1="8" y1="50" x2="88" y2="49" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <line x1="8" y1="57" x2="88" y2="56" stroke="${W_SHD}" stroke-width="1.3" opacity="0.5"/>
+  <line x1="30" y1="22" x2="30" y2="63" stroke="${W_SHD}" stroke-width="0.7" opacity="0.22"/>
+  <line x1="50" y1="22" x2="50" y2="63" stroke="${W_SHD}" stroke-width="0.7" opacity="0.22"/>
+  <line x1="70" y1="21" x2="70" y2="63" stroke="${W_SHD}" stroke-width="0.7" opacity="0.22"/>
+  <path d="M 8,22 L 8,64 L 4,65 L 4,23 Z" fill="${W_LIT}" opacity="0.78"/>
+  <path d="M 8,22 Q 48,16 88,20" stroke="${GOLD}" stroke-width="2.6" fill="none" stroke-linecap="round" opacity="0.92"/>
+  <path d="M 88,20 L 94,23" stroke="${GOLD}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.6"/>
 </svg>`,
 
   // ── NORTHSHORE : passerelle en lattes de bois ─────────────────────────
