@@ -1,4 +1,4 @@
-export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride'
+export type Module3DType = 'jump' | 'double' | 'table' | 'berm' | 'pumptrack' | 'northshore' | 'drop' | 'stepup' | 'wallride' | 'hip'
 
 export type Module3D = {
   id: string
@@ -18,6 +18,7 @@ export const MODULE3D_LABELS: Record<Module3DType, string> = {
   drop: 'Drop',
   stepup: 'Step-Up',
   wallride: 'Wallride',
+  hip: 'Hip',
 }
 
 // Sprites 3D (rendus Blender, golden hour). Le contact-sol est centré dans
@@ -101,6 +102,36 @@ const _WALLRIDE_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/s
 </svg>`
 const _wallrideDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_WALLRIDE_SVG)
 
+// Hip : virage sauté 90°. Un seul dôme en forme de coin (wedge), l'apex = la pointe du hip.
+// Face gauche (takeoff slope) éclairée NW → D_LIT. Face droite (landing) en ombre → D_SHD.
+// Deux rims dorés depuis l'apex : gauche (takeoff, plein feu) + droite (landing, moins intense).
+const _HIP_SVG = `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="62" rx="43" ry="5.5" fill="${SHAD}"/>
+  <!-- === Face gauche (takeoff, NW lit) === -->
+  <!-- Corps mi-ton -->
+  <path d="M 51,16 L 14,57 L 50,57 Z" fill="${D_MID}"/>
+  <!-- Dessus éclairé NW (bande diagonale lumière) -->
+  <path d="M 51,16 Q 44,32 38,42 Q 28,52 14,57 L 18,54 Q 30,50 40,40 Q 46,30 53,13 Z" fill="${D_LIT}"/>
+  <!-- Compaction lines parallèles au rim gauche -->
+  <path d="M 20,56 Q 36,52 44,42 Q 49,34 51,25" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.28"/>
+  <path d="M 16,57 Q 32,54 42,46 Q 48,38 51,30" stroke="${D_SHD}" stroke-width="0.6" fill="none" opacity="0.20"/>
+  <!-- === Face droite (landing, SE shadow) === -->
+  <!-- Corps shadow -->
+  <path d="M 51,16 L 50,57 L 88,56 Z" fill="${D_SHD}" opacity="0.72"/>
+  <!-- Nuance mid pour donner de la matière (lumière rasante) -->
+  <path d="M 53,13 L 90,54 L 88,56 L 50,57 L 51,16 Z" fill="${D_MID}" opacity="0.28"/>
+  <!-- Compaction légère face droite -->
+  <path d="M 52,45 Q 64,48 76,53" stroke="${D_SHD}" stroke-width="0.6" fill="none" opacity="0.20"/>
+  <!-- === Rims === -->
+  <!-- Rim gauche = takeoff (lumière NW directe, dorée vive) -->
+  <path d="M 18,54 Q 36,46 53,13" stroke="${GOLD}" stroke-width="2.6" stroke-linecap="round" fill="none" opacity="0.93"/>
+  <!-- Rim droite = landing (moins exposé, doré atténué) -->
+  <path d="M 53,13 Q 70,34 86,53" stroke="${GOLD}" stroke-width="1.9" stroke-linecap="round" fill="none" opacity="0.70"/>
+  <!-- Pointe du hip (apex) : pastille golden hour -->
+  <circle cx="53" cy="13" r="2.5" fill="${GOLD}" opacity="0.90"/>
+</svg>`
+const _hipDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_HIP_SVG)
+
 export const MODULE3D_IMG: Record<Module3DType, string> = {
   jump: jumpUrl,
   double: doubleUrl,
@@ -111,6 +142,7 @@ export const MODULE3D_IMG: Record<Module3DType, string> = {
   drop: _dropDataUrl,
   stepup: _stepupDataUrl,
   wallride: _wallrideDataUrl,
+  hip: _hipDataUrl,
 }
 
 // Palette commune
@@ -302,6 +334,23 @@ export const MODULE3D_SVG: Record<Module3DType, string> = {
   <path d="M 8,22 L 8,64 L 4,65 L 4,23 Z" fill="${W_LIT}" opacity="0.78"/>
   <path d="M 8,22 Q 48,16 88,20" stroke="${GOLD}" stroke-width="2.6" fill="none" stroke-linecap="round" opacity="0.92"/>
   <path d="M 88,20 L 94,23" stroke="${GOLD}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.6"/>
+</svg>`,
+
+  // ── HIP : virage sauté 90° — wedge avec apex = point de saut ─────────
+  // Face gauche (takeoff) NW lit, face droite (landing) shadow.
+  // Deux rims depuis l'apex : gauche doré vif (takeoff), droite doré atténué (landing).
+  hip: `<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="62" rx="43" ry="5.5" fill="${SHAD}"/>
+  <path d="M 51,16 L 14,57 L 50,57 Z" fill="${D_MID}"/>
+  <path d="M 51,16 Q 44,32 38,42 Q 28,52 14,57 L 18,54 Q 30,50 40,40 Q 46,30 53,13 Z" fill="${D_LIT}"/>
+  <path d="M 20,56 Q 36,52 44,42 Q 49,34 51,25" stroke="${D_SHD}" stroke-width="0.8" fill="none" opacity="0.28"/>
+  <path d="M 16,57 Q 32,54 42,46 Q 48,38 51,30" stroke="${D_SHD}" stroke-width="0.6" fill="none" opacity="0.20"/>
+  <path d="M 51,16 L 50,57 L 88,56 Z" fill="${D_SHD}" opacity="0.72"/>
+  <path d="M 53,13 L 90,54 L 88,56 L 50,57 L 51,16 Z" fill="${D_MID}" opacity="0.28"/>
+  <path d="M 52,45 Q 64,48 76,53" stroke="${D_SHD}" stroke-width="0.6" fill="none" opacity="0.20"/>
+  <path d="M 18,54 Q 36,46 53,13" stroke="${GOLD}" stroke-width="2.6" stroke-linecap="round" fill="none" opacity="0.93"/>
+  <path d="M 53,13 Q 70,34 86,53" stroke="${GOLD}" stroke-width="1.9" stroke-linecap="round" fill="none" opacity="0.70"/>
+  <circle cx="53" cy="13" r="2.5" fill="${GOLD}" opacity="0.90"/>
 </svg>`,
 
   // ── NORTHSHORE : passerelle en lattes de bois ─────────────────────────

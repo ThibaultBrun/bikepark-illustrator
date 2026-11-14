@@ -263,10 +263,41 @@ def build_wallride():
     return [wall]
 
 
+def build_hip():
+    """Hip : virage sauté 90°. Wedge de terre avec apex (pointe du hip) en haut.
+    Face gauche (takeoff, NW) = lit ; face droite (landing) = shadow.
+    Ressemble à un kicker mais en coin de pizza."""
+    m_dirt = mat("dirt_hip", DIRT, rough=0.95)
+    bm = bmesh.new()
+    # Apex (pointe du hip), base gauche (takeoff), base droite (landing), centre bas
+    # Wedge : 4 faces (gauche, droite, avant, dessous)
+    # Coordonnées : x=large, y=profond, z=haut. Viewer vient du SW (-x, -y).
+    # Apex : (0, 0, 4) — pointe haute
+    # Base takeoff gauche : (-5, -1, 0) et (-5, 1, 0)
+    # Base landing droite : (5, -1, 0) et (5, 1, 0)
+    ax, ay, az = 0.0, 0.0, 4.0
+    vs_coords = [
+        (ax, ay, az),         # 0 apex
+        (-5.0, -0.8, 0.0),    # 1 takeoff bas-avant
+        (-5.0,  0.8, 0.0),    # 2 takeoff bas-arrière
+        ( 5.0, -0.8, 0.0),    # 3 landing bas-avant
+        ( 5.0,  0.8, 0.0),    # 4 landing bas-arrière
+    ]
+    vs = [bm.verts.new(co) for co in vs_coords]
+    bm.faces.new([vs[0], vs[1], vs[2]])         # face takeoff (gauche, triangle)
+    bm.faces.new([vs[0], vs[4], vs[3]])         # face landing (droite, triangle)
+    bm.faces.new([vs[0], vs[2], vs[4]])         # face arrière (haut)
+    bm.faces.new([vs[0], vs[3], vs[1]])         # face avant (viewer)
+    bm.faces.new([vs[1], vs[3], vs[4], vs[2]])  # dessous
+    bm.normal_update()
+    obj_from_bm(bm, "hip_body", m_dirt)
+
+
 BUILDERS = {
     "jump": build_jump, "double": build_double, "table": build_table,
     "berm": build_berm, "pumptrack": build_pumptrack, "northshore": build_northshore,
     "drop": build_drop, "stepup": build_stepup, "wallride": build_wallride,
+    "hip": build_hip,
 }
 
 # ---------------------------------------------------------------- render setup
